@@ -14,7 +14,7 @@ compiler:
 
 env:
     global:
-        - PROJECT_NAME=HydrogenVR
+        - PROJECT_NAME=Prograde
     matrix:
         exclude:
             # Qt 5.6 no longer supports gcc on OS X.
@@ -23,6 +23,10 @@ env:
 addons:
     apt:
         packages:
+            - libboost1.55-dev
+            - clang-3.8
+            - clang-format-3.8
+            - clang-tidy-3.8
             - qtbase5-dev
 
 install:
@@ -51,6 +55,8 @@ script:
     - mkdir build ; cd build
     - cmake .. -DTAG=$TRAVIS_TAG -DWERROR=true
     - make -j
+    - ./Prograde_test
+    - make clang-format
 
 before_deploy:
     - make package

@@ -17,7 +17,8 @@
 #INIT
 cmake_minimum_required(VERSION 3.0.0)
 
-set(PROJECT_NAME HydrogenVR)
+set(PROJECT_NAME Prograde)
+set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
 project(${PROJECT_NAME} CXX)
 
 
@@ -52,7 +53,8 @@ add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 #DEPENDENCIES
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/modules)
 
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Boost REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Test REQUIRED)
 if((NOT DEFINED OPENVR_INCLUDE_DIR) OR (NOT DEFINED OPENVR_LIBRARY))
 	find_package(OpenVR REQUIRED)
 endif()
@@ -64,9 +66,9 @@ endif()
 
 if(LEAPMOTION_FOUND)
 	add_definitions(-DLEAP_MOTION)
-	set(EXTERNAL_LIBS_INCLUDE_DIRS ${Qt5_DIR} ${Qt5Widgets_INCLUDE_DIRS} ${OPENVR_INCLUDE_DIR} ${LEAPMOTION_INCLUDE_DIR})
+	set(EXTERNAL_LIBS_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} ${Qt5Test_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${OPENVR_INCLUDE_DIR} ${LEAPMOTION_INCLUDE_DIR})
 else()
-	set(EXTERNAL_LIBS_INCLUDE_DIRS ${Qt5_DIR} ${Qt5Widgets_INCLUDE_DIRS} ${OPENVR_INCLUDE_DIR})
+	set(EXTERNAL_LIBS_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} ${Qt5Test_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${OPENVR_INCLUDE_DIR})
 endif()
 
 #FILES/DIRECTORIES
@@ -75,6 +77,12 @@ set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB_RECURSE HPP_FILES ${COMMON_INCLUDES}/*.hpp)
 file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE MAIN_FILE ${PROJECT_SOURCE_DIR}/src/main.cpp)
+list(REMOVE_ITEM SRC_FILES ${MAIN_FILE})
+
+file(GLOB_RECURSE TEST_HPP_FILES ${PROJECT_SOURCE_DIR}/test/*.hpp)
+file(GLOB_RECURSE TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
+
 
 #INCLUDE
 
@@ -82,9 +90,9 @@ include_directories(${COMMON_INCLUDES} SYSTEM ${EXTERNAL_LIBS_INCLUDE_DIRS})
 
 #LINKING SETUP
 if(LEAPMOTION_FOUND)
-	set(LD_LIBS Qt5::Widgets ${OPENVR_LIBRARY} ${LEAPMOTION_LIBRARY})
+	set(LD_LIBS Qt5::Widgets Qt5::Test ${Boost_LIBRARIES} ${OPENVR_LIBRARY} -lquadmath ${LEAPMOTION_LIBRARY})
 else()
-	set(LD_LIBS Qt5::Widgets ${OPENVR_LIBRARY})
+	set(LD_LIBS Qt5::Widgets Qt5::Test ${Boost_LIBRARIES} ${OPENVR_LIBRARY} -lquadmath)
 endif()
 
 #Find .so in working directory
@@ -99,12 +107,22 @@ ENDIF()
 
 
 #RUN MOC (FOR QT5)
-qt5_wrap_cpp(MOC_FILES ${HPP_FILES})
+qt5_wrap_cpp(MOC_FILES ${HPP_FILES} ${TEST_HPP_FILES})
 
-#EXECUTABLE : PROJECT_NAME
-add_executable(${PROJECT_NAME} ${SRC_FILES} ${MOC_FILES})
+#COMMON OBJECTS
+add_library(objects OBJECT ${SRC_FILES} ${MOC_FILES})
+
+#EXECUTABLE 1 : PROJECT_NAME
+add_executable(${PROJECT_NAME} ${MAIN_FILE} $<TARGET_OBJECTS:objects>)
 target_link_libraries(${PROJECT_NAME} ${LD_LIBS})
 
+#EXECUTABLE 2 : Tests
+add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${TEST_MOC_FILES} $<TARGET_OBJECTS:objects>)
+target_link_libraries(${PROJECT_TEST_NAME} ${LD_LIBS})
+
+# Including extra cmake rules
+include(cmake/clang-dev-tools.cmake)
+include(cmake/doc.cmake)
 
 #INSTALL RULES
 INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME} DESTINATION bin)
@@ -116,8 +134,8 @@ INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION share/${PROJECT_N
 
 SET(CPACK_GENERATOR "DEB")
 SET(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "A C++ lightweight 3D rendering engine that tightly integrates VR at its core. It is based on OpenGL, Qt, OpenVR and the Leap Motion SDK.")
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Florian Cabot <florian.cabot@epfl.ch>")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "An ambitious space flight simulator.")
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Florian Cabot <florian.cabot@hotmail.fr>")
 if(TAG)
 	SET(CPACK_PACKAGE_VERSION ${TAG})
 endif()

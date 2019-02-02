@@ -4,7 +4,7 @@ build:
     verbosity: detailed
 environment:
   global:
-    PROJECT_NAME: 'HydrogenVR'
+    PROJECT_NAME: 'Prograde'
   matrix:
     - QTPATH: 'C:\Qt\5.11.2\msvc2015'
       BUILD_TYPE: 32bit
@@ -58,8 +58,9 @@ build_script:
     - cd %APPVEYOR_BUILD_FOLDER%
     - mkdir build
     - cd build
-    - cmake .. -G %GENERATOR% -DOPENVR_INCLUDE_DIR=%OPENVR_INCLUDE_DIR% -DOPENVR_LIBRARY=%OPENVR_LIBRARY% -DLEAPMOTION_INCLUDE_DIR=%LEAP_INCLUDE_DIR% -DLEAPMOTION_LIBRARY=%LEAP_LIBRARY%
+    - cmake .. -G %GENERATOR% -DBOOST_ROOT="C:\Libraries\boost_1_67_0" -DOPENVR_INCLUDE_DIR=%OPENVR_INCLUDE_DIR% -DOPENVR_LIBRARY=%OPENVR_LIBRARY% -DLEAPMOTION_INCLUDE_DIR=%LEAP_INCLUDE_DIR% -DLEAPMOTION_LIBRARY=%LEAP_LIBRARY%
     - cmake --build . --config Release
+    # TODO EXECUTE TESTS
 
 after_build:
     - cd %BINDIR%
