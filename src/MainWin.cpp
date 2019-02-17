@@ -48,13 +48,22 @@ GLHandler::Mesh createCube(GLHandler::ShaderProgram const& shader)
 	return mesh;
 }
 
+void MainWin::keyPressEvent(QKeyEvent* e)
+{
+	AbstractMainWin::keyPressEvent(e);
+	if(e->key() == Qt::Key_PageUp)
+		barrelPower = 1.f + (barrelPower - 1.f) * 1.2f;
+	else
+		barrelPower = 1.f + (barrelPower - 1.f) / 1.2f;
+}
+
 void MainWin::initScene()
 {
 	shaderProgram = GLHandler::newShader("default");
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
 	GLHandler::setShaderParam(shaderProgram, "alpha", 1.0f);
-	GLHandler::setShaderParam(shaderProgram, "color", {1.0f, 0.4f, 0.3f});
+	GLHandler::setShaderParam(shaderProgram, "color", QColor::fromRgbF(1.0f, 0.4f, 0.3f));
 
 	std::vector<float> vertices = {
 	    0.5f,  0.5f,  0.0f, // top right
@@ -74,19 +83,21 @@ void MainWin::initScene()
 	// create cube
 	cubeShader = GLHandler::newShader("default");
 	GLHandler::setShaderParam(cubeShader, "alpha", 0.5f);
-	GLHandler::setShaderParam(cubeShader, "color", {1.0f, 1.0f, 1.0f});
+	GLHandler::setShaderParam(cubeShader, "color", QColor::fromRgbF(1.0f, 1.0f, 1.0f));
 	cube = createCube(cubeShader);
 
 	// create points
 	pointsMesh   = GLHandler::newMesh();
 	pointsShader = GLHandler::newShader("default");
 	GLHandler::setShaderParam(pointsShader, "alpha", 1.0f);
-	GLHandler::setShaderParam(pointsShader, "color", {1.0f, 1.0f, 1.0f});
+	GLHandler::setShaderParam(pointsShader, "color", QColor::fromRgbF(1.0f, 1.0f, 1.0f));
 	std::vector<float> points = {0, 0, 0};
 	GLHandler::setVertices(pointsMesh, points, pointsShader, {{"position", 3}});
 	cubeTimer.start();
 
 	getCamera().setEyeDistanceFactor(5.0f);
+
+	appendPostProcessingShader("distort", "distort");
 }
 
 void MainWin::updateScene(BasicCamera& camera)
@@ -136,6 +147,13 @@ void MainWin::renderScene(BasicCamera const& camera)
 	GLHandler::setUpRender(pointsShader);
 	GLHandler::setPointSize(8);
 	GLHandler::render(pointsMesh);
+}
+
+void MainWin::applyPostProcShaderParams(QString const& id, GLHandler::ShaderProgram shader) const
+{
+	AbstractMainWin::applyPostProcShaderParams(id, shader);
+	if(id == "distort")
+		GLHandler::setShaderParam(shader, "BarrelPower", barrelPower);
 }
 
 MainWin::~MainWin()

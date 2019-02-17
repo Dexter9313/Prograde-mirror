@@ -16,21 +16,22 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef DEBUGCAMERA_H
-#define DEBUGCAMERA_H
+#ifndef LAUNCHER_H
+#define LAUNCHER_H
 
-#include "BasicCamera.hpp"
+#include <QDebug>
+#include <QDialog>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QVBoxLayout>
 
-class DebugCamera : public BasicCamera
+#include "SettingsWidget.hpp"
+
+class Launcher : public QDialog
 {
+	Q_OBJECT
   public:
-	DebugCamera(VRHandler const* vrHandler);
-	virtual void update(bool force2D = false) override;
-	void renderCamera(BasicCamera const* cam);
-
-  private:
-	GLHandler::Mesh camMesh;
-	GLHandler::ShaderProgram camMeshShader;
+	Launcher();
 };
 
-#endif // DEBUGCAMERA_H
+#endif // LAUNCHER_H

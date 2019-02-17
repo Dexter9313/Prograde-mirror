@@ -9,12 +9,9 @@ AbstractMainWin::AbstractMainWin()
 	format.setVersion(4, 0);
 	format.setSwapInterval(0);
 	setFormat(format);
-}
 
-void AbstractMainWin::setCamera(BasicCamera* newCamera)
-{
-	delete camera;
-	camera = newCamera;
+	if(hdr)
+		GLHandler::defaultRenderTargetFormat = GL_RGBA16F;
 }
 
 void AbstractMainWin::keyPressEvent(QKeyEvent* e)
@@ -43,6 +40,67 @@ void AbstractMainWin::keyPressEvent(QKeyEvent* e)
 	}
 }
 
+void AbstractMainWin::setCamera(BasicCamera* newCamera)
+{
+	delete camera;
+	camera = newCamera;
+}
+
+void AbstractMainWin::appendPostProcessingShader(QString const& id,
+                                                 QString const& fragment)
+{
+	postProcessingPipeline_.append(QPair<QString, GLHandler::ShaderProgram>(
+	    id, GLHandler::newShader("postprocess", fragment)));
+}
+
+void AbstractMainWin::insertPostProcessingShader(QString const& id,
+                                                 QString const& fragment,
+                                                 unsigned int pos)
+{
+	postProcessingPipeline_.insert(
+	    pos, QPair<QString, GLHandler::ShaderProgram>(
+	             id, GLHandler::newShader("postprocess", fragment)));
+}
+
+void AbstractMainWin::removePostProcessingShader(QString const& id)
+{
+	for(int i(0); i < postProcessingPipeline_.size(); ++i)
+	{
+		if(postProcessingPipeline_[i].first == id)
+		{
+			postProcessingPipeline_.removeAt(i);
+			break;
+		}
+	}
+}
+
+void AbstractMainWin::applyPostProcShaderParams(
+    QString const& id, GLHandler::ShaderProgram shader) const
+{
+	if(id == "colors")
+	{
+		GLHandler::setShaderParam(shader, "gamma", gamma);
+		GLHandler::setShaderParam(shader, "hdr", hdr);
+	}
+}
+
+void AbstractMainWin::reloadPostProcessingTargets()
+{
+	GLHandler::defaultRenderTargetFormat = hdr ? GL_RGBA16F : GL_RGBA;
+
+	GLHandler::deleteRenderTarget(postProcessingTargets[0]);
+	GLHandler::deleteRenderTarget(postProcessingTargets[1]);
+	postProcessingTargets[0] = GLHandler::newRenderTarget(width(), height());
+	postProcessingTargets[1] = GLHandler::newRenderTarget(width(), height());
+
+}
+
+void AbstractMainWin::setHDR(bool hdr)
+{
+	this->hdr = hdr;
+	reloadPostProcessingTargets();
+}
+
 void AbstractMainWin::initializeGL()
 {
 	// Init GL
@@ -66,18 +124,63 @@ void AbstractMainWin::initializeGL()
 	if(vrHandler)
 		vrHandler.resetPos();
 
+	postProcessingTargets[0] = GLHandler::newRenderTarget(width(), height());
+	postProcessingTargets[1] = GLHandler::newRenderTarget(width(), height());
+
 	// let user init
 	initScene();
 
+	// make sure gamma correction is applied last
+	appendPostProcessingShader("colors", "colors");
+
 	frameTimer.start();
+}
+
+void AbstractMainWin::vrRender(Side side, BasicCamera* renderingCam, bool debug,
+                               bool debugInHeadset)
+{
+	vrHandler.beginRendering(side, postProcessingPipeline_.size() > 0);
+	camera->update();
+	dbgCamera->update();
+	renderingCam->uploadMatrices();
+	vrHandler.renderControllers();
+	vrHandler.renderHands();
+	// render scene
+	renderScene(*camera);
+	if(debug && debugInHeadset)
+		dbgCamera->renderCamera(camera);
+
+	// do all postprocesses except last one
+	for(int i(0); i < postProcessingPipeline_.size() - 1; ++i)
+	{
+		applyPostProcShaderParams(postProcessingPipeline_[i].first,
+		                          postProcessingPipeline_[i].second);
+		GLHandler::postProcess(
+		    postProcessingPipeline_[i].second,
+		    vrHandler.getPostProcessingTarget(i % 2),
+		    vrHandler.getPostProcessingTarget((i + 1) % 2));
+	}
+	// render last one on true target
+	if(postProcessingPipeline_.size() != 0)
+	{
+		int i = postProcessingPipeline_.size() - 1;
+		applyPostProcShaderParams(postProcessingPipeline_[i].first,
+		                          postProcessingPipeline_[i].second);
+		GLHandler::postProcess(
+		    postProcessingPipeline_[i].second,
+		    vrHandler.getPostProcessingTarget(i % 2),
+		    vrHandler.getEyeTarget(side));
+	}
+
+	vrHandler.submitRendering(side);
 }
 
 void AbstractMainWin::paintGL()
 {
 	frameTiming_ = frameTimer.restart() / 1000.f;
 
-	setTitle(QString(PROJECT_NAME) + " - "
-	         + QString::number(1.f / frameTiming) + " FPS");
+	setTitle(QString(PROJECT_NAME) + " - " + QString::number(1.f / frameTiming)
+	         + " FPS");
 
 	if(vrHandler)
 		frameTiming_ = vrHandler.getFrameTiming() / 1000.f;
@@ -104,29 +207,8 @@ void AbstractMainWin::paintGL()
 	{
 		vrHandler.prepareRendering();
 
-		vrHandler.beginRendering(Side::LEFT);
-		camera->update();
-		dbgCamera->update();
-		renderingCam->uploadMatrices();
-		vrHandler.renderControllers();
-		vrHandler.renderHands();
-		// render scene
-		renderScene(*camera);
-		if(debug && debugInHeadset)
-			dbgCamera->renderCamera(camera);
-		vrHandler.submitRendering(Side::LEFT);
-
-		vrHandler.beginRendering(Side::RIGHT);
-		camera->update();
-		dbgCamera->update();
-		renderingCam->uploadMatrices();
-		vrHandler.renderControllers();
-		vrHandler.renderHands();
-		// render scene
-		renderScene(*camera);
-		if(debug && debugInHeadset)
-			dbgCamera->renderCamera(camera);
-		vrHandler.submitRendering(Side::RIGHT);
+		vrRender(Side::LEFT, renderingCam, debug, debugInHeadset);
+		vrRender(Side::RIGHT, renderingCam, debug, debugInHeadset);
 
 		if(!debug || debugInHeadset)
 			vrHandler.displayOnCompanion(width(), height());
@@ -136,7 +218,10 @@ void AbstractMainWin::paintGL()
 	// if no VR or debug not in headset, render 2D
 	if(!vrHandler || (debug && !debugInHeadset))
 	{
-		GLHandler::beginRendering();
+		if(postProcessingPipeline_.size() == 0)
+			GLHandler::beginRendering();
+		else
+			GLHandler::beginRendering(postProcessingTargets[0]);
 		camera->update();
 		dbgCamera->update();
 		renderingCam->uploadMatrices();
@@ -144,6 +229,25 @@ void AbstractMainWin::paintGL()
 		renderScene(*camera);
 		if(debug)
 			dbgCamera->renderCamera(camera);
+
+		// do all postprocesses except last one
+		for(int i(0); i < postProcessingPipeline_.size() - 1; ++i)
+		{
+			applyPostProcShaderParams(postProcessingPipeline_[i].first,
+			                          postProcessingPipeline_[i].second);
+			GLHandler::postProcess(postProcessingPipeline_[i].second,
+			                       postProcessingTargets[i % 2],
+			                       postProcessingTargets[(i + 1) % 2]);
+		}
+		// render last one on screen target
+		if(postProcessingPipeline_.size() != 0)
+		{
+			int i = postProcessingPipeline_.size() - 1;
+			applyPostProcShaderParams(postProcessingPipeline_[i].first,
+			                          postProcessingPipeline_[i].second);
+			GLHandler::postProcess(postProcessingPipeline_[i].second,
+			                       postProcessingTargets[i % 2]);
+		}
 	}
 
 	// Trigger a repaint immediatly
@@ -152,6 +256,11 @@ void AbstractMainWin::paintGL()
 
 AbstractMainWin::~AbstractMainWin()
 {
+	for(QPair<QString, GLHandler::ShaderProgram> p : postProcessingPipeline_)
+		GLHandler::deleteShader(p.second);
 	delete camera;
 	delete dbgCamera;
+
+	GLHandler::deleteRenderTarget(postProcessingTargets[0]);
+	GLHandler::deleteRenderTarget(postProcessingTargets[1]);
 }

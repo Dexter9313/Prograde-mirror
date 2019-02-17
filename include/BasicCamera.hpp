@@ -11,6 +11,17 @@ class VRHandler;
 
 class BasicCamera
 {
+  protected: // protected typedefs
+	enum ClippingPlane
+	{
+		LEFT_PLANE   = 0,
+		RIGHT_PLANE  = 1,
+		BOTTOM_PLANE = 2,
+		TOP_PLANE    = 3,
+		NEAR_PLANE   = 4,
+		FAR_PLANE    = 5,
+	};
+	typedef QVector4D Plane; // Ax+By+Cz+D=0 => [A,B,C,D]
   public:
 	BasicCamera(VRHandler const* vrHandler);
 	QMatrix4x4 getView() const { return view; };
@@ -26,7 +37,8 @@ class BasicCamera
 	float getEyeDistanceFactor() const { return eyeDistanceFactor; };
 	void setEyeDistanceFactor(float EyeDistanceFactor);
 	QVector4D project(QVector3D const& vertex) const;
-	virtual void update();
+	QVector4D project(QVector4D const& vertex) const;
+	virtual void update(bool force2D = false);
 	void uploadMatrices() const;
 	QMatrix4x4 cameraSpaceToWorldTransform() const;
 	QMatrix4x4 trackedSpaceToWorldTransform() const;
@@ -37,11 +49,13 @@ class BasicCamera
 	virtual ~BasicCamera(){};
 
   protected:
+
 	VRHandler const* vrHandler;
 	float eyeDistanceFactor;
 
 	// See TRANSFORMS beyond here
-	static QMatrix4x4 eyeDist(QMatrix4x4 const& matrix, float eyeDistanceFactor);
+	static QMatrix4x4 eyeDist(QMatrix4x4 const& matrix,
+	                          float eyeDistanceFactor);
 
 	QMatrix4x4 view;
 
@@ -64,6 +78,10 @@ class BasicCamera
 	QMatrix4x4 fullTrackedSpaceTransform;
 	// transform for any HMD space object (follows HMD)
 	QMatrix4x4 fullHmdSpaceTransform;
+
+	// For culling. Normals point Inside i.e. clippingPlanes[i]*v >= 0 <=>
+	// v is at the inner side of clippingPlanes[i]
+	Plane clippingPlanes[6];
 };
 
 #include "vr/VRHandler.hpp"

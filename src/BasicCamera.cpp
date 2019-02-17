@@ -40,12 +40,17 @@ void BasicCamera::setEyeDistanceFactor(float eyeDistanceFactor)
 
 QVector4D BasicCamera::project(QVector3D const& vertex) const
 {
-	return fullTransform * QVector4D(vertex, 1.0f);
+	return project(QVector4D(vertex, 1.f));
 }
 
-void BasicCamera::update()
+QVector4D BasicCamera::project(QVector4D const& vertex) const
 {
-	if(*vrHandler)
+	return fullTransform * vertex;
+}
+
+void BasicCamera::update(bool force2D)
+{
+	if(*vrHandler && !force2D)
 	{
 		// proj
 		projLeft = vrHandler->getProjectionMatrix(
@@ -85,6 +90,19 @@ void BasicCamera::update()
 		fullTrackedSpaceTransform = proj * eyeDistanceCorrection;
 		fullHmdSpaceTransform     = fullTrackedSpaceTransform;
 	}
+
+	// update clipping planes
+	// Gribb, G., & Hartmann, K. (2001). Fast extraction of viewing frustum
+	// planes from the world-view-projection matrix.
+	// http://www.cs.otago.ac.nz/postgrads/alexis/planeExtraction.pdf
+	clippingPlanes[LEFT_PLANE]  = fullTransform.row(3) + fullTransform.row(0);
+	clippingPlanes[RIGHT_PLANE] = fullTransform.row(3) - fullTransform.row(0);
+
+	clippingPlanes[BOTTOM_PLANE] = fullTransform.row(3) + fullTransform.row(1);
+	clippingPlanes[TOP_PLANE]    = fullTransform.row(3) - fullTransform.row(1);
+
+	clippingPlanes[NEAR_PLANE] = fullTransform.row(3) + fullTransform.row(2);
+	clippingPlanes[FAR_PLANE]  = fullTransform.row(3) - fullTransform.row(2);
 }
 
 void BasicCamera::uploadMatrices() const
@@ -120,7 +138,6 @@ QMatrix4x4 BasicCamera::hmdScaledSpaceToWorldTransform() const
 		return view.inverted();
 }
 
-
 QMatrix4x4 BasicCamera::screenToWorldTransform() const
 {
 	return view.inverted() * proj.inverted();
@@ -134,7 +151,8 @@ QMatrix4x4 BasicCamera::hmdScreenToWorldTransform(Side side) const
 		return hmdScaledToWorld * projRight.inverted();
 }
 
-QMatrix4x4 BasicCamera::eyeDist(QMatrix4x4 const& matrix, float eyeDistanceFactor)
+QMatrix4x4 BasicCamera::eyeDist(QMatrix4x4 const& matrix,
+                                float eyeDistanceFactor)
 {
 	QMatrix4x4 result(matrix);
 	result.setColumn(

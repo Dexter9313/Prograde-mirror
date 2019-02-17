@@ -16,21 +16,28 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef DEBUGCAMERA_H
-#define DEBUGCAMERA_H
+#include "Launcher.hpp"
 
-#include "BasicCamera.hpp"
-
-class DebugCamera : public BasicCamera
+Launcher::Launcher()
 {
-  public:
-	DebugCamera(VRHandler const* vrHandler);
-	virtual void update(bool force2D = false) override;
-	void renderCamera(BasicCamera const* cam);
+	this->setWindowTitle(QString(PROJECT_NAME) + " Launcher");
 
-  private:
-	GLHandler::Mesh camMesh;
-	GLHandler::ShaderProgram camMeshShader;
-};
+	QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
-#endif // DEBUGCAMERA_H
+	// SETTINGS TAB WIDGET
+	SettingsWidget* settingsWidget = new SettingsWidget(this);
+	mainLayout->addWidget(settingsWidget);
+
+	// LAUNCH AND QUIT BUTTONS
+	QWidget* w = new QWidget(this);
+	mainLayout->addWidget(w);
+	QHBoxLayout* l = new QHBoxLayout(w);
+	QPushButton* pbl = new QPushButton(this);
+	l->addWidget(pbl);
+	pbl->setText(tr("LAUNCH"));
+	connect(pbl, SIGNAL(pressed()), this, SLOT(accept()));
+	QPushButton* pbq = new QPushButton(this);
+	l->addWidget(pbq);
+	pbq->setText(tr("QUIT"));
+	connect(pbq, SIGNAL(pressed()), this, SLOT(reject()));
+}

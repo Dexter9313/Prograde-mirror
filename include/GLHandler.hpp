@@ -1,9 +1,11 @@
 #ifndef GLHANDLER_H
 #define GLHANDLER_H
 
+#include <QColor>
 #include <QDebug>
 #include <QFile>
 #include <QImage>
+#include <QtMath>
 #include <QMatrix4x4>
 #include <QOpenGLFunctions_4_0_Core>
 #include <QSettings>
@@ -55,7 +57,8 @@ class GLHandler
 		POINTS    = GL_POINTS,
 		LINES     = GL_LINES,
 		TRIANGLES = GL_TRIANGLES,
-		AUTO
+		TRIANGLE_STRIP = GL_TRIANGLE_STRIP,
+		AUTO // if no ebo, POINTS, else TRIANGLES
 	};
 
 	enum class GeometricSpace
@@ -79,6 +82,11 @@ class GLHandler
 	                           = {0, 0, 0,
 	                              QSettings().value("window/width").toUInt(),
 	                              QSettings().value("window/height").toUInt()});
+	static void postProcess(ShaderProgram shader, RenderTarget const& from,
+	                        RenderTarget const& to
+	                        = {0, 0, 0,
+	                           QSettings().value("window/width").toUInt(),
+	                           QSettings().value("window/height").toUInt()});
 	static void showOnScreen(RenderTarget const& renderTarget,
 	                         Rect const& screenRect
 	                         = {0, 0, QSettings().value("window/width").toInt(),
@@ -100,24 +108,18 @@ class GLHandler
 	                           QVector3D const& value);
 	static void setShaderParam(ShaderProgram shader, const char* paramName,
 	                           QMatrix4x4 const& value);
+	static void setShaderParam(ShaderProgram shader, const char* paramName,
+	                           QColor const& value, bool sRGB = true);
 	static void useShader(ShaderProgram shader);
 	static void deleteShader(ShaderProgram shaderProgram);
 
 	// meshes
-	// For now it is very basic : we suppose vertices are positions only (no
-	// texCoord nor normal nor color).
-	//
-	// If no shader provided, first "in" in vertex shader is assumed to be the
-	// position
 	static Mesh newMesh();
-	// static Mesh newMesh(ShaderProgram sp, str in_name) would be a good idea
-	// too
 	static void setVertices(Mesh& mesh, std::vector<float> const& vertices,
 	                        ShaderProgram const& shaderProgram,
 	                        std::vector<VertexMapping> const& mapping,
 	                        std::vector<unsigned int> const& elements = {});
 	static void updateVertices(Mesh& mesh, std::vector<float> const& vertices);
-	// render renders as points as of now
 	static void setUpRender(ShaderProgram shader,
 	                        QMatrix4x4 const& model = QMatrix4x4(),
 	                        GeometricSpace space    = GeometricSpace::WORLD);
@@ -126,15 +128,17 @@ class GLHandler
 	static void deleteMesh(Mesh const& mesh);
 
 	// textures
-	// for now it is very basic : we suppose one texture is loaded for the whole
-	// program and that's all
-	static Texture newTexture(const char* texturePath);
+	static Texture newTexture(const char* texturePath, bool sRGB = true);
 	static Texture newTexture(unsigned int width, unsigned int height,
-	                          const GLvoid* data);
+	                          const GLvoid* data, bool sRGB = true);
 	static void useTextures(std::vector<Texture> const& textures);
 	static void deleteTexture(Texture const& texture);
 
-	~GLHandler();
+	// http://entropymine.com/imageworsener/srgbformula/
+	static QColor sRGBToLinear(QColor const& srgb);
+	QColor linearTosRGB(QColor const& linear);
+
+	static GLint defaultRenderTargetFormat;
 
   private:
 	static GLuint loadShader(QString const& path, GLenum shaderType);
