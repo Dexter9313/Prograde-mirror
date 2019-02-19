@@ -3,6 +3,8 @@
 
 #include "AbstractMainWin.hpp"
 
+#include "graphics/renderers/StarryBackground.hpp"
+
 class MainWin : public AbstractMainWin
 {
 	Q_OBJECT
@@ -11,8 +13,6 @@ class MainWin : public AbstractMainWin
 	~MainWin();
 
   protected:
-	virtual void keyPressEvent(QKeyEvent* e) override;
-
 	// declare drawn resources
 	virtual void initScene() override;
 
@@ -24,20 +24,8 @@ class MainWin : public AbstractMainWin
 	// (no controllers or hands)
 	virtual void renderScene(BasicCamera const& camera) override;
 
-	virtual void applyPostProcShaderParams(QString const& id, GLHandler::ShaderProgram shader) const override;
-
   private:
-	GLHandler::Mesh mesh;
-	GLHandler::ShaderProgram shaderProgram;
-
-	GLHandler::Mesh pointsMesh;
-	GLHandler::ShaderProgram pointsShader;
-
-	GLHandler::Mesh cube;
-	GLHandler::ShaderProgram cubeShader;
-	QElapsedTimer cubeTimer;
-
-	float barrelPower = 1.01f;
+	StarryBackground stars;
 };
 
 #endif // MAINWIN_H

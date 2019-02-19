@@ -110,7 +110,7 @@ Vector3& Vector3::rotateAlongX(double angle)
 {
 	double oldY(data[1]);
 	data[1] = cos(angle) * data[1] - sin(angle) * data[2];
-	data[2] = sin(angle) * oldY + sin(angle) * data[2];
+	data[2] = sin(angle) * oldY + cos(angle) * data[2];
 
 	return *this;
 }
