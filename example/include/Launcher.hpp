@@ -19,19 +19,14 @@
 #ifndef LAUNCHER_H
 #define LAUNCHER_H
 
-#include <QDebug>
-#include <QDialog>
-#include <QHBoxLayout>
-#include <QPushButton>
-#include <QVBoxLayout>
+#include "BaseLauncher.hpp"
 
-#include "SettingsWidget.hpp"
-
-class Launcher : public QDialog
+class Launcher : public BaseLauncher
 {
-	Q_OBJECT
-  public:
-	Launcher();
+	public:
+		Launcher();
 };
 
+
 #endif // LAUNCHER_H
+

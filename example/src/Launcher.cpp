@@ -19,25 +19,7 @@
 #include "Launcher.hpp"
 
 Launcher::Launcher()
+	: BaseLauncher()
 {
-	this->setWindowTitle(QString(PROJECT_NAME) + " Launcher");
 
-	QVBoxLayout* mainLayout = new QVBoxLayout(this);
-
-	// SETTINGS TAB WIDGET
-	SettingsWidget* settingsWidget = new SettingsWidget(this);
-	mainLayout->addWidget(settingsWidget);
-
-	// LAUNCH AND QUIT BUTTONS
-	QWidget* w = new QWidget(this);
-	mainLayout->addWidget(w);
-	QHBoxLayout* l = new QHBoxLayout(w);
-	QPushButton* pbl = new QPushButton(this);
-	l->addWidget(pbl);
-	pbl->setText(tr("LAUNCH"));
-	connect(pbl, SIGNAL(pressed()), this, SLOT(accept()));
-	QPushButton* pbq = new QPushButton(this);
-	l->addWidget(pbq);
-	pbq->setText(tr("QUIT"));
-	connect(pbq, SIGNAL(pressed()), this, SLOT(reject()));
 }

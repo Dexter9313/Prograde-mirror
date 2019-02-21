@@ -15,43 +15,36 @@ Add the repo as the source remote (for example):
 
 	git remote add source https://gitlab.com/Dexter9313/hydrogenvr.git
 
-This new branch will be used to pull updates from this repo :
-
-	git checkout -b update-source
-
-The any time you want to update :
+Then any time you want to update :
 
 	git pull source master
-	git branch -u source/master #only first time
-	
-Then from any other branch in the project (master for example with git checkout master) :
 
-	git merge update-source
-	
-Don't rebase anything in update-source if you want to be able to pull.
-
-
-This branch will now have an updated version of this template. Subsequent eninge updates will only need the pull/merge from update-source steps.
+Don't rebase anything from source if you want to be able to pull.
 
 
 For initial setup, make sure you :
 
-* Erase and replace this README by a new one.
-* Change .travis.yml, .appveyor.yml and CMakeLists.txt PROJECT_NAME variables.
+* Write your own README.md (see bellow for informations to put in it)
+* Change variables in build.conf
 * If you deploy on Github, add the API_KEY secure variable in the Travis CI project and replace the encrypted key in .appveyor.yml.
-* Change the PROJECT_NAME in CMakeLists.txt.
-* Change the CPack parameters in CMakeLists.txt (descriptions, dependencies, etc...).
-* Change innosetup/config.iss defines.
-* Change build status from Travis and Appveyor to your own.
-* Inherit from AbstractMainWin to draw (replace all of the MainWin class code which serves as an example).
+* Create a project directory. We will call it "projectdir" in this README but you can name it whatever you want as long as build.conf is set accordingly. All your source code should be within your project directory. Don't change anything at root level unless specified as safe here, unless you want engine update problems (see data/ and example/ directories for an example project).
+* Create a MainWin class in projectdir/include/MainWin.hpp that inherits from AbstractMainWin to draw. It can do nothing if you don't want to do anything (you only have to implement the pure virtual methods, but you can make them do nothing).
+* Create a Launcher class in projectdir/include/Launcher.hpp that inherits from BaseLauncher to instanciate a Launcher. It can do nothing if you don't want to do anything.
+* Don't write a main() function, HydrogenVR already provides one.
+* Don't remove the examples, they are light and won't be included within your project packages. This is to ensure you can update HydrogenVR without any problem.
 
 You can also :
+* Add CMake dependencies in projectdir/cmake/Dependencies.cmake
+* Add files to install with CMake install() in projectdir/cmake/Install.cmake
+* Add a custom install script for Travis CI as projectdir/ci/travis/install.sh
+* Add a custom install script for Appveyor as projectdir/ci/appveyor/install.bat
+* Add files to the final archive via a script for Appveyor as projectdir/ci/appveyor/before_archive.bat
 * Add settings to the SettingsWidget constructor.
-* Add assets to the data/ directory. The working directory will always contain data (so you can always reach data relatively from this path : "data/"). It will be packaged with the rest of the project.
+* Add assets to your data/projectdir directory. The working directory will always contain data/ (so you can always reach data relatively from this path; ex : "data/core/shaders/default.vert" is a valid path). The last example is what is called an "absolute data path" because you need to provide the "data/core" prefix to reach the data (if it is in data/core). The preferred way of accessing data is by using the utils.hpp:getAbsoluteDataPath() function and provide a "relative data path" to it (for last example it would have been "shaders/default.vert"). The function will figure in which data/ subdirectory is your data file and give back an "absolute data path" (for last example : "data/core/shaders/default.vert"). Your subdirectory has priority over core/, so you can override core/ data files by providing other versions in your data/projectdir. The data directory will automatically be packaged with your project releases (only the relevant subdirs).
 
-The project name defined as CMakeLists.txt PROJECT_NAME will be accessible in C++ code as the PROJECT_NAME macro. It is a C-style string constant.
+The project name defined in build.conf as PROJECT_NAME is accessible in C++ code as the PROJECT_NAME macro, and so is PROJECT_DIRECTORY. They are C-style string constants.
 
-All used classes starting with Q (ex: QSettings) belongs to the Qt framework. The engine didn't wrap anything from Qt, so you will have to use Qt a least a little.
+All used classes starting with Q (ex: QSettings) belong to the Qt framework. The engine didn't wrap anything from Qt, so you will have to use Qt a least a little.
 
 ## Example releases
 
@@ -59,6 +52,8 @@ You can see releases for Linux and Windows produced by the engine build system t
 
 
 # Example of things that should be in your README
+
+Put build status on top.
 
 ## Installation and requirements
 
@@ -91,18 +86,15 @@ You will need the following requirements :
 Then clone this repository. We now suppose the root directory of the repository is stored in the $HydrogenVR_ROOT_DIR variable.
 
         cd $HydrogenVR_ROOT_DIR
-        mkdir build && cd build
-        cmake ..
-        make -j
+        ./build-linux.sh
+        cd build
         sudo make install
 
 Optionally, you can generate a deb package to make installation managing easier if you are on a debian-based system. The package name will be "hydrogenvr".
 
         cd $HydrogenVR_ROOT_DIR
-        mkdir build && cd build
-        cmake ..
-        make -j package
-        sudo dpkg -i ./*.deb
+        ./build-linux.sh package
+        sudo dpkg -i ./build/*.deb
 
 ## Usage
 
@@ -118,4 +110,4 @@ If the make install method for installation was used, uninstallation can only be
         cd build
         sudo make uninstall
 
-As of now, this method can leave some empty directories in your file system though... Check the file content yourself if you want to clean everything properly.
+As of now, this method can leave some empty directories in your file system though... Check install_manifest.txt content yourself if you want to clean everything properly.

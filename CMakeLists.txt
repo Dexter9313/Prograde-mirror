@@ -17,9 +17,23 @@
 #INIT
 cmake_minimum_required(VERSION 3.0.0)
 
-set(PROJECT_NAME Prograde)
-set(PROJECT_TEST_NAME ${PROJECT_NAME}_test)
+#READ CONFIG FILE AND SET VARIABLES
+file(STRINGS "build.conf" ConfigContents)
+foreach(NameAndValue ${ConfigContents})
+  # Strip leading spaces
+  string(REGEX REPLACE "^[ ]+" "" NameAndValue ${NameAndValue})
+  # Find variable name
+  string(REGEX MATCH "^[^=]+" Name ${NameAndValue})
+  # Find the value
+  string(REPLACE "${Name}=" "" Value ${NameAndValue})
+  # Remove quotes
+  string(REPLACE "\"" "" Value ${Value})
+  # Set the variable
+  set(${Name} ${Value})
+endforeach()
+
 project(${PROJECT_NAME} CXX)
+set(CMAKE_PROJECT_DESCRIPTION ${PROJECT_DESCRIPTION})
 
 
 #C++11
@@ -49,12 +63,21 @@ endif()
 
 #Define project name in source for preprocessor
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
+add_definitions(-DPROJECT_DIRECTORY="${PROJECT_DIRECTORY}")
+
+
+#FILES/DIRECTORIES
+
+set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
+set(PROJECT_INCLUDES ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/include)
+
+file(GLOB_RECURSE HPP_FILES ${COMMON_INCLUDES}/*.hpp ${PROJECT_INCLUDES}/*.hpp)
+file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/src/*.cpp)
 
 #DEPENDENCIES
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/modules)
 
-find_package(Boost REQUIRED)
-find_package(Qt5 COMPONENTS Widgets Test REQUIRED)
+find_package(Qt5 COMPONENTS Widgets REQUIRED)
 if((NOT DEFINED OPENVR_INCLUDE_DIR) OR (NOT DEFINED OPENVR_LIBRARY))
 	find_package(OpenVR REQUIRED)
 endif()
@@ -64,35 +87,22 @@ else()
 	set(LEAPMOTION_FOUND true)
 endif()
 
-if(LEAPMOTION_FOUND)
-	add_definitions(-DLEAP_MOTION)
-	set(EXTERNAL_LIBS_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} ${Qt5Test_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${OPENVR_INCLUDE_DIR} ${LEAPMOTION_INCLUDE_DIR})
-else()
-	set(EXTERNAL_LIBS_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} ${Qt5Test_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${OPENVR_INCLUDE_DIR})
-endif()
-
-#FILES/DIRECTORIES
-
-set(COMMON_INCLUDES ${PROJECT_SOURCE_DIR}/include)
-
-file(GLOB_RECURSE HPP_FILES ${COMMON_INCLUDES}/*.hpp)
-file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
-file(GLOB_RECURSE MAIN_FILE ${PROJECT_SOURCE_DIR}/src/main.cpp)
-list(REMOVE_ITEM SRC_FILES ${MAIN_FILE})
-
-file(GLOB_RECURSE TEST_HPP_FILES ${PROJECT_SOURCE_DIR}/test/*.hpp)
-file(GLOB_RECURSE TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
-
+include(${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/cmake/Dependencies.cmake)
 
 #INCLUDE
 
-include_directories(${COMMON_INCLUDES} SYSTEM ${EXTERNAL_LIBS_INCLUDE_DIRS})
+set(EXTERNAL_LIBS_INCLUDE_DIRS ${Qt5_DIR} ${Qt5Widgets_INCLUDE_DIRS} ${OPENVR_INCLUDE_DIR} ${PROJECT_INCLUDE_DIRS})
+if(LEAPMOTION_FOUND)
+	add_definitions(-DLEAP_MOTION)
+	set(EXTERNAL_LIBS_INCLUDE_DIRS ${EXTERNAL_LIBS_INCLUDE_DIRS} ${LEAPMOTION_INCLUDE_DIR})
+endif()
+
+include_directories(${COMMON_INCLUDES} ${PROJECT_INCLUDES} SYSTEM ${EXTERNAL_LIBS_INCLUDE_DIRS})
 
 #LINKING SETUP
+	set(LD_LIBS Qt5::Widgets ${OPENVR_LIBRARY} ${PROJECT_LIBRARIES})
 if(LEAPMOTION_FOUND)
-	set(LD_LIBS Qt5::Widgets Qt5::Test ${Boost_LIBRARIES} ${OPENVR_LIBRARY} -lquadmath ${LEAPMOTION_LIBRARY})
-else()
-	set(LD_LIBS Qt5::Widgets Qt5::Test ${Boost_LIBRARIES} ${OPENVR_LIBRARY} -lquadmath)
+	set(LD_LIBS Qt5::Widgets ${LD_LIBS} ${LEAPMOTION_LIBRARY})
 endif()
 
 #Find .so in working directory
@@ -107,75 +117,68 @@ ENDIF()
 
 
 #RUN MOC (FOR QT5)
-qt5_wrap_cpp(MOC_FILES ${HPP_FILES} ${TEST_HPP_FILES})
+qt5_wrap_cpp(MOC_FILES ${HPP_FILES})
 
-#COMMON OBJECTS
-add_library(objects OBJECT ${SRC_FILES} ${MOC_FILES})
-
-#EXECUTABLE 1 : PROJECT_NAME
-add_executable(${PROJECT_NAME} ${MAIN_FILE} $<TARGET_OBJECTS:objects>)
+#EXECUTABLE : PROJECT_NAME
+add_executable(${PROJECT_NAME} ${SRC_FILES} ${MOC_FILES})
 target_link_libraries(${PROJECT_NAME} ${LD_LIBS})
 
-#EXECUTABLE 2 : Tests
-add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${TEST_MOC_FILES} $<TARGET_OBJECTS:objects>)
-target_link_libraries(${PROJECT_TEST_NAME} ${LD_LIBS})
+#INSTALL RULES / NOT FOR WINDOWS
+if(NOT WIN32)
+	INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME} DESTINATION bin)
+	INSTALL(FILES ${OPENVR_LIBRARY} DESTINATION lib)
+	if(LEAPMOTION_FOUND)
+		INSTALL(FILES ${LEAPMOTION_LIBRARY} DESTINATION lib)
+	endif()
+	INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data/core DESTINATION share/${PROJECT_NAME}/data)
+	INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data/${PROJECT_DIRECTORY} DESTINATION share/${PROJECT_NAME}/data)
+	include(${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/cmake/Install.cmake)
 
-# Including extra cmake rules
-include(cmake/clang-dev-tools.cmake)
-include(cmake/doc.cmake)
+	SET(CPACK_GENERATOR "DEB")
+	SET(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+	SET(CPACK_DEBIAN_PACKAGE_MAINTAINER ${PROJECT_MAINTAINER})
+	if(TAG)
+		SET(CPACK_PACKAGE_VERSION ${TAG})
+	endif()
 
-#INSTALL RULES
-INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME} DESTINATION bin)
-INSTALL(FILES ${OPENVR_LIBRARY} DESTINATION lib)
-if(LEAPMOTION_FOUND)
-	INSTALL(FILES ${LEAPMOTION_LIBRARY} DESTINATION lib)
+	SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5widgets5:amd64,\
+	libqt5gui5:amd64,\
+	libqt5core5a:amd64,\
+	libstdc++6:amd64,\
+	libc6:amd64,\
+	libgcc1:amd64,\
+	libc6:amd64,\
+	libc6:amd64,\
+	libc6:amd64,\
+	libc6:amd64,\
+	libgl1:amd64,\
+	libpng16-16:amd64,\
+	libharfbuzz0b:amd64,\
+	zlib1g:amd64,\
+	libicu60:amd64,\
+	libicu60:amd64,\
+	libdouble-conversion1:amd64,\
+	libglib2.0-0:amd64,\
+	libglx0:amd64,\
+	libglvnd0:amd64,\
+	libfreetype6:amd64,\
+	libgraphite2-3:amd64,\
+	libicu60:amd64,\
+	libpcre3:amd64,\
+	libx11-6:amd64,\
+	libxcb1:amd64,\
+	libxau6:amd64,\
+	libxdmcp6:amd64,\
+	libbsd0:amd64,\
+	${PROJECT_ADDITIONAL_DEB_DEPENDENCIES}")
+
+	INCLUDE(CPack)
+
+	#Create uninstall target
+	add_custom_target(uninstall
+			COMMAND xargs rm < install_manifest.txt && rm install_manifest.txt
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			COMMENT "Uninstalling executable..."
+			VERBATIM)
 endif()
-INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION share/${PROJECT_NAME})
-
-SET(CPACK_GENERATOR "DEB")
-SET(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "An ambitious space flight simulator.")
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Florian Cabot <florian.cabot@hotmail.fr>")
-if(TAG)
-	SET(CPACK_PACKAGE_VERSION ${TAG})
-endif()
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5widgets5:amd64,\
-libqt5gui5:amd64,\
-libqt5core5a:amd64,\
-libstdc++6:amd64,\
-libc6:amd64,\
-libgcc1:amd64,\
-libc6:amd64,\
-libc6:amd64,\
-libc6:amd64,\
-libc6:amd64,\
-libgl1:amd64,\
-libpng16-16:amd64,\
-libharfbuzz0b:amd64,\
-zlib1g:amd64,\
-libicu60:amd64,\
-libicu60:amd64,\
-libdouble-conversion1:amd64,\
-libglib2.0-0:amd64,\
-libglx0:amd64,\
-libglvnd0:amd64,\
-libfreetype6:amd64,\
-libgraphite2-3:amd64,\
-libicu60:amd64,\
-libpcre3:amd64,\
-libx11-6:amd64,\
-libxcb1:amd64,\
-libxau6:amd64,\
-libxdmcp6:amd64,\
-libbsd0:amd64")
-
-INCLUDE(CPack)
-
-#Create uninstall target
-add_custom_target(uninstall
-		COMMAND xargs rm < install_manifest.txt && rm install_manifest.txt
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMENT "Uninstalling executable..."
-		VERBATIM)
-
 
