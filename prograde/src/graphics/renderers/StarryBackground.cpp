@@ -138,7 +138,7 @@ std::vector<StarryBackground::Star> StarryBackground::loadStars()
 {
 	std::vector<Star> result;
 
-	QFile f("data/physics/hygdata_v3_min.csv");
+	QFile f("data/prograde/physics/hygdata_v3_min.csv");
 	f.open(QFile::ReadOnly | QFile::Text);
 	QTextStream in(&f);
 	while(!in.atEnd())
