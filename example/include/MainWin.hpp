@@ -2,12 +2,13 @@
 #define MAINWIN_H
 
 #include "AbstractMainWin.hpp"
+#include "Primitives.hpp"
 
 class MainWin : public AbstractMainWin
 {
 	Q_OBJECT
   public:
-	MainWin();
+	MainWin() = default;
 	~MainWin();
 
   protected:
@@ -24,7 +25,8 @@ class MainWin : public AbstractMainWin
 	// (no controllers or hands)
 	virtual void renderScene(BasicCamera const& camera) override;
 
-	virtual void applyPostProcShaderParams(QString const& id, GLHandler::ShaderProgram shader) const override;
+	virtual void applyPostProcShaderParams(
+	    QString const& id, GLHandler::ShaderProgram shader) const override;
 
   private:
 	GLHandler::Mesh mesh;
@@ -36,6 +38,9 @@ class MainWin : public AbstractMainWin
 	GLHandler::Mesh cube;
 	GLHandler::ShaderProgram cubeShader;
 	QElapsedTimer cubeTimer;
+
+	GLHandler::Mesh sphere;
+	GLHandler::ShaderProgram sphereShader;
 
 	float barrelPower = 1.01f;
 };
