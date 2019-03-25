@@ -31,8 +31,8 @@
  * don't support loading/saving to/from files so for now a few of them have
  * been hardcoded (see also \ref SolarSystem).
  *
- * This system is implemented to show that Prograde isn't necessarly tied to a 
- * real star system and can simulate a wide variety of systems. It is also a 
+ * This system is implemented to show that Prograde isn't necessarly tied to a
+ * real star system and can simulate a wide variety of systems. It is also a
  * tribute to KSP.
  *
  * See \ref phys group description for conventions and notations.
@@ -54,8 +54,8 @@ class KerbalSystem : public OrbitalSystem
 	void createJoolSubSystem();
 
 	float distanceMultiplier = 1.f;
-	float radiusMultiplier = 1000.f;
-	float massMultiplier   = 1.f;
+	float radiusMultiplier   = 1000.f;
+	float massMultiplier     = 1.f;
 };
 
 #endif // KERBALSYSTEM_HPP

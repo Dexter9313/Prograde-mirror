@@ -290,9 +290,9 @@ double dotProduct(Vector4 const& a, Vector4 const& b);
  * Equivalent to converting both parameters to Vector3s then calling
  * crossProduct() on them as Vector3s. This results in a Vector3 on which
  * we append a w component defined as in the following :
- * the w component of the result is set to 1 if and only if both 
+ * the w component of the result is set to 1 if and only if both
  * w components of a and b are 1, and 0 instead.
- * This means the result is a position-vector if and only if both 
+ * This means the result is a position-vector if and only if both
  * parameters are position-vectors, which makes the most sense.
  * \param a first cross product parameter
  * \param b second cross product parameter

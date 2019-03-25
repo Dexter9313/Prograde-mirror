@@ -31,7 +31,7 @@ double EccentricAnomalySolver::solveForEllipticOrbit(double meanAnomaly,
 		    return std::make_pair(eccAn - (eccentricity * sin(eccAn))
 		                              - meanAnomaly,
 		                          1 - (eccentricity * cos(eccAn)));
-		},
+	    },
 	    guess, 0.0, 2 * constant::pi, std::numeric_limits<double>::digits,
 	    maxit);
 }
@@ -63,7 +63,7 @@ double EccentricAnomalySolver::solveForHyperbolicOrbit(double meanAnomaly,
 		    return std::make_pair((eccentricity * sinh(eccAn)) - eccAn
 		                              - meanAnomaly,
 		                          (eccentricity * cosh(eccAn)) - 1);
-		},
+	    },
 	    guess, 0.0, 2 * constant::pi, std::numeric_limits<double>::digits,
 	    maxit);
 }

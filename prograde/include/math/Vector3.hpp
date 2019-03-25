@@ -20,8 +20,8 @@
 #define VECTOR3D_HPP
 
 #include <array>
-#include <iostream>
 #include <cmath>
+#include <iostream>
 
 #include "exceptions/Exceptions.hpp"
 

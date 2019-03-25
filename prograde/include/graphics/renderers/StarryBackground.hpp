@@ -19,13 +19,13 @@
 #ifndef STARRYBACKGROUND_H
 #define STARRYBACKGROUND_H
 
-#include <random>
 #include <QFile>
+#include <random>
 
-#include "math/constants.hpp"
-#include "math/Vector3.hpp"
-#include "physics/Color.hpp"
 #include "GLHandler.hpp"
+#include "math/Vector3.hpp"
+#include "math/constants.hpp"
+#include "physics/Color.hpp"
 
 class StarryBackground
 {

@@ -81,7 +81,6 @@
 	init_exceptions(argv[0]); /*NOLINT complaining about argv[0]*/ \
 	try /*NOLINT clang-tidy thinks this is never executed */       \
 	{
-
 /*! \ingroup exceptions
  * Closes the critical exceptions handling.
  *

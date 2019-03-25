@@ -18,9 +18,7 @@
 
 #include "graphics/renderers/StarryBackground.hpp"
 
-StarryBackground::StarryBackground()
-{
-}
+StarryBackground::StarryBackground() {}
 
 // http://mathworld.wolfram.com/SpherePointPicking.html
 void StarryBackground::initFromRandomUniform()
@@ -51,8 +49,8 @@ void StarryBackground::initFromRandomUniform()
 		stars[j].properMotionLatitude  = 0.f;
 		stars[j].properMotionLongitude = 0.f;
 		stars[j].magnitude             = mag;
-		stars[j].color
-		    = Color(lum * 255, lum * baseColor.r, lum * baseColor.g, lum * baseColor.b);
+		stars[j].color = Color(lum * 255, lum * baseColor.r, lum * baseColor.g,
+		                       lum * baseColor.b);
 	}
 
 	initMesh(stars);
@@ -86,8 +84,8 @@ void StarryBackground::initFromRandomGalactic()
 		stars[j].properMotionLatitude  = 0.f;
 		stars[j].properMotionLongitude = 0.f;
 		stars[j].magnitude             = mag;
-		stars[j].color
-		    = Color(lum * 255, lum * baseColor.r, lum * baseColor.g, lum * baseColor.b);
+		stars[j].color = Color(lum * 255, lum * baseColor.r, lum * baseColor.g,
+		                       lum * baseColor.b);
 	}
 
 	initMesh(stars);
@@ -121,9 +119,9 @@ void StarryBackground::initMesh(std::vector<Star> const& stars, float axialTilt)
 		pos[1] = -1 * cos(star.latitude) * sin(star.longitude);
 		pos[2] = sin(star.latitude);
 		pos.rotateAlongX(axialTilt);
-		vboContent.push_back(pos[0]*1000);
-		vboContent.push_back(pos[1]*1000);
-		vboContent.push_back(pos[2]*1000);
+		vboContent.push_back(pos[0] * 1000);
+		vboContent.push_back(pos[1] * 1000);
+		vboContent.push_back(pos[2] * 1000);
 		vboContent.push_back(star.color.r / 255.f);
 		vboContent.push_back(star.color.g / 255.f);
 		vboContent.push_back(star.color.b / 255.f);
@@ -143,7 +141,7 @@ std::vector<StarryBackground::Star> StarryBackground::loadStars()
 	QTextStream in(&f);
 	while(!in.atEnd())
 	{
-		QString line = in.readLine();
+		QString line        = in.readLine();
 		QStringList columns = line.split(',');
 
 		// NAME
@@ -157,10 +155,10 @@ std::vector<StarryBackground::Star> StarryBackground::loadStars()
 
 		// RIGHT ASCENSION RAD
 		float rarad(columns[3].toFloat());
-		
+
 		// DECLINATION RAD
 		float decrad(columns[4].toFloat());
-		
+
 		// CONSTELLATION
 		std::string constellation(columns[5].toStdString());
 
@@ -179,8 +177,8 @@ std::vector<StarryBackground::Star> StarryBackground::loadStars()
 
 			float lum(lumFromMagnitude(mag));
 			Color baseColor(colorFromColorIndex(ci));
-			result[i].color
-			    = Color(lum * 255, lum * baseColor.r, lum * baseColor.g, lum * baseColor.b);
+			result[i].color = Color(lum * 255, lum * baseColor.r,
+			                        lum * baseColor.g, lum * baseColor.b);
 		}
 	}
 	return result;
@@ -190,14 +188,15 @@ float StarryBackground::lumFromMagnitude(float magnitude)
 {
 	// return magnitude < 3 ? 3 - magnitude : 0;
 	// return pow(10, (-1.44f - magnitude) / 9.f);
-	 return pow(10, (-1.44f - magnitude) / 9.f) * 0.8f;
+	return pow(10, (-1.44f - magnitude) / 9.f) * 0.8f;
 }
 
 Color StarryBackground::colorFromColorIndex(float ci)
 {
 	// https://stackoverflow.com/questions/21977786/star-b-v-color-index-to-apparent-rgb-color
-	float t = 4600 * ((1.f / ((0.92f * ci) + 1.7f))
-	                  + (1.f / ((0.92f * ci) + 0.62f)));
+	float t
+	    = 4600
+	      * ((1.f / ((0.92f * ci) + 1.7f)) + (1.f / ((0.92f * ci) + 0.62f)));
 
 	float x = 0.f, y = 0.f, X, Y, Z, r, g, b;
 

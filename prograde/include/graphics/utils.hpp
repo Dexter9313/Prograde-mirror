@@ -31,4 +31,3 @@ QColor toQt(Color const& color);
 Color fromQt(QColor const& color);
 
 #endif // UTILS_H
-

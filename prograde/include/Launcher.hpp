@@ -23,10 +23,9 @@
 
 class Launcher : public BaseLauncher
 {
-	public:
-		Launcher() : BaseLauncher(){};
+  public:
+	Launcher()
+	    : BaseLauncher(){};
 };
 
-
 #endif // LAUNCHER_h
-

@@ -43,13 +43,15 @@ class Orbit
 
 	struct MassiveBodyMass
 	{
-		explicit MassiveBodyMass(double value) : value(value) {};
+		explicit MassiveBodyMass(double value)
+		    : value(value){};
 		double value;
 	};
 
 	struct Period
 	{
-		explicit Period(double value) : value(value) {};
+		explicit Period(double value)
+		    : value(value){};
 		double value;
 	};
 
@@ -66,7 +68,7 @@ class Orbit
 	double getTrueAnomalyAtUT(UniversalTime uT) const;
 	double getMassiveBodyDistanceAtUT(UniversalTime uT) const;
 	Vector3 getPositionAtUT(UniversalTime uT) const;
-	//Vector3 getVelocityAtUT(UniversalTime uT) const;
+	// Vector3 getVelocityAtUT(UniversalTime uT) const;
 	CoordinateSystem getRelativeCoordinateSystemAtUT(UniversalTime uT) const;
 	std::ostream& displayAsText(std::ostream& stream) const;
 
@@ -74,7 +76,7 @@ class Orbit
 	double massiveBodyMass;
 	Parameters parameters;
 
-	//period is precomputed as it is often used and doesn't change
+	// period is precomputed as it is often used and doesn't change
 	double period;
 };
 

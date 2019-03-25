@@ -62,21 +62,21 @@ class Color
 	 * contribution).
 	 */
 	Color(unsigned int alpha, unsigned int r, unsigned int g, unsigned int b);
-	
+
 	/*!
 	 * Alpha channel with value from 0 (no contribution) to 255
 	 * (max contribution).
 	 */
 	unsigned int alpha;
-	 /*! Red channel with value from 0 (no contribution) to 255 (max
+	/*! Red channel with value from 0 (no contribution) to 255 (max
 	 * contribution).
 	 */
 	unsigned int r;
-	 /*! Green channel with value from 0 (no contribution) to 255 (max
+	/*! Green channel with value from 0 (no contribution) to 255 (max
 	 * contribution).
 	 */
 	unsigned int g;
-	 /*! Blue channel with value from 0 (no contribution) to 255 (max
+	/*! Blue channel with value from 0 (no contribution) to 255 (max
 	 * contribution).
 	 */
 	unsigned int b;

@@ -39,8 +39,8 @@
  * which are vectors with a starting point. Thus,
  * our coordinate system has an origin.
  *
- * We call "absolute system" the coordinate system in which the basis vectors of this particular 
- * coordinate system are expressed.
+ * We call "absolute system" the coordinate system in which the basis vectors of
+ * this particular coordinate system are expressed.
  */
 class CoordinateSystem
 {
@@ -81,8 +81,8 @@ class CoordinateSystem
 
 	/*! Gets the transformation matrix associated to the coordinate system.
 	 *
-	 * If a matrix mat is returned, then for any #Vector4 v expressed in this coordinate system, 
-	 * then mat*v is v expressed in the absolute system.
+	 * If a matrix mat is returned, then for any #Vector4 v expressed in this
+	 * coordinate system, then mat*v is v expressed in the absolute system.
 	 */
 	Matrix4x4 getTransform() const { return transform; };
 
@@ -142,29 +142,29 @@ class CoordinateSystem
 
 	/*! Rotates the coordinate system around the absolute X = [1; 0; 0] vector
 	 *
-	 * Rotation occur with constant origin (around an axis parallel to X and passing through origin).
-	 * \param angle angle of the rotation
+	 * Rotation occur with constant origin (around an axis parallel to X and
+	 * passing through origin). \param angle angle of the rotation
 	 */
 	CoordinateSystem& rotateAlongX(double angle);
 
 	/*! Rotates the coordinate system around the absolute Y = [0; 1; 0] vector
 	 *
-	 * Rotation occur with constant origin (around an axis parallel to Y and passing through origin).
-	 * \param angle angle of the rotation
+	 * Rotation occur with constant origin (around an axis parallel to Y and
+	 * passing through origin). \param angle angle of the rotation
 	 */
 	CoordinateSystem& rotateAlongY(double angle);
 
 	/*! Rotates the coordinate system around the absolute Z = [0; 0; 1] vector
 	 *
-	 * Rotation occur with constant origin (around an axis parallel to Z and passing through origin).
-	 * \param angle angle of the rotation
+	 * Rotation occur with constant origin (around an axis parallel to Z and
+	 * passing through origin). \param angle angle of the rotation
 	 */
 	CoordinateSystem& rotateAlongZ(double angle);
 
 	/*! Rotates the coordinate system around the an axis
 	 *
-	 * Rotation occur with constant origin (around an axis parallel to the axis given and passing through origin).
-	 * \param angle angle of the rotation
+	 * Rotation occur with constant origin (around an axis parallel to the axis
+	 * given and passing through origin). \param angle angle of the rotation
 	 * \param axis axis to rotate around
 	 */
 	CoordinateSystem& rotate(double angle, Vector3 const& axis);

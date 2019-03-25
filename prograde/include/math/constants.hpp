@@ -41,6 +41,6 @@ static const double G = 6.67408e-11;
  * mathematical operations
  */
 static const double NaN = nan("");
-}
+} // namespace constant
 
 #endif // CONSTANTS_HPP

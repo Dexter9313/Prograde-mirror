@@ -21,6 +21,4 @@ void MainWin::renderScene(BasicCamera const& camera)
 	stars.render();
 }
 
-MainWin::~MainWin()
-{
-}
+MainWin::~MainWin() {}
