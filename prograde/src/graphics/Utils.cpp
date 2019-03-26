@@ -16,8 +16,10 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "graphics/utils.hpp"
+#include "graphics/Utils.hpp"
 
+namespace Utils
+{
 QVector3D toQt(Vector3 const& vector)
 {
 	return QVector3D(vector[0], vector[1], vector[2]);
@@ -37,3 +39,4 @@ Color fromQt(QColor const& color)
 {
 	return Color(color.alpha(), color.red(), color.blue());
 }
+} // namespace Utils

@@ -16,8 +16,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef GRAPHICS_UTILS_HPP
+#define GRAPHICS_UTILS_HPP
 
 #include <QColor>
 #include <QVector3D>
@@ -25,9 +25,12 @@
 #include "math/Vector3.hpp"
 #include "physics/Color.hpp"
 
+namespace Utils
+{
 QVector3D toQt(Vector3 const& vector);
 Vector3 fromQt(QVector3D const& vector);
 QColor toQt(Color const& color);
 Color fromQt(QColor const& color);
+} // namespace Utils
 
-#endif // UTILS_H
+#endif // GRAPHICS_UTILS_HPP
