@@ -19,6 +19,8 @@
 #ifndef ORBITALSYSTEMRENDERER_HPP
 #define ORBITALSYSTEMRENDERER_HPP
 
+#include "Billboard.hpp"
+
 #include "physics/OrbitalSystem.hpp"
 #include "graphics/Utils.hpp"
 #include "CelestialBodyRenderer.hpp"
@@ -30,7 +32,7 @@ class OrbitalSystemRenderer //: public Renderer
 	OrbitalSystemRenderer(OrbitalSystem const* drawnSystem);
 	void updateMesh(UniversalTime uT,
 	                        Vector3 const& cameraPos);
-	void render();
+	void render(BasicCamera const& camera);
 	~OrbitalSystemRenderer();
 
   private:
@@ -43,9 +45,11 @@ class OrbitalSystemRenderer //: public Renderer
 	double billboardOriginalEdgeSize;
 
 	// TEMP
-	GLHandler::Mesh mesh;
+	/*GLHandler::Mesh mesh;
 	GLHandler::ShaderProgram shader;
-	QMatrix4x4 model;
+	QMatrix4x4 model;*/
+	Billboard billboard;
+
 };
 
 #endif // ORBITALSYSTEMDRAWER_HPP

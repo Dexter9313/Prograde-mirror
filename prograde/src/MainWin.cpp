@@ -116,9 +116,8 @@ void MainWin::updateScene(BasicCamera& camera)
 
 void MainWin::renderScene(BasicCamera const& camera)
 {
-	Q_UNUSED(camera);
 	stars.render();
-	systemRenderer->render();
+	systemRenderer->render(camera);
 }
 
 MainWin::~MainWin()

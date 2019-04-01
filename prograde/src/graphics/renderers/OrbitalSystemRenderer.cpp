@@ -18,32 +18,15 @@
 #include "graphics/renderers/OrbitalSystemRenderer.hpp"
 
 OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem const* drawnSystem)
-    : drawnSystem(drawnSystem)
+    : drawnSystem(drawnSystem), billboard("data/prograde/images/star.png")
 {
-	shader = GLHandler::newShader("default");
+	/*shader = GLHandler::newShader("default");
 	GLHandler::setShaderParam(shader, "color", QColor(255, 255, 255, 255));
 
-	mesh = Primitives::newUnitSphere(shader, 100, 100);
-
-	/*auto cache = scene->GetSubsystem<Urho3D::ResourceCache>();
-
-	node           = scene->CreateChild("Sun");
-	auto billboard = node->CreateComponent<Urho3D::BillboardSet>();
-	billboard->SetNumBillboards(1);
-	billboard->SetSorted(true);
-
-	auto mat = new Urho3D::Material(scene->GetContext());
-	auto tex = cache->GetResource<Urho3D::Texture2D>("Textures/star.png");
-	mat->SetTexture(Urho3D::TU_DIFFUSE, tex);
-	mat->SetNumTechniques(1);
-	mat->SetTechnique(0, cache->GetResource<Urho3D::Technique>(
-	                         "Techniques/DiffUnlitAlpha.xml"));
-	billboard->SetMaterial(mat);
-	node->GetComponent<Urho3D::BillboardSet>()->GetBillboard(0)->enabled_
-	    = true;
+	mesh = Primitives::newUnitSphere(shader, 100, 100);*/
 
 	billboardOriginalEdgeSize = drawnSystem->getCentralRadius() * 512.0 / 30.0;
-	*/
+
 	for(CelestialBody* body :
 	    this->drawnSystem->getAllCelestialBodiesPointers())
 	{
@@ -76,7 +59,7 @@ void OrbitalSystemRenderer::updateMesh(UniversalTime uT,
 	{
 		if(rendererPair.first > camDist && !centralBodyDrawn)
 		{
-			model = QMatrix4x4();
+			/*model = QMatrix4x4();
 			double camDist(cameraPos.length());
 			double scale(centerPosition / camDist);
 			model.translate(Utils::toQt(-1 * scale * cameraPos));
@@ -86,22 +69,19 @@ void OrbitalSystemRenderer::updateMesh(UniversalTime uT,
 			{
 				radiusScale = 0.002 * centerPosition;
 			}
-			model.scale(radiusScale);
+			model.scale(radiusScale);*/
 
-			/*double scale(centerPosition / camDist);
-			model = QMatrix4x4();
-			model.translate(Utils::toQt(-1 * scale * cameraPos));
+
+			double scale(centerPosition / camDist);
+			billboard.position = Utils::toQt(-1 * scale * cameraPos);
 			if((scale * drawnSystem->getCentralRadius()) / centerPosition
 			   < 0.0007)
 			{
 			    scale
 			        = 0.0007 * centerPosition / drawnSystem->getCentralRadius();
 			}
-			model.scale(scale);
-			node->GetComponent<Urho3D::BillboardSet>()->GetBillboard(0)->size_
-			    = Urho3D::Vector2(billboardOriginalEdgeSize * scale,
-			                      billboardOriginalEdgeSize * scale);
-			node->GetComponent<Urho3D::BillboardSet>()->Commit();*/
+			billboard.width = billboardOriginalEdgeSize * scale;
+
 			centralBodyDrawn = true;
 			centerPosition += increment;
 		}
@@ -111,10 +91,9 @@ void OrbitalSystemRenderer::updateMesh(UniversalTime uT,
 	}
 }
 
-void OrbitalSystemRenderer::render()
+void OrbitalSystemRenderer::render(BasicCamera const& camera)
 {
-	GLHandler::setUpRender(shader, model);
-	GLHandler::render(mesh);
+	billboard.render(camera);
 	for(auto bodyRenderer : bodyRenderers)
 	{
 		bodyRenderer->render();
