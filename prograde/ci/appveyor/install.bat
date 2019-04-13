@@ -1,1 +1,1 @@
-set BOOST_ROOT="C:/Libraries/boost_1_69_0"
+set BOOST_ROOT=C:/Libraries/boost_1_69_0
