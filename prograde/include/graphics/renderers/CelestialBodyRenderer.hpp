@@ -30,8 +30,7 @@ class CelestialBodyRenderer //: public Renderer
 {
   public:
 	CelestialBodyRenderer(CelestialBody const* drawnBody);
-	void updateMesh(UniversalTime uT,
-	                        Vector3 const& cameraPos);
+	void updateMesh(UniversalTime uT, Vector3 const& cameraPos);
 	void render();
 	CelestialBody const* getDrawnBody() const { return drawnBody; };
 	void setCenterPosition(float centerPosition)

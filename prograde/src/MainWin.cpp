@@ -14,21 +14,27 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 		std::vector<CelestialBody*> bodies(
 		    orbitalSystem->getAllCelestialBodiesPointers());
 		if(bodyTracked == bodies.size())
+		{
 			bodyTracked = 0;
+		}
 		cam->target = bodies[bodyTracked];
 	}
 	else if(e->key() == Qt::Key_R)
 	{
 		float timeCoeff(clock.getTimeCoeff());
 		if(timeCoeff >= 10)
+		{
 			timeCoeff /= 10;
+		}
 		clock.setTimeCoeff(timeCoeff);
 	}
 	else if(e->key() == Qt::Key_T)
 	{
 		float timeCoeff(clock.getTimeCoeff());
 		if(timeCoeff <= 100000)
+		{
 			timeCoeff *= 10;
+		}
 		clock.setTimeCoeff(timeCoeff);
 	}
 

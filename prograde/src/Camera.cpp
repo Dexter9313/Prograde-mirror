@@ -4,7 +4,8 @@
 Camera::Camera(VRHandler const* vrHandler)
     : BasicCamera(vrHandler)
 {
-	lookAt(QVector3D(0.f, 0.f, 0.f), QVector3D(1.f, 0.f, 0.f), QVector3D(0.f, 0.f, 1.f));
+	lookAt(QVector3D(0.f, 0.f, 0.f), QVector3D(1.f, 0.f, 0.f),
+	       QVector3D(0.f, 0.f, 1.f));
 }
 
 void Camera::updateUT(UniversalTime uT)
@@ -18,8 +19,7 @@ void Camera::updateUT(UniversalTime uT)
 
 	absolutePosition     = target->getAbsolutePositionAtUT(uT) + camRelPos;
 	Vector3 targetVector = (-1 * camRelPos);
-	position = Utils::toQt(absolutePosition);
-	lookDirection = Utils::toQt(targetVector);
+	position             = Utils::toQt(absolutePosition);
+	lookDirection        = Utils::toQt(targetVector);
 	lookAt(QVector3D(0.f, 0.f, 0.f), lookDirection, QVector3D(0.f, 0.f, 1.f));
 }
-

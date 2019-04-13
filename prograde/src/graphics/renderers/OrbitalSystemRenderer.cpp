@@ -18,7 +18,8 @@
 #include "graphics/renderers/OrbitalSystemRenderer.hpp"
 
 OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem const* drawnSystem)
-    : drawnSystem(drawnSystem), billboard("data/prograde/images/star.png")
+    : drawnSystem(drawnSystem)
+    , billboard("data/prograde/images/star.png")
 {
 	/*shader = GLHandler::newShader("default");
 	GLHandler::setShaderParam(shader, "color", QColor(255, 255, 255, 255));
@@ -67,18 +68,17 @@ void OrbitalSystemRenderer::updateMesh(UniversalTime uT,
 			double radiusScale(drawnSystem->getCentralRadius() * scale);
 			if(radiusScale / centerPosition < 0.002)
 			{
-				radiusScale = 0.002 * centerPosition;
+			    radiusScale = 0.002 * centerPosition;
 			}
 			model.scale(radiusScale);*/
-
 
 			double scale(centerPosition / camDist);
 			billboard.position = Utils::toQt(-1 * scale * cameraPos);
 			if((scale * drawnSystem->getCentralRadius()) / centerPosition
 			   < 0.0007)
 			{
-			    scale
-			        = 0.0007 * centerPosition / drawnSystem->getCentralRadius();
+				scale
+				    = 0.0007 * centerPosition / drawnSystem->getCentralRadius();
 			}
 			billboard.width = billboardOriginalEdgeSize * scale;
 

@@ -17,12 +17,12 @@
 */
 #include "../../../include/graphics/renderers/CelestialBodyRenderer.hpp"
 
-CelestialBodyRenderer::CelestialBodyRenderer(
-                                         CelestialBody const* drawnBody)
+CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody const* drawnBody)
     : drawnBody(drawnBody)
 {
 	shader = GLHandler::newShader("farcelestialbody");
-	GLHandler::setShaderParam(shader, "color", Utils::toQt(drawnBody->getParameters().color));
+	GLHandler::setShaderParam(shader, "color",
+	                          Utils::toQt(drawnBody->getParameters().color));
 
 	mesh = Primitives::newUnitSphere(shader, 100, 100);
 
@@ -36,7 +36,8 @@ CelestialBodyRenderer::CelestialBodyRenderer(
 	model.translate(Utils::toQt(this->drawnBody->getAbsolutePositionAtUT(0)));
 }
 
-void CelestialBodyRenderer::updateMesh(UniversalTime uT, Vector3 const& cameraPos)
+void CelestialBodyRenderer::updateMesh(UniversalTime uT,
+                                       Vector3 const& cameraPos)
 {
 	model = QMatrix4x4();
 	Vector3 camRelPos(drawnBody->getAbsolutePositionAtUT(uT) - cameraPos);
@@ -44,8 +45,7 @@ void CelestialBodyRenderer::updateMesh(UniversalTime uT, Vector3 const& cameraPo
 	double scale(centerPosition / camDist);
 	model.translate(Utils::toQt(scale * camRelPos));
 
-	double radiusScale(drawnBody->getParameters().radius
-	                   * scale);
+	double radiusScale(drawnBody->getParameters().radius * scale);
 	if(radiusScale / centerPosition < 0.002)
 	{
 		radiusScale = 0.002 * centerPosition;
@@ -56,7 +56,8 @@ void CelestialBodyRenderer::updateMesh(UniversalTime uT, Vector3 const& cameraPo
 	Vector3 centralBodyCenter(-1 * scale * cameraPos);
 
 	GLHandler::setShaderParam(shader, "bodyCenter", Utils::toQt(bodyCenter));
-	GLHandler::setShaderParam(shader, "centralBodyCenter", Utils::toQt(centralBodyCenter));
+	GLHandler::setShaderParam(shader, "centralBodyCenter",
+	                          Utils::toQt(centralBodyCenter));
 }
 
 void CelestialBodyRenderer::render()
@@ -70,4 +71,3 @@ CelestialBodyRenderer::~CelestialBodyRenderer()
 	GLHandler::deleteMesh(mesh);
 	GLHandler::deleteShader(shader);
 }
-

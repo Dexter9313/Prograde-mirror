@@ -21,17 +21,16 @@
 
 #include "Billboard.hpp"
 
-#include "physics/OrbitalSystem.hpp"
-#include "graphics/Utils.hpp"
 #include "CelestialBodyRenderer.hpp"
+#include "graphics/Utils.hpp"
+#include "physics/OrbitalSystem.hpp"
 
 // TODO rethink Renderer (mesh attribute)
 class OrbitalSystemRenderer //: public Renderer
 {
   public:
 	OrbitalSystemRenderer(OrbitalSystem const* drawnSystem);
-	void updateMesh(UniversalTime uT,
-	                        Vector3 const& cameraPos);
+	void updateMesh(UniversalTime uT, Vector3 const& cameraPos);
 	void render(BasicCamera const& camera);
 	~OrbitalSystemRenderer();
 
@@ -49,7 +48,6 @@ class OrbitalSystemRenderer //: public Renderer
 	GLHandler::ShaderProgram shader;
 	QMatrix4x4 model;*/
 	Billboard billboard;
-
 };
 
 #endif // ORBITALSYSTEMDRAWER_HPP

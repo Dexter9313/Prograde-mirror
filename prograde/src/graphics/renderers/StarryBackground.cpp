@@ -100,7 +100,8 @@ void StarryBackground::initFromFile(float axialTilt)
 void StarryBackground::render()
 {
 	GLHandler::beginTransparent();
-	GLHandler::setUpRender(shader, QMatrix4x4(), GLHandler::GeometricSpace::SKYBOX);
+	GLHandler::setUpRender(shader, QMatrix4x4(),
+	                       GLHandler::GeometricSpace::SKYBOX);
 	GLHandler::render(mesh);
 	GLHandler::endTransparent();
 }
