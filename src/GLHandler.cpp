@@ -157,12 +157,13 @@ void GLHandler::showOnScreen(RenderTarget const& renderTarget, int screenx0,
 	                        GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
 
-void GLHandler::beginTransparent()
+void GLHandler::beginTransparent(GLenum blendfuncSfactor,
+                                 GLenum blendfuncDfactor)
 {
 	glf().glDepthMask(GL_FALSE);
 	// enable transparency
 	glf().glEnable(GL_BLEND);
-	glf().glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glf().glBlendFunc(blendfuncSfactor, blendfuncDfactor);
 }
 
 void GLHandler::endTransparent()
@@ -232,6 +233,53 @@ GLHandler::ShaderProgram GLHandler::newShader(QString vertexName,
 	glf().glValidateProgram(result);
 
 	return result;
+}
+
+void GLHandler::setShaderUnusedAttributesValues(
+    ShaderProgram shader,
+    std::vector<QPair<const char*, std::vector<float>>> const& defaultValues)
+{
+	for(auto attribute : defaultValues)
+	{
+		GLint posAttrib = glf().glGetAttribLocation(shader, attribute.first);
+		if(posAttrib != -1)
+		{
+			glf().glDisableVertexAttribArray(posAttrib);
+			// special case where we have to do it, see :
+			// https://bugreports.qt.io/browse/QTBUG-40090?jql=text%20~%20%22glvertexattrib%22
+			QOpenGLFunctions glf_base;
+			glf_base.initializeOpenGLFunctions();
+			switch(attribute.second.size())
+			{
+				case 1:
+					glf_base.glVertexAttrib1fv(posAttrib, &attribute.second[0]);
+					break;
+				case 2:
+					glf_base.glVertexAttrib2fv(posAttrib, &attribute.second[0]);
+					break;
+				case 3:
+					glf_base.glVertexAttrib3fv(posAttrib, &attribute.second[0]);
+					break;
+				case 4:
+					glf_base.glVertexAttrib4fv(posAttrib, &attribute.second[0]);
+					break;
+				default:
+					break;
+			}
+		}
+	}
+}
+
+void GLHandler::setShaderUnusedAttributesValues(
+    ShaderProgram shader, QStringList const& names,
+    std::vector<std::vector<float>> const& values)
+{
+	std::vector<QPair<const char*, std::vector<float>>> defaultValues;
+	for(unsigned int i(0); i < values.size(); ++i)
+	{
+		defaultValues.emplace_back(names[i].toLatin1().constData(), values[i]);
+	}
+	setShaderUnusedAttributesValues(shader, defaultValues);
 }
 
 void GLHandler::setShaderParam(ShaderProgram shader, const char* paramName,
@@ -458,19 +506,24 @@ void GLHandler::deleteMesh(Mesh const& mesh)
 
 GLHandler::Texture GLHandler::newTexture(const char* texturePath, bool sRGB)
 {
-	Texture tex   = {};
-	tex.glTexture = 0;
-	tex.glTarget  = GL_TEXTURE_2D;
-
 	QImage img_data;
 	if(!img_data.load(texturePath))
 	{
 		// NOLINTNEXTLINE(hicpp-no-array-decay)
 		qWarning() << "Could not load Texture \"" << texturePath << "\""
 		           << '\n';
-		return tex;
+		return {};
 	}
-	img_data = img_data.convertToFormat(QImage::Format_RGBA8888);
+	return newTexture(img_data, sRGB);
+}
+
+GLHandler::Texture GLHandler::newTexture(QImage const& image, bool sRGB)
+{
+	Texture tex   = {};
+	tex.glTexture = 0;
+	tex.glTarget  = GL_TEXTURE_2D;
+
+	QImage img_data = image.convertToFormat(QImage::Format_RGBA8888);
 
 	glf().glGenTextures(1, &tex.glTexture);
 	glf().glActiveTexture(GL_TEXTURE0);

@@ -62,19 +62,22 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 
 void MainWin::initScene()
 {
-	shaderProgram = GLHandler::newShader("default");
+	shaderProgram = GLHandler::newShader("colorpervert");
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
-	GLHandler::setShaderParam(shaderProgram, "alpha", 1.0f);
-	GLHandler::setShaderParam(shaderProgram, "color",
-	                          QColor::fromRgbF(1.0f, 0.4f, 0.3f));
 
 	std::vector<float> vertices = {
 	    0.5f,  0.5f,  0.0f, // top right
 	    0.5f,  -0.5f, 0.0f, // bottom right
 	    -0.5f, -0.5f, 0.0f, // bottom left
-	    -0.5f, 0.5f,  0.0f  // top left
+	    -0.5f, 0.5f,  0.0f, // top left
 	};
+	/*std::vector<float> vertices = {
+	    0.5f,  0.5f,  0.0f, 1.f, 0.f, 0.f, // top right
+	    0.5f,  -0.5f, 0.0f, 0.f, 1.f, 0.f, // bottom right
+	    -0.5f, -0.5f, 0.0f, 0.f, 0.f, 1.f, // bottom left
+	    -0.5f, 0.5f,  0.0f, 0.f, 0.f, 0.f, // top left
+	};*/
 	std::vector<unsigned int> indices = {
 	    // note that we start from 0!
 	    0, 1, 3, // first Triangle
@@ -83,6 +86,8 @@ void MainWin::initScene()
 	mesh = GLHandler::newMesh();
 	GLHandler::setVertices(mesh, vertices, shaderProgram, {{"position", 3}},
 	                       indices);
+	GLHandler::setShaderUnusedAttributesValues(shaderProgram,
+	                                           {{"color", {1.0, 1.0, 0.0}}});
 
 	// create cube
 	cubeShader = GLHandler::newShader("default");
@@ -108,7 +113,19 @@ void MainWin::initScene()
 	sphere = Primitives::newUnitSphere(sphereShader, 100, 100);
 
 	bill           = new Billboard("data/example/images/cc.png");
-	bill->position = QVector3D(0.f, 0.f, 0.5f);
+	bill->position = QVector3D(0.f, 0.f, 0.8f);
+
+	text = new Text3D(200, 40);
+	text->setText("Hello World !\nLet's draw some text !");
+	text->setColor(QColor(0, 0, 0, 255));
+	text->setBackgroundColor(QColor(255, 0, 0, 127));
+	text->setRectangle(QRect(50, 0, 150, 40));
+	text->setSuperSampling(2.f);
+	text->setFlags(Qt::AlignRight);
+
+	text->getModel().rotate(135.f, 0.f, 0.f, 1.f);
+	text->getModel().rotate(45.f, 1.f, 0.f);
+	text->getModel().translate(0.f, 0.f, 0.5f);
 
 	getCamera().setEyeDistanceFactor(5.0f);
 
@@ -174,6 +191,7 @@ void MainWin::renderScene(BasicCamera const& camera)
 	GLHandler::setPointSize(1);
 
 	bill->render(camera);
+	text->render();
 }
 
 void MainWin::applyPostProcShaderParams(QString const& id,
@@ -197,4 +215,5 @@ MainWin::~MainWin()
 	GLHandler::deleteShader(cubeShader);
 
 	delete bill;
+	delete text;
 }
