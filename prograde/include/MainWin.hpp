@@ -4,8 +4,9 @@
 #include "AbstractMainWin.hpp"
 
 #include "Camera.hpp"
-#include "graphics/renderers/StarryBackground.hpp"
+#include "Text3D.hpp"
 #include "graphics/renderers/OrbitalSystemRenderer.hpp"
+#include "graphics/renderers/StarryBackground.hpp"
 #include "physics/OrbitalSystem.hpp"
 #include "physics/SimulationTime.hpp"
 
@@ -46,11 +47,17 @@ class MainWin : public AbstractMainWin
 
 	unsigned int bodyTracked = 0;
 
+	Text3D* debugText;
+
+	static std::string timeToStr(UniversalTime uT);
+	static void computeDayMonth(unsigned int* day, unsigned int* month,
+	                            bool bissextile);
+
 	// temp
-	//OrbitalSystem* orbitalSystem = new KerbalSystem;
+	// OrbitalSystem* orbitalSystem = new KerbalSystem;
 	OrbitalSystem* orbitalSystem = new SolarSystem;
 	OrbitalSystemRenderer* systemRenderer;
-	//SimulationTime clock = SimulationTime(0);
+	// SimulationTime clock = SimulationTime(0);
 	SimulationTime clock = SimulationTime(1443394800 - 946728000);
 };
 
