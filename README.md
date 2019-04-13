@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/Dexter9313/Prograde-mirror.svg?branch=master)](https://travis-ci.org/Dexter9313/Prograde-mirror)
-[![Build status](https://ci.appveyor.com/api/projects/status/st325kf8l81eq9kd/branch/master?svg=true)](https://ci.appveyor.com/project/Dexter9313/prograde-mirror/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/j4j7vqkxwuibkde7/branch/master?svg=true)](https://ci.appveyor.com/project/Dexter9313/prograde-mirror/branch/master)
 
 # Prograde
 
