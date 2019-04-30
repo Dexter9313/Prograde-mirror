@@ -48,6 +48,7 @@ class MainWin : public AbstractMainWin
 	unsigned int bodyTracked = 0;
 
 	Text3D* debugText;
+	float timeSinceTextUpdate = FLT_MAX;
 
 	static std::string timeToStr(UniversalTime uT);
 	static void computeDayMonth(unsigned int* day, unsigned int* month,

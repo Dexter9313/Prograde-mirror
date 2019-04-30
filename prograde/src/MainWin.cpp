@@ -118,6 +118,10 @@ void MainWin::updateScene(BasicCamera& camera)
 	auto& cam = dynamic_cast<Camera&>(camera);
 
 	clock.update();
+	/*if(!clock.drawableFrame())
+	{
+	    return;
+	}*/
 
 	cam.updateUT(clock.getCurrentUt());
 	systemRenderer->updateMesh(clock.getCurrentUt(), cam.getAbsolutePosition());
@@ -147,9 +151,15 @@ void MainWin::updateScene(BasicCamera& camera)
 	stream.precision(8);
 	stream << "x" << clock.getTimeCoeff();
 
-	debugText->setText(stream.str().c_str());
 	debugText->getModel() = cam.screenToWorldTransform();
 	debugText->getModel().scale(1.98f, 3.5f);
+
+	timeSinceTextUpdate += frameTiming;
+	if(timeSinceTextUpdate > 1.0)
+	{
+		debugText->setText(stream.str().c_str());
+		timeSinceTextUpdate = 0.f;
+	}
 }
 
 void MainWin::renderScene(BasicCamera const& camera)
