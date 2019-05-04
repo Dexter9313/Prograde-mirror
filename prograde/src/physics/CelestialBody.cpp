@@ -20,8 +20,9 @@
 
 CelestialBody::CelestialBody(double influentBodyMass,
                              Orbit::Parameters orbitalParams,
-                             Parameters physicalParams)
-    : parent(nullptr)
+                             Parameters physicalParams, Type type)
+    : type(type)
+    , parent(nullptr)
     , orbit(Orbit(Orbit::MassiveBodyMass(influentBodyMass), orbitalParams))
     , parameters(std::move(physicalParams))
 {
@@ -29,8 +30,9 @@ CelestialBody::CelestialBody(double influentBodyMass,
 
 CelestialBody::CelestialBody(CelestialBody const& parent,
                              Orbit::Parameters const& orbitalParams,
-                             Parameters physicalParams)
-    : parent(&parent)
+                             Parameters physicalParams, Type type)
+    : type(type)
+    , parent(&parent)
     , orbit(Orbit(Orbit::MassiveBodyMass(parent.getParameters().mass),
                   orbitalParams))
     , parameters(std::move(physicalParams))

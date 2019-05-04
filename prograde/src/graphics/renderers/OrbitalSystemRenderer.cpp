@@ -28,10 +28,10 @@ OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem const* drawnSystem)
 
 	billboardOriginalEdgeSize = drawnSystem->getCentralRadius() * 512.0 / 30.0;
 
-	for(CelestialBody* body :
-	    this->drawnSystem->getAllCelestialBodiesPointers())
+	for(std::string name : drawnSystem->getAllCelestialBodiesNames())
 	{
-		bodyRenderers.push_back(new CelestialBodyRenderer(body));
+		bodyRenderers.push_back(
+		    new CelestialBodyRenderer((*drawnSystem)[name], name));
 	}
 }
 

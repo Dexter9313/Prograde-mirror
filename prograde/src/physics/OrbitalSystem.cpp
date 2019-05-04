@@ -46,6 +46,11 @@ CelestialBody* OrbitalSystem::operator[](std::string const& name)
 	return bodies[name];
 }
 
+CelestialBody const* OrbitalSystem::operator[](std::string const& name) const
+{
+	return bodies.at(name);
+}
+
 std::vector<std::string> OrbitalSystem::getAllCelestialBodiesNames() const
 {
 	std::vector<std::string> result;

@@ -70,6 +70,7 @@ void SolarSystem::createPlanets()
 	physicalParams.radius                = 6371.0 * km;
 	physicalParams.color                 = Color(0, 204, 255);
 	physicalParams.mass                  = 5.97237 * 1e24;
+	physicalParams.atmosphere            = 0.3f;
 	createChild("Earth", orbitalParams, physicalParams);
 
 	// mars
@@ -82,6 +83,7 @@ void SolarSystem::createPlanets()
 	physicalParams.radius                = 3389.5 * km;
 	physicalParams.color                 = Color(204, 102, 51);
 	physicalParams.mass                  = 6.4171 * 1e23;
+	physicalParams.atmosphere            = 0.075f;
 	createChild("Mars", orbitalParams, physicalParams);
 
 	// jupiter
@@ -93,6 +95,7 @@ void SolarSystem::createPlanets()
 	orbitalParams.meanAnomalyAtEpoch     = constant::pi * 20.020 / 180.f;
 	physicalParams.radius                = 69911 * km;
 	physicalParams.color                 = Color(255, 204, 102);
+	physicalParams.atmosphere            = 0.f;
 	createChild("Jupiter", orbitalParams, physicalParams);
 
 	// saturn
@@ -104,6 +107,8 @@ void SolarSystem::createPlanets()
 	orbitalParams.meanAnomalyAtEpoch     = constant::pi * 317.020 / 180.f;
 	physicalParams.radius                = 58232 * km;
 	physicalParams.color                 = Color(255, 204, 80);
+	physicalParams.innerRing             = 73788.72 * km;
+	physicalParams.outerRing             = 139595.64 * km;
 	createChild("Saturn", orbitalParams, physicalParams);
 
 	// uranus
@@ -115,6 +120,8 @@ void SolarSystem::createPlanets()
 	orbitalParams.meanAnomalyAtEpoch     = constant::pi * 142.238600 / 180.f;
 	physicalParams.radius                = 25362 * km;
 	physicalParams.color                 = Color(180, 180, 255);
+	physicalParams.innerRing             = 73788.72 * km;
+	physicalParams.outerRing             = 139595.64 * km;
 	createChild("Uranus", orbitalParams, physicalParams);
 
 	// neptune
@@ -126,6 +133,8 @@ void SolarSystem::createPlanets()
 	orbitalParams.meanAnomalyAtEpoch     = constant::pi * 256.228 / 180.f;
 	physicalParams.radius                = 24622 * km;
 	physicalParams.color                 = Color(80, 51, 255);
+	physicalParams.innerRing             = 0.0;
+	physicalParams.outerRing             = 0.0;
 	createChild("Neptune", orbitalParams, physicalParams);
 
 	// pluto

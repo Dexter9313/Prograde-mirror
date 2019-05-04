@@ -36,6 +36,7 @@ class OrbitalSystem
 	                 CelestialBody::Parameters const& physicalParameters,
 	                 std::string const& parent = std::string(""));
 	CelestialBody* operator[](std::string const& name);
+	CelestialBody const* operator[](std::string const& name) const;
 	std::vector<std::string> getAllCelestialBodiesNames() const;
 	std::vector<CelestialBody*> getAllCelestialBodiesPointers() const;
 	std::vector<std::string> getParentCelestialBodiesNames() const;

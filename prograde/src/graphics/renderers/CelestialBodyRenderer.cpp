@@ -17,14 +17,16 @@
 */
 #include "../../../include/graphics/renderers/CelestialBodyRenderer.hpp"
 
-CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody const* drawnBody)
+CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody const* drawnBody,
+                                             std::string const& name)
     : drawnBody(drawnBody)
+    , planet(1.f)
 {
-	shader = GLHandler::newShader("farcelestialbody");
+	/*shader = GLHandler::newShader("farcelestialbody");
 	GLHandler::setShaderParam(shader, "color",
 	                          Utils::toQt(drawnBody->getParameters().color));
 
-	mesh = Primitives::newUnitSphere(shader, 100, 100);
+	mesh = Primitives::newUnitSphere(shader, 100, 100);*/
 
 	// node = scene->addSphereSceneNode(this->drawnBody->getParameters().radius,
 	// 64, 0, -1);
@@ -34,6 +36,78 @@ CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody const* drawnBody)
 	// toIrrlicht(this->drawnBody->getParameters().color));
 	model = QMatrix4x4();
 	model.translate(Utils::toQt(this->drawnBody->getAbsolutePositionAtUT(0)));
+
+	QString diffuse(""), normal("");
+	QString str(QString("data/prograde/images/") + name.c_str()
+	            + "/diffuse.jpg");
+	if(QFileInfo(str).exists())
+	{
+		diffuse = str;
+	}
+	str = QString("data/prograde/images/") + name.c_str() + "/diffuse.png";
+	if(QFileInfo(str).exists())
+	{
+		diffuse = str;
+	}
+	if(diffuse != "")
+	{
+		str = QString("data/prograde/images/") + name.c_str() + "/normal.jpg";
+		if(QFileInfo(str).exists())
+		{
+			normal = str;
+		}
+		str = QString("data/prograde/images/") + name.c_str() + "/normal.png";
+		if(QFileInfo(str).exists())
+		{
+			normal = str;
+		}
+	}
+
+	if(normal != "")
+	{
+		planet.initFromTex(diffuse, normal,
+		                   drawnBody->getParameters().atmosphere);
+	}
+	else if(diffuse != "")
+	{
+		planet.initFromTex(diffuse);
+	}
+	else if(drawnBody->getType() == CelestialBody::Type::GAZGIANT)
+	{
+		planet.initGazGiant(Utils::toQt(drawnBody->getParameters().color));
+	}
+	else
+	{
+		planet.initTerrestrial(Utils::toQt(drawnBody->getParameters().color));
+	}
+
+	float outerRing(drawnBody->getParameters().outerRing);
+	if(drawnBody->getParameters().outerRing != 0.f)
+	{
+		float innerRing(drawnBody->getParameters().innerRing);
+		float radius(drawnBody->getParameters().radius);
+		QString rings;
+		str = QString("data/prograde/images/") + name.c_str() + "/rings.jpg";
+		if(QFileInfo(str).exists())
+		{
+			rings = str;
+		}
+		str = QString("data/prograde/images/") + name.c_str() + "/rings.png";
+		if(QFileInfo(str).exists())
+		{
+			rings = str;
+		}
+
+		if(rings != "")
+		{
+			planet.initRing(innerRing / radius, outerRing / radius, rings);
+		}
+		else
+		{
+			planet.initRing(drawnBody->getParameters().innerRing / radius,
+			                drawnBody->getParameters().outerRing / radius);
+		}
+	}
 }
 
 void CelestialBodyRenderer::updateMesh(UniversalTime uT,
@@ -55,19 +129,24 @@ void CelestialBodyRenderer::updateMesh(UniversalTime uT,
 	Vector3 bodyCenter(scale * camRelPos);
 	Vector3 centralBodyCenter(-1 * scale * cameraPos);
 
-	GLHandler::setShaderParam(shader, "bodyCenter", Utils::toQt(bodyCenter));
-	GLHandler::setShaderParam(shader, "centralBodyCenter",
-	                          Utils::toQt(centralBodyCenter));
+	lightpos = Utils::toQt(centralBodyCenter - bodyCenter);
+	/*
+	    GLHandler::setShaderParam(shader, "bodyCenter",
+	   Utils::toQt(bodyCenter)); GLHandler::setShaderParam(shader,
+	   "centralBodyCenter", Utils::toQt(centralBodyCenter));
+	*/
 }
 
 void CelestialBodyRenderer::render()
 {
-	GLHandler::setUpRender(shader, model);
-	GLHandler::render(mesh);
+	/*GLHandler::setUpRender(shader, model);
+	GLHandler::render(mesh);*/
+	planet.renderPlanet(model, lightpos);
+	planet.renderRings(model, lightpos);
 }
 
 CelestialBodyRenderer::~CelestialBodyRenderer()
 {
-	GLHandler::deleteMesh(mesh);
-	GLHandler::deleteShader(shader);
+	/*GLHandler::deleteMesh(mesh);
+	GLHandler::deleteShader(shader);*/
 }

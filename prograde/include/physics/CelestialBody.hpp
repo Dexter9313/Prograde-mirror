@@ -28,19 +28,30 @@
 class CelestialBody
 {
   public:
+	enum class Type
+	{
+		GENERIC,
+		TERRESTRIAL,
+		GAZGIANT,
+	};
+
 	struct Parameters
 	{
 		double mass;
 		double radius;
 		Color color;
+		float atmosphere = 0.0;
+		float innerRing  = 0.0;
+		float outerRing  = 0.0;
 	};
 
 	CelestialBody(double influentBodyMass, Orbit::Parameters orbitalParams,
-	              Parameters physicalParams);
+	              Parameters physicalParams, Type type = Type::GENERIC);
 	CelestialBody(CelestialBody const& parent,
 	              Orbit::Parameters const& orbitalParams,
-	              Parameters physicalParams);
+	              Parameters physicalParams, Type type = Type::GENERIC);
 	CelestialBody(CelestialBody const& copiedBody) = default;
+	Type getType() const { return type; };
 	CelestialBody const* getParent() const;
 	CelestialBody* createChild(Orbit::Parameters const& orbitalParams,
 	                           Parameters const& physicalParams);
@@ -52,6 +63,7 @@ class CelestialBody
 	virtual ~CelestialBody();
 
   private:
+	Type type = Type::GENERIC;
 	CelestialBody const* parent;
 	std::vector<CelestialBody*> children;
 	Orbit orbit;

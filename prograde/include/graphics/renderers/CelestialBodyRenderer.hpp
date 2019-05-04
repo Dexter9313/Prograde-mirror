@@ -19,7 +19,10 @@
 #ifndef CELESTIALBODYRENDERER_HPP
 #define CELESTIALBODYRENDERER_HPP
 
+#include <QFileInfo>
+
 #include "GLHandler.hpp"
+#include "Planet.hpp"
 #include "Primitives.hpp"
 
 #include "graphics/Utils.hpp"
@@ -29,7 +32,8 @@
 class CelestialBodyRenderer //: public Renderer
 {
   public:
-	CelestialBodyRenderer(CelestialBody const* drawnBody);
+	CelestialBodyRenderer(CelestialBody const* drawnBody,
+	                      std::string const& name);
 	void updateMesh(UniversalTime uT, Vector3 const& cameraPos);
 	void render();
 	CelestialBody const* getDrawnBody() const { return drawnBody; };
@@ -44,9 +48,13 @@ class CelestialBodyRenderer //: public Renderer
 	float centerPosition;
 	int shaderParametersId;
 
+	/*
 	GLHandler::Mesh mesh;
-	GLHandler::ShaderProgram shader;
+	GLHandler::ShaderProgram shader;*/
 	QMatrix4x4 model;
+
+	Planet planet;
+	QVector3D lightpos;
 };
 
 #endif // CELESTIALBODYDRAWER_HPP
