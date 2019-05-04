@@ -37,6 +37,7 @@ class CelestialBody
 
 	struct Parameters
 	{
+		Type type = Type::GENERIC;
 		double mass;
 		double radius;
 		Color color;
@@ -46,12 +47,11 @@ class CelestialBody
 	};
 
 	CelestialBody(double influentBodyMass, Orbit::Parameters orbitalParams,
-	              Parameters physicalParams, Type type = Type::GENERIC);
+	              Parameters physicalParams);
 	CelestialBody(CelestialBody const& parent,
 	              Orbit::Parameters const& orbitalParams,
-	              Parameters physicalParams, Type type = Type::GENERIC);
+	              Parameters physicalParams);
 	CelestialBody(CelestialBody const& copiedBody) = default;
-	Type getType() const { return type; };
 	CelestialBody const* getParent() const;
 	CelestialBody* createChild(Orbit::Parameters const& orbitalParams,
 	                           Parameters const& physicalParams);
@@ -63,7 +63,6 @@ class CelestialBody
 	virtual ~CelestialBody();
 
   private:
-	Type type = Type::GENERIC;
 	CelestialBody const* parent;
 	std::vector<CelestialBody*> children;
 	Orbit orbit;

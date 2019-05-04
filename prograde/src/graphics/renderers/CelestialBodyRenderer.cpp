@@ -72,7 +72,7 @@ CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody const* drawnBody,
 	{
 		planet.initFromTex(diffuse);
 	}
-	else if(drawnBody->getType() == CelestialBody::Type::GAZGIANT)
+	else if(drawnBody->getParameters().type == CelestialBody::Type::GAZGIANT)
 	{
 		planet.initGazGiant(Utils::toQt(drawnBody->getParameters().color));
 	}

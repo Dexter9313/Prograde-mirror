@@ -56,6 +56,7 @@ void KerbalSystem::createPlanets()
 	physicalParams.mass                  = 1.2244127 * 1e23 * massMultiplier;
 	physicalParams.radius                = 700.0 * radiusMultiplier;
 	physicalParams.color                 = Color(106, 27, 154);
+	physicalParams.type                  = CelestialBody::Type::GAZGIANT;
 	createChild("Eve", orbitalParams, physicalParams);
 
 	// kerbin
@@ -68,6 +69,7 @@ void KerbalSystem::createPlanets()
 	physicalParams.mass                  = 5.2915793 * 1e22 * massMultiplier;
 	physicalParams.radius                = 600.0 * radiusMultiplier;
 	physicalParams.color                 = Color(40, 53, 147);
+	physicalParams.type                  = CelestialBody::Type::TERRESTRIAL;
 	createChild("Kerbin", orbitalParams, physicalParams);
 
 	// duna
@@ -103,6 +105,7 @@ void KerbalSystem::createPlanets()
 	physicalParams.mass                  = 4.2332635 * 1e24 * massMultiplier;
 	physicalParams.radius                = 6000.0 * radiusMultiplier;
 	physicalParams.color                 = Color(104, 159, 56);
+	physicalParams.type                  = CelestialBody::Type::GAZGIANT;
 	createChild("Jool", orbitalParams, physicalParams);
 
 	// eeloo
@@ -114,6 +117,7 @@ void KerbalSystem::createPlanets()
 	orbitalParams.meanAnomalyAtEpoch     = 3.14;
 	physicalParams.radius                = 210.0 * radiusMultiplier;
 	physicalParams.color                 = Color(240, 240, 240);
+	physicalParams.type                  = CelestialBody::Type::TERRESTRIAL;
 	createChild("Eeloo", orbitalParams, physicalParams);
 }
 
