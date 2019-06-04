@@ -131,7 +131,7 @@ void MainWin::initScene()
 {
 	stars.initFromFile(23.4392811 * constant::pi / 180.f);
 
-	debugText = new Text3D(192, 108);
+	debugText = new Text3D(textWidth, textHeight);
 	debugText->setColor(QColor(255, 0, 0));
 
 	auto cam = new Camera(&vrHandler);
@@ -156,9 +156,9 @@ void MainWin::updateScene(BasicCamera& camera)
 	systemRenderer->updateMesh(clock.getCurrentUt(), cam);
 
 	std::stringstream stream;
-	stream.precision(2);
+	stream.precision(3);
 	// stream << clock.getCurrentFPS() << " FPS" << std::endl;
-	stream << 1.f / frameTiming << " FPS" << std::endl;
+	stream << round(1.f / frameTiming) << " FPS" << std::endl;
 	stream << "Targeting : "
 	       << orbitalSystem->getAllCelestialBodiesNames()[bodyTracked]
 	       << std::endl;
@@ -181,8 +181,9 @@ void MainWin::updateScene(BasicCamera& camera)
 	*/
 
 	debugText->getModel() = cam.screenToWorldTransform();
-	debugText->getModel().translate(QVector3D(-0.9f, 0.9f, 0.f));
-	debugText->getModel().scale(0.198f, 0.35f);
+	debugText->getModel().translate(QVector3D(-0.88f, 0.9f, 0.f));
+	debugText->getModel().scale(2 * static_cast<float>(textWidth) / width(),
+	                            2 * static_cast<float>(textWidth) / height());
 
 	timeSinceTextUpdate += frameTiming;
 	if(timeSinceTextUpdate > 0.2)
@@ -220,178 +221,25 @@ UniversalTime MainWin::loadStartUT()
 	return result;
 }
 
-#include <cmath>
 std::string MainWin::timeToStr(UniversalTime uT)
 {
-	UniversalTime uT2 = floor(uT);
-	auto time(uT2.convert_to<int64_t>());
-	unsigned int sec, min, hour, day, month(0), year(1999);
-	sec = time % 60;
-	time -= sec;
-	min = (time / 60) % 60;
-	time -= min * 60;
-	hour = (/*12 +*/ (time / 3600)) % 24;
-	time -= hour * 3600;
-	day = time / (24 * 3600);
-
-	int daytmp(day);
-
-	while(daytmp >= 0)
+	uT /= 24.0 * 3600.0;
+	int64_t j2000d(static_cast<int64_t>(uT));
+	if(uT < 0)
 	{
-		year++;
-		daytmp -= 365;
-
-		if(daytmp < 0)
-		{
-			daytmp += 365;
-			break;
-		}
-
-		year++;
-		daytmp -= 365;
-
-		if(daytmp < 0)
-		{
-			daytmp += 365;
-			break;
-		}
-
-		year++;
-		daytmp -= 365;
-
-		if(daytmp < 0)
-		{
-			daytmp += 365;
-			break;
-		}
-
-		year++;
-		daytmp -= 366;
-
-		if(daytmp < 0)
-		{
-			daytmp += 366;
-			break;
-		}
+		--j2000d;
 	}
 
-	day = daytmp;
+	int timeOfDayInMSecs(
+	    static_cast<int>((uT - j2000d) * 24.0 * 3600.0 * 1000.0));
 
-	computeDayMonth(&day, &month, (year % 4) == 0);
+	QDateTime dt(QDate::fromJulianDay(j2000d + 2451545),
+	             QTime::fromMSecsSinceStartOfDay(timeOfDayInMSecs), Qt::UTC);
 
-	std::stringstream stream;
-	stream << day << " "
-	       << " " << month << " " << year << " " << hour << ":" << min << ":"
-	       << sec;
-	return stream.str();
+	QString seconds
+	    = QString("%1").arg(dt.toUTC().time().second(), 2, 10, QChar('0'));
+
+	return (dt.toUTC().toString(Qt::SystemLocaleShortDate) + ":" + seconds)
+	    .toStdString();
 }
 
-void MainWin::computeDayMonth(unsigned int* day, unsigned int* month,
-                              bool bissextile)
-{
-	if(*day < 31)
-	{
-		*day += 1;
-		*month = 1;
-		return;
-	}
-
-	*day -= 31;
-
-	if((*day < 28 && !bissextile) || (*day < 29 && bissextile))
-	{
-		*day += 1;
-		*month = 2;
-		return;
-	}
-
-	*day -= bissextile ? 29 : 28;
-
-	if(*day < 31)
-	{
-		*day += 1;
-		*month = 3;
-		return;
-	}
-
-	*day -= 31;
-
-	if(*day < 30)
-	{
-		*day += 1;
-		*month = 4;
-		return;
-	}
-
-	*day -= 30;
-
-	if(*day < 31)
-	{
-		*day += 1;
-		*month = 5;
-		return;
-	}
-
-	*day -= 31;
-
-	if(*day < 30)
-	{
-		*day += 1;
-		*month = 6;
-		return;
-	}
-
-	*day -= 30;
-
-	if(*day < 31)
-	{
-		*day += 1;
-		*month = 7;
-		return;
-	}
-
-	*day -= 31;
-
-	if(*day < 31)
-	{
-		*day += 1;
-		*month = 8;
-		return;
-	}
-
-	*day -= 31;
-
-	if(*day < 30)
-	{
-		*day += 1;
-		*month = 9;
-		return;
-	}
-
-	*day -= 30;
-
-	if(*day < 31)
-	{
-		*day += 1;
-		*month = 10;
-		return;
-	}
-
-	*day -= 31;
-
-	if(*day < 30)
-	{
-		*day += 1;
-		*month = 11;
-		return;
-	}
-
-	*day -= 30;
-
-	if(*day < 31)
-	{
-		*day += 1;
-		*month = 12;
-		return;
-	}
-}

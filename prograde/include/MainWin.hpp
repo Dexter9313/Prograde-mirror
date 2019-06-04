@@ -55,8 +55,6 @@ class MainWin : public AbstractMainWin
 
 	static UniversalTime loadStartUT();
 	static std::string timeToStr(UniversalTime uT);
-	static void computeDayMonth(unsigned int* day, unsigned int* month,
-	                            bool bissextile);
 
 	OrbitalSystem* orbitalSystem;
 	OrbitalSystemRenderer* systemRenderer;
@@ -78,6 +76,10 @@ class MainWin : public AbstractMainWin
 	// SimulationTime clock = SimulationTime(6852600); // March equinox
 
 	SimulationTime clock = SimulationTime(loadStartUT());
+
+	//TEMP
+	const int textWidth = 225;
+	const int textHeight = 105;
 };
 
 #endif // MAINWIN_H
