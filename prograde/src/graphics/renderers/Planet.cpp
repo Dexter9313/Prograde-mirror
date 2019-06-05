@@ -101,12 +101,13 @@ void Planet::initGazGiant(QColor const& color, float bandsIntensity,
 	GLHandler::deleteShader(sdiff);
 }
 
-void Planet::initFromTex(QString const& diffusePath)
+void Planet::initFromTex(QString const& diffusePath, float atmosphere)
 {
 	shader = GLHandler::newShader("planet/planet");
 	mesh   = Primitives::newUnitSphere(shader, 50, 50);
 
 	loadParallel(diffusePath, 0);
+	this->atmosphere = atmosphere;
 }
 
 void Planet::initFromTex(QString const& diffusePath, QString const& normalPath,

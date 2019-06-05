@@ -40,7 +40,7 @@ class Planet
 	                     float polarLatitude = 90.f, float atmosphere = 0.f);
 	void initGazGiant(QColor const& color  = QColor(255, 255, 255),
 	                  float bandsIntensity = 1.f, float stormsIntensity = 1.f);
-	void initFromTex(QString const& diffusePath);
+	void initFromTex(QString const& diffusePath, float atmosphere);
 	void initFromTex(QString const& diffusePath, QString const& normalPath,
 	                 float atmosphere = 0.f);
 	void updateModel(QString const& modelName);

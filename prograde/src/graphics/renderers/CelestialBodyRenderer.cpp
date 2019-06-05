@@ -314,7 +314,7 @@ void CelestialBodyRenderer::loadPlanet()
 	}
 	else if(diffuse != "")
 	{
-		planet->initFromTex(diffuse);
+		planet->initFromTex(diffuse, drawnBody->getParameters().atmosphere);
 	}
 	else if(drawnBody->getParameters().type == CelestialBody::Type::GAZGIANT)
 	{
