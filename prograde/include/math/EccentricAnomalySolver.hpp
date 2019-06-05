@@ -25,6 +25,7 @@
 #include <tuple>
 
 #include "constants.hpp"
+#include "math/MathUtils.hpp"
 
 /*! \ingroup math
  * Solves [Kepler's Equation](https://en.wikipedia.org/wiki/Kepler%27s_equation)

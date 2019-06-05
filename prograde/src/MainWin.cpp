@@ -229,8 +229,9 @@ std::string MainWin::timeToStr(UniversalTime uT)
 	{
 		--j2000d;
 	}
+	uT -= j2000d;
 
-	UniversalTime timeOfDayInMSecs((uT - j2000d) * 24.0 * 3600.0 * 1000.0);
+	UniversalTime timeOfDayInMSecs(uT * 24.0 * 3600.0 * 1000.0);
 
 	QDateTime dt(
 	    QDate::fromJulianDay(j2000d + 2451545),
