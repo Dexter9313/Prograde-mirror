@@ -29,7 +29,8 @@ inline T operator%(T a, double b);
 template <typename T>
 T& operator%=(T& a, double b)
 {
-	int q(floor(a / b));
+	T div(a / b);
+	int q(floor(static_cast<double>(div)));
 	a -= q * b;
 	return a;
 }
