@@ -37,7 +37,7 @@ T& operator%=(T& a, double b)
 template <typename T>
 T operator%(T a, double b)
 {
-	a %= b;
+	operator%=<T>(a, b);
 	return a;
 }
 
