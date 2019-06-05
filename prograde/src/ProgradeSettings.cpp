@@ -31,5 +31,8 @@ ProgradeSettings::ProgradeSettings(QWidget* parent)
 	        + "/systems/",
 	    tr("Planetary System Root Directory"));
 
+	insertGroup("quality", tr("Quality"), 1);
+	addUIntSetting("texmaxsize", 16, tr("Textures max size (x512)"), 1, 32);
+
 	setCurrentIndex(0);
 }

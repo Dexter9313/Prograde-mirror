@@ -321,20 +321,23 @@ void Planet::render(QMatrix4x4 const& model, QVector3D const& lightpos,
 
 void Planet::loadParallel(QString const& path, unsigned int index)
 {
-	pbos[index] = GLHandler::newPixelBufferObject(8192, 4096);
+	unsigned int texmaxsize(QSettings().value("quality/texmaxsize").toUInt());
+	pbos[index]
+	    = GLHandler::newPixelBufferObject(texmaxsize * 512, texmaxsize * 256);
 	unsigned char* data(pbos[index].mappedData);
 
-	futures.push_back(QtConcurrent::run([path, data]() {
-		QImage img;
-		if(!img.load(path))
+	futures.push_back(QtConcurrent::run([path, data, texmaxsize]() {
+		QImageReader imgReader(path);
+		imgReader.setScaledSize(QSize(texmaxsize * 512, texmaxsize * 256));
+		QImage img(imgReader.read());
+		if(img.isNull())
 		{
 			// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-			qWarning() << "Could not load Texture \"" << path << "\"" << '\n';
+			qWarning() << "Could not load Texture '" + path
+			                  + "' : " + imgReader.errorString();
 			return;
 		}
-		img = img.scaled(QSize(8192, 4096), Qt::IgnoreAspectRatio,
-		                 Qt::SmoothTransformation)
-		          .convertToFormat(QImage::Format_RGBA8888);
+		img = img.convertToFormat(QImage::Format_RGBA8888);
 		std::memcpy(data, img.bits(), std::size_t(img.byteCount()));
 	}));
 }

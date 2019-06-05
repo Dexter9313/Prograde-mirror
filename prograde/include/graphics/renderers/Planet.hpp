@@ -19,6 +19,7 @@
 #ifndef PLANET_H
 #define PLANET_H
 
+#include <QImageReader>
 #include <QtConcurrent>
 
 #include "AssetLoader.hpp"

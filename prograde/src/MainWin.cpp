@@ -224,7 +224,7 @@ UniversalTime MainWin::loadStartUT()
 std::string MainWin::timeToStr(UniversalTime uT)
 {
 	uT /= 24.0 * 3600.0;
-	int64_t j2000d(static_cast<int64_t>(uT));
+	auto j2000d(static_cast<int64_t>(uT));
 	if(uT < 0)
 	{
 		--j2000d;
@@ -242,4 +242,3 @@ std::string MainWin::timeToStr(UniversalTime uT)
 	return (dt.toUTC().toString(Qt::SystemLocaleShortDate) + ":" + seconds)
 	    .toStdString();
 }
-
