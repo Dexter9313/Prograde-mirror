@@ -26,6 +26,7 @@
 #include "CSVOrbit.hpp"
 #include "Color.hpp"
 #include "Orbit.hpp"
+#include "math/MathUtils.hpp"
 
 class CelestialBody
 {
@@ -44,17 +45,17 @@ class CelestialBody
 		double radius;
 		Vector3 oblateness = Vector3(1.0, 1.0, 1.0);
 		Color color;
-		float atmosphere = 0.f;
-		float innerRing  = 0.f;
-		float outerRing  = 0.f;
+		double atmosphere = 0.0;
+		double innerRing  = 0.0;
+		double outerRing  = 0.0;
 
 		/* ROTATION */
-		float siderealTimeAtEpoch = 0.f; // angle between FP of Aries and Prime
-		                                 // Meridian in radians
-		float siderealRotationPeriod = FLT_MAX; // in seconds
+		double siderealTimeAtEpoch = 0.0; // angle between FP of Aries and Prime
+		                                  // Meridian in radians
+		double siderealRotationPeriod = DBL_MAX; // in seconds
 
-		float northPoleRightAsc    = 0.f;                // in rad
-		float northPoleDeclination = constant::pi / 2.0; // in rad
+		double northPoleRightAsc    = 0.0;                // in rad
+		double northPoleDeclination = constant::pi / 2.0; // in rad
 	};
 
 	CelestialBody(QJsonObject const& json, std::string const& ownName,
@@ -87,7 +88,7 @@ class CelestialBody
 	Vector3 getAbsolutePositionAtUT(UniversalTime uT) const;
 	Vector3 getAbsoluteVelocityAtUT(UniversalTime uT) const;
 	CoordinateSystem getAttachedCoordinateSystemAtUT(UniversalTime uT) const;
-	float getPrimeMeridianSiderealTimeAtUT(UniversalTime uT) const;
+	double getPrimeMeridianSiderealTimeAtUT(UniversalTime uT) const;
 	virtual ~CelestialBody();
 
 	// Will try to get more significant digits than the awful

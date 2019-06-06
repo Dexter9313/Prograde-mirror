@@ -189,10 +189,9 @@ CoordinateSystem
 	return orbit->getRelativeCoordinateSystemAtUT(uT);
 }
 
-float CelestialBody::getPrimeMeridianSiderealTimeAtUT(UniversalTime uT) const
+double CelestialBody::getPrimeMeridianSiderealTimeAtUT(UniversalTime uT) const
 {
-	uT -= round(uT / parameters.siderealRotationPeriod)
-	      * UniversalTime(parameters.siderealRotationPeriod);
+	operator%=<UniversalTime>(uT, parameters.siderealRotationPeriod);
 
 	return parameters.siderealTimeAtEpoch
 	       + 2.0 * constant::pi * static_cast<double>(uT)
