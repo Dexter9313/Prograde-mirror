@@ -58,7 +58,7 @@ class OrbitalSystem
   private:
 	double centralMass;
 	double centralRadius;
-	float declinationTilt;
+	double declinationTilt;
 
 	std::map<std::string, CelestialBody*> bodies;
 
