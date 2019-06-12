@@ -107,9 +107,11 @@ class CelestialBody
 	static std::string typeToStr(Type type);
 	static Type strToType(std::string const& str);
 	static QJsonObject vector3ToJSON(Vector3 const& v);
-	static Vector3 jsonToVector3(QJsonObject const& obj);
+	static Vector3 jsonToVector3(QJsonObject const& obj,
+	                             Vector3 const& defaultValue = Vector3());
 	static QJsonObject colorToJSON(Color const& c);
-	static Color jsonToColor(QJsonObject const& obj);
+	static Color jsonToColor(QJsonObject const& obj,
+	                         Color const& defaultValue = Color(255, 0, 0, 0));
 };
 
 #endif // CELESTIALBODY_HPP
