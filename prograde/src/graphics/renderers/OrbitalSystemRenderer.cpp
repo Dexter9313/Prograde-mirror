@@ -19,13 +19,10 @@
 
 OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
     : drawnSystem(drawnSystem)
+    , pointShader(GLHandler::newShader("colored"))
+    , pointMesh(GLHandler::newMesh())
     , billboard("data/prograde/images/star.png")
 {
-	/*shader = GLHandler::newShader("default");
-	GLHandler::setShaderParam(shader, "color", QColor(255, 255, 255, 255));
-
-	mesh = Primitives::newUnitSphere(shader, 100, 100);*/
-
 	billboardOriginalEdgeSize = drawnSystem->getCentralRadius() * 512.0 / 30.0;
 
 	for(std::string name : drawnSystem->getAllCelestialBodiesNames())
@@ -34,6 +31,9 @@ OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
 		    (*drawnSystem)[name], drawnSystem->getCentralRadius(),
 		    drawnSystem->getDeclinationTilt(), name));
 	}
+	// POINT
+	GLHandler::setVertices(pointMesh, {0.f, 0.f, 0.f, 1.f, 1.f, 1.f, 1.f},
+	                       pointShader, {{"position", 3}, {"color", 4}});
 }
 
 void OrbitalSystemRenderer::updateMesh(UniversalTime uT, Camera const& camera)
@@ -54,8 +54,8 @@ void OrbitalSystemRenderer::updateMesh(UniversalTime uT, Camera const& camera)
 	float centerPosition(300.f);
 
 	double scale(centerPosition / camDist);
-
-	billboard.position = Utils::toQt(-1 * scale * camera.getAbsolutePosition());
+	pointPos           = Utils::toQt(-1 * scale * camera.getAbsolutePosition());
+	billboard.position = pointPos;
 	billboard.width    = billboardOriginalEdgeSize * scale;
 
 	for(std::pair<double, CelestialBodyRenderer*> rendererPair :
@@ -68,6 +68,17 @@ void OrbitalSystemRenderer::updateMesh(UniversalTime uT, Camera const& camera)
 
 void OrbitalSystemRenderer::render(BasicCamera const& camera)
 {
+	if(drawnSystem->getCentralRadius() / camDist < 0.0007)
+	{
+		QMatrix4x4 model;
+		model.translate(pointPos);
+		GLHandler::setUpRender(pointShader, model);
+		GLHandler::render(pointMesh);
+	}
+	else
+	{
+		billboard.render(camera);
+	}
 	auto it(sortedRenderers.end());
 	while(it != sortedRenderers.begin())
 	{
@@ -83,4 +94,6 @@ OrbitalSystemRenderer::~OrbitalSystemRenderer()
 	{
 		delete bodyRenderer;
 	}
+	GLHandler::deleteMesh(pointMesh);
+	GLHandler::deleteShader(pointShader);
 }
