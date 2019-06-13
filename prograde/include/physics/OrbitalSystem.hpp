@@ -23,6 +23,7 @@
 #include <QCoreApplication>
 #include <QJsonArray>
 #include <QProgressDialog>
+#include <QtDebug>
 #include <map>
 #include <vector>
 
@@ -37,8 +38,7 @@ class OrbitalSystem
 	double getCentralMass() const { return centralMass; };
 	double getCentralRadius() const { return centralRadius; };
 	double getDeclinationTilt() const { return declinationTilt; };
-	void createChild(std::string const& name, QJsonObject const& json,
-	                 std::string const& parent = "");
+	void createChild(QJsonObject const& json);
 	void createChild(std::string const& name,
 	                 Orbit::Parameters const& orbitalParameters,
 	                 CelestialBody::Parameters const& physicalParameters,
@@ -65,7 +65,6 @@ class OrbitalSystem
 	// JSON loading
 	unsigned int current;
 	QProgressDialog* progress;
-	void loadChildFromJSON(QString const& name, QJsonObject& json);
 };
 
 #endif // ORBITALSYSTEM_HPP

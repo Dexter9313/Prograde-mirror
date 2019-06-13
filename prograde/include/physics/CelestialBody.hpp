@@ -19,6 +19,7 @@
 #ifndef CELESTIALBODY_HPP
 #define CELESTIALBODY_HPP
 
+#include <QJsonArray>
 #include <QJsonObject>
 #include <cmath>
 #include <vector>
@@ -58,10 +59,8 @@ class CelestialBody
 		double northPoleDeclination = constant::pi / 2.0; // in rad
 	};
 
-	CelestialBody(QJsonObject const& json, std::string const& ownName,
-	              double influentBodyMass);
-	CelestialBody(QJsonObject const& json, std::string const& ownName,
-	              CelestialBody const& parent);
+	CelestialBody(QJsonObject const& json, double influentBodyMass);
+	CelestialBody(QJsonObject const& json, CelestialBody const& parent);
 
 	CelestialBody(double influentBodyMass, Orbit::Parameters orbitalParams,
 	              Parameters physicalParams);
@@ -75,12 +74,13 @@ class CelestialBody
 	CelestialBody(CelestialBody const& copiedBody) = default;
 	CelestialBody const* getParent() const;
 	std::vector<CelestialBody*> const& getChildren() const;
-	CelestialBody* createChild(QJsonObject const& json,
-	                           std::string const& childName);
+	std::vector<CelestialBody*> getAllDescendants() const;
+	CelestialBody* createChild(QJsonObject const& json);
 	CelestialBody* createChild(Orbit::Parameters const& orbitalParams,
 	                           Parameters const& physicalParams);
 	CelestialBody* createChild(std::string const& childName,
 	                           Parameters const& physicalParams);
+	std::string const& getName() { return name; };
 	Orbit const* getOrbit() const;
 	Orbit* getOrbit();
 	Parameters getParameters() const;
@@ -99,6 +99,7 @@ class CelestialBody
 	QJsonObject getJSONRepresentation() const;
 
   private:
+	std::string name;
 	CelestialBody const* parent;
 	std::vector<CelestialBody*> children;
 	Orbit* orbit;

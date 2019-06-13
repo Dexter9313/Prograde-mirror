@@ -20,18 +20,32 @@
 
 OrbitalSystem::OrbitalSystem(QJsonObject const& json)
 {
-	centralMass     = json["centralMass"].toDouble();
-	centralRadius   = json["centralRadius"].toDouble();
+	if(json["stars"] == QJsonValue::Undefined
+	   || json["stars"].toArray().size() > 1)
+	{
+		// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+		qWarning() << "Only single-star systems are supported right now.";
+		exit(EXIT_FAILURE);
+	}
+
+	QJsonObject jsonStar(json["stars"].toArray()[0].toObject());
+
+	centralMass     = jsonStar["mass"].toDouble();
+	centralRadius   = jsonStar["radius"].toDouble();
 	declinationTilt = json["declinationTilt"].toDouble();
 
-	QJsonObject jb(json["bodies"].toObject());
+	QJsonArray planets(jsonStar["planets"].toArray());
 
 	current  = 0;
 	progress = new QProgressDialog(QObject::tr("Loading System..."), QString(),
-	                               0, jb.size());
-	while(!jb.empty())
+	                               0, planets.size());
+	for(auto val : planets)
 	{
-		loadChildFromJSON(jb.begin().key(), jb);
+		createChild(val.toObject());
+
+		++current;
+		progress->setValue(current);
+		QCoreApplication::processEvents();
 	}
 	delete progress;
 }
@@ -44,17 +58,13 @@ OrbitalSystem::OrbitalSystem(double centralMass, double centralRadius,
 {
 }
 
-void OrbitalSystem::createChild(std::string const& name,
-                                QJsonObject const& json,
-                                std::string const& parent)
+void OrbitalSystem::createChild(QJsonObject const& json)
 {
-	if(!parent.empty())
+	auto body               = new CelestialBody(json, centralMass);
+	bodies[body->getName()] = body;
+	for(auto child : body->getAllDescendants())
 	{
-		bodies[name] = bodies[parent]->createChild(json, name);
-	}
-	else
-	{
-		bodies[name] = new CelestialBody(json, name, centralMass);
+		bodies[child->getName()] = child;
 	}
 }
 
@@ -158,56 +168,24 @@ std::vector<CelestialBody*>
 QJsonObject OrbitalSystem::getJSONRepresentation() const
 {
 	QJsonObject result;
-	result["centralMass"]     = centralMass;
-	result["centralRadius"]   = centralRadius;
 	result["declinationTilt"] = declinationTilt;
+	QJsonArray stars;
+	QJsonObject star;
+	star["mass"]   = centralMass;
+	star["radius"] = centralRadius;
 
-	QJsonObject bodiesJSON;
-	for(auto& pair : bodies)
+	QJsonArray planets;
+	for(auto body : getParentCelestialBodiesPointers())
 	{
-		QJsonObject bodyObj = pair.second->getJSONRepresentation();
-		if(pair.second->getParent() != nullptr)
-		{
-			std::vector<CelestialBody*> ptrs(getAllCelestialBodiesPointers());
-			for(unsigned int i(0); i < ptrs.size(); ++i)
-			{
-				if(pair.second->getParent() == ptrs[i])
-				{
-					bodyObj["parent"] = getAllCelestialBodiesNames()[i].c_str();
-					break;
-				}
-			}
-		}
-		bodiesJSON[pair.first.c_str()] = bodyObj;
+		QJsonObject bodyObj = body->getJSONRepresentation();
+		planets.push_back(bodyObj);
 	}
-	result["bodies"] = bodiesJSON;
+	star["planets"] = planets;
+
+	stars.push_back(star);
+	result["stars"] = stars;
 
 	return result;
-}
-
-void OrbitalSystem::loadChildFromJSON(QString const& name, QJsonObject& json)
-{
-	QJsonObject bodyJSON(json[name].toObject());
-
-	if(bodyJSON.contains("parent"))
-	{
-		std::string parentName(bodyJSON["parent"].toString().toStdString());
-		if(bodies.count(parentName) == 0)
-		{
-			loadChildFromJSON(parentName.c_str(), json);
-		}
-		createChild(name.toStdString(), bodyJSON,
-		            bodyJSON["parent"].toString().toStdString());
-	}
-	else
-	{
-		createChild(name.toStdString(), bodyJSON);
-	}
-
-	json.erase(json.find(name));
-	++current;
-	progress->setValue(current);
-	QCoreApplication::processEvents();
 }
 
 OrbitalSystem::~OrbitalSystem()

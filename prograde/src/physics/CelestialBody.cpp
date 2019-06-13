@@ -18,69 +18,78 @@
 
 #include "../../include/physics/CelestialBody.hpp"
 
-CelestialBody::CelestialBody(QJsonObject const& json,
-                             std::string const& ownName,
-                             double influentBodyMass)
+CelestialBody::CelestialBody(QJsonObject const& json, double influentBodyMass)
     : parent(nullptr)
 {
+	name = json["name"].toString().toStdString();
 	if(json.contains("orbit"))
 	{
-		orbit = new Orbit(json["orbit"].toObject());
+		orbit = new Orbit(Orbit::MassiveBodyMass(influentBodyMass),
+		                  json["orbit"].toObject());
 	}
 	else
 	{
-		orbit = new CSVOrbit(Orbit::MassiveBodyMass(influentBodyMass), ownName);
+		orbit = new CSVOrbit(Orbit::MassiveBodyMass(influentBodyMass), name);
 	}
-	QJsonObject jp(json["parameters"].toObject());
-	parameters.type   = strToType(jp["type"].toString().toStdString());
-	parameters.mass   = jp["mass"].toDouble();
-	parameters.radius = jp["radius"].toDouble(70000000.0);
+	parameters.type   = strToType(json["type"].toString().toStdString());
+	parameters.mass   = json["mass"].toDouble();
+	parameters.radius = json["radius"].toDouble(70000000.0);
 	parameters.oblateness
-	    = jsonToVector3(jp["oblateness"].toObject(), Vector3(1.0, 1.0, 1.0));
+	    = jsonToVector3(json["oblateness"].toObject(), Vector3(1.0, 1.0, 1.0));
 	parameters.color
-	    = jsonToColor(jp["color"].toObject(), Color(255, 255, 255, 255));
-	parameters.atmosphere          = jp["atmosphere"].toDouble();
-	parameters.innerRing           = jp["innerRing"].toDouble();
-	parameters.outerRing           = jp["outerRing"].toDouble();
-	parameters.siderealTimeAtEpoch = jp["siderealTimeAtEpoch"].toDouble();
+	    = jsonToColor(json["color"].toObject(), Color(255, 255, 255, 255));
+	parameters.atmosphere          = json["atmosphere"].toDouble();
+	parameters.innerRing           = json["innerRing"].toDouble();
+	parameters.outerRing           = json["outerRing"].toDouble();
+	parameters.siderealTimeAtEpoch = json["siderealTimeAtEpoch"].toDouble();
 	parameters.siderealRotationPeriod
-	    = jp["siderealRotationPeriod"].toDouble(DBL_MAX);
-	parameters.northPoleRightAsc = jp["northPoleRightAsc"].toDouble();
+	    = json["siderealRotationPeriod"].toDouble(DBL_MAX);
+	parameters.northPoleRightAsc = json["northPoleRightAsc"].toDouble();
 	parameters.northPoleDeclination
-	    = jp["northPoleDeclination"].toDouble(1.5707963705062866);
+	    = json["northPoleDeclination"].toDouble(1.5707963705062866);
+
+	for(auto val : json["planets"].toArray())
+	{
+		createChild(val.toObject());
+	}
 }
 
 CelestialBody::CelestialBody(QJsonObject const& json,
-                             std::string const& ownName,
                              CelestialBody const& parent)
     : parent(&parent)
 {
+	name = json["name"].toString().toStdString();
 	if(json.contains("orbit"))
 	{
-		orbit = new Orbit(json["orbit"].toObject());
+		orbit = new Orbit(Orbit::MassiveBodyMass(parent.getParameters().mass),
+		                  json["orbit"].toObject());
 	}
 	else
 	{
 		orbit = new CSVOrbit(
-		    Orbit::MassiveBodyMass(parent.getParameters().mass), ownName);
+		    Orbit::MassiveBodyMass(parent.getParameters().mass), name);
 	}
-	QJsonObject jp(json["parameters"].toObject());
-	parameters.type   = strToType(jp["type"].toString().toStdString());
-	parameters.mass   = jp["mass"].toDouble();
-	parameters.radius = jp["radius"].toDouble(70000000.0);
+	parameters.type   = strToType(json["type"].toString().toStdString());
+	parameters.mass   = json["mass"].toDouble();
+	parameters.radius = json["radius"].toDouble(70000000.0);
 	parameters.oblateness
-	    = jsonToVector3(jp["oblateness"].toObject(), Vector3(1.0, 1.0, 1.0));
+	    = jsonToVector3(json["oblateness"].toObject(), Vector3(1.0, 1.0, 1.0));
 	parameters.color
-	    = jsonToColor(jp["color"].toObject(), Color(255, 255, 255, 255));
-	parameters.atmosphere          = jp["atmosphere"].toDouble();
-	parameters.innerRing           = jp["innerRing"].toDouble();
-	parameters.outerRing           = jp["outerRing"].toDouble();
-	parameters.siderealTimeAtEpoch = jp["siderealTimeAtEpoch"].toDouble();
+	    = jsonToColor(json["color"].toObject(), Color(255, 255, 255, 255));
+	parameters.atmosphere          = json["atmosphere"].toDouble();
+	parameters.innerRing           = json["innerRing"].toDouble();
+	parameters.outerRing           = json["outerRing"].toDouble();
+	parameters.siderealTimeAtEpoch = json["siderealTimeAtEpoch"].toDouble();
 	parameters.siderealRotationPeriod
-	    = jp["siderealRotationPeriod"].toDouble(DBL_MAX);
-	parameters.northPoleRightAsc = jp["northPoleRightAsc"].toDouble();
+	    = json["siderealRotationPeriod"].toDouble(DBL_MAX);
+	parameters.northPoleRightAsc = json["northPoleRightAsc"].toDouble();
 	parameters.northPoleDeclination
-	    = jp["northPoleDeclination"].toDouble(1.5707963705062866);
+	    = json["northPoleDeclination"].toDouble(1.5707963705062866);
+
+	for(auto val : json["planets"].toArray())
+	{
+		createChild(val.toObject());
+	}
 }
 
 CelestialBody::CelestialBody(double influentBodyMass,
@@ -131,10 +140,22 @@ std::vector<CelestialBody*> const& CelestialBody::getChildren() const
 	return children;
 }
 
-CelestialBody* CelestialBody::createChild(QJsonObject const& json,
-                                          std::string const& childName)
+std::vector<CelestialBody*> CelestialBody::getAllDescendants() const
 {
-	auto newChild = new CelestialBody(json, childName, *this);
+	std::vector<CelestialBody*> result(children);
+	for(auto child : children)
+	{
+		std::vector<CelestialBody*> const& childDescendants(
+		    child->getAllDescendants());
+		result.insert(result.end(), childDescendants.begin(),
+		              childDescendants.end());
+	}
+	return result;
+}
+
+CelestialBody* CelestialBody::createChild(QJsonObject const& json)
+{
+	auto newChild = new CelestialBody(json, *this);
 	children.push_back(newChild);
 	return newChild;
 }
@@ -330,22 +351,29 @@ QJsonObject CelestialBody::getJSONRepresentation() const
 		result["orbit"] = orbit->getJSONRepresentation();
 	}
 
-	QJsonObject parametersResult;
-	parametersResult["type"]       = typeToStr(parameters.type).c_str();
-	parametersResult["mass"]       = parameters.mass;
-	parametersResult["radius"]     = parameters.radius;
-	parametersResult["oblateness"] = vector3ToJSON(parameters.oblateness);
-	parametersResult["color"]      = colorToJSON(parameters.color);
-	parametersResult["atmosphere"] = parameters.atmosphere;
-	parametersResult["innerRing"]  = parameters.innerRing;
-	parametersResult["outerRing"]  = parameters.outerRing;
-	parametersResult["siderealTimeAtEpoch"] = parameters.siderealTimeAtEpoch;
-	parametersResult["siderealRotationPeriod"]
-	    = parameters.siderealRotationPeriod;
-	parametersResult["northPoleRightAsc"]    = parameters.northPoleRightAsc;
-	parametersResult["northPoleDeclination"] = parameters.northPoleDeclination;
+	result["name"]                   = name.c_str();
+	result["type"]                   = typeToStr(parameters.type).c_str();
+	result["mass"]                   = parameters.mass;
+	result["radius"]                 = parameters.radius;
+	result["oblateness"]             = vector3ToJSON(parameters.oblateness);
+	result["color"]                  = colorToJSON(parameters.color);
+	result["atmosphere"]             = parameters.atmosphere;
+	result["innerRing"]              = parameters.innerRing;
+	result["outerRing"]              = parameters.outerRing;
+	result["siderealTimeAtEpoch"]    = parameters.siderealTimeAtEpoch;
+	result["siderealRotationPeriod"] = parameters.siderealRotationPeriod;
+	result["northPoleRightAsc"]      = parameters.northPoleRightAsc;
+	result["northPoleDeclination"]   = parameters.northPoleDeclination;
 
-	result["parameters"] = parametersResult;
+	if(!children.empty())
+	{
+		QJsonArray childrenJSON;
+		for(auto child : children)
+		{
+			childrenJSON.push_back(child->getJSONRepresentation());
+		}
+		result["planets"] = childrenJSON;
+	}
 
 	return result;
 }
