@@ -11,6 +11,7 @@ uniform float planetradius;
 uniform vec3 planetoblateness = vec3(1.0, 1.0, 1.0);
 uniform vec3 lightpos;
 uniform float lightradius;
+uniform vec3 lightcolor;
 uniform vec4 neighborsPosRadius[5];
 uniform vec3 neighborsOblateness[5];
 
@@ -73,4 +74,6 @@ void main()
 
 	outColor = texture(tex, vec2(texCoord, 0.5));
 	outColor.rgb *= coeff * globalCoeffNeighbor;
+
+	outColor.rgb *= lightcolor;
 }

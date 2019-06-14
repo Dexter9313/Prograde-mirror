@@ -32,6 +32,12 @@ Star::Star(std::string const& name, Parameters const& params)
 {
 }
 
+Color Star::getColor() const
+{
+	Color sRGBcolor(blackbody::colorFromTemperature(parameters.temperature));
+	return sRGBcolor;
+}
+
 QJsonObject Star::getJSONRepresentation() const
 {
 	QJsonObject result;

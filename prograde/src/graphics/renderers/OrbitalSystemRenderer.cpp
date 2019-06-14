@@ -24,8 +24,7 @@ OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
 	for(std::string name : drawnSystem->getAllCelestialBodiesNames())
 	{
 		bodyRenderers.push_back(new CelestialBodyRenderer(
-		    (*drawnSystem)[name],
-		    drawnSystem->getStar()->getParameters().radius,
+		    (*drawnSystem)[name], drawnSystem->getStar(),
 		    drawnSystem->getDeclinationTilt()));
 	}
 }

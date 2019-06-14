@@ -7,6 +7,7 @@ uniform vec3 oblateness = vec3(1.0, 1.0, 1.0);
 uniform vec3 color;
 uniform vec3 lightpos;
 uniform float lightradius;
+uniform vec3 lightcolor;
 uniform vec4 neighborsPosRadius[5];
 uniform vec3 neighborsOblateness[5];
 
@@ -53,4 +54,6 @@ void main()
 
 	outColor = vec4(color, 1.0);
 	outColor.rgb *= coeff * globalCoeffNeighbor;
+
+	outColor.rgb *= lightcolor;
 }

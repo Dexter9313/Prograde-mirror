@@ -15,37 +15,21 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-#ifndef STARRENDERER_HPP
-#define STARRENDERER_HPP
 
-#include "Billboard.hpp"
-#include "Camera.hpp"
-#include "graphics/Utils.hpp"
-#include "physics/Star.hpp"
-#include "physics/UniversalTime.hpp"
+#include "physics/blackbody.hpp"
 
-class StarRenderer
+Color blackbody::colorFromTemperature(double temp)
 {
-  public:
-	StarRenderer(Star const* drawnStar);
-	void updateMesh(UniversalTime uT, Camera const& camera);
-	void render(BasicCamera const& camera);
-	~StarRenderer();
+	if(temp > max_temp)
+	{
+		temp = max_temp;
+	}
+	else if(temp < min_temp)
+	{
+		temp = min_temp;
+	}
 
-  private:
-	Star const* drawnStar;
+	unsigned int index = round((temp - min_temp) / temp_step);
 
-	double camDist;
-
-	double billboardOriginalEdgeSize;
-	Billboard billboard;
-
-	// POINT
-	GLHandler::ShaderProgram pointShader;
-	GLHandler::Mesh pointMesh;
-	QVector3D pointPos;
-
-	static QImage getBillboardImage(Star const* star);
-};
-
-#endif // STARRENDERER_HPP
+	return Color(255, red[index], green[index], blue[index]);
+}

@@ -20,7 +20,7 @@
 
 StarRenderer::StarRenderer(Star const* drawnStar)
     : drawnStar(drawnStar)
-    , billboard("data/prograde/images/star.png")
+    , billboard(getBillboardImage(drawnStar))
     , pointShader(GLHandler::newShader("colored"))
     , pointMesh(GLHandler::newMesh())
 {
@@ -28,7 +28,12 @@ StarRenderer::StarRenderer(Star const* drawnStar)
 	    = drawnStar->getParameters().radius * 512.0 / 30.0;
 
 	// POINT
-	GLHandler::setVertices(pointMesh, {0.f, 0.f, 0.f, 1.f, 1.f, 1.f, 1.f},
+	QColor color(GLHandler::sRGBToLinear(Utils::toQt(drawnStar->getColor())));
+	float r, g, b;
+	r = color.redF();
+	g = color.greenF();
+	b = color.blueF();
+	GLHandler::setVertices(pointMesh, {0.f, 0.f, 0.f, r, g, b, 1.f},
 	                       pointShader, {{"position", 3}, {"color", 4}});
 }
 
@@ -55,6 +60,24 @@ void StarRenderer::render(BasicCamera const& camera)
 	{
 		billboard.render(camera);
 	}
+}
+
+QImage StarRenderer::getBillboardImage(Star const* star)
+{
+	QColor starCol(Utils::toQt(star->getColor()));
+	QImage img("data/prograde/images/star.png");
+	for(int i(0); i < img.height(); ++i)
+	{
+		for(int j(0); j < img.width(); ++j)
+		{
+			QColor col(img.pixelColor(i, j));
+			col.setRedF(col.redF() * starCol.redF());
+			col.setGreenF(col.greenF() * starCol.greenF());
+			col.setBlueF(col.blueF() * starCol.blueF());
+			img.setPixelColor(i, j, col);
+		}
+	}
+	return img;
 }
 
 StarRenderer::~StarRenderer()

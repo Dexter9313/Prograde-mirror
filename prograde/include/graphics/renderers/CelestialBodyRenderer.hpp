@@ -25,6 +25,7 @@
 #include "GLHandler.hpp"
 #include "Planet.hpp"
 #include "Primitives.hpp"
+#include "physics/Star.hpp"
 
 #include "graphics/Utils.hpp"
 #include "physics/CelestialBody.hpp"
@@ -33,7 +34,7 @@
 class CelestialBodyRenderer //: public Renderer
 {
   public:
-	CelestialBodyRenderer(CelestialBody* drawnBody, double centralBodyRadius,
+	CelestialBodyRenderer(CelestialBody* drawnBody, Star const* star,
 	                      double declinationTilt);
 	void updateMesh(UniversalTime uT, Camera const& camera);
 	void render();
@@ -66,6 +67,7 @@ class CelestialBodyRenderer //: public Renderer
 	bool customModel = false;
 	QVector3D lightpos;
 	float lightradius;
+	QColor lightcolor;
 	QMatrix4x4 baseRotation;   // only align axis, no sideral time
 	QMatrix4x4 properRotation; // full rotation, sideral time included
 	std::array<QVector4D, 5>

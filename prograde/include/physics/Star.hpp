@@ -19,8 +19,12 @@
 #ifndef STAR_HPP
 #define STAR_HPP
 
+#include <QImage>
 #include <QJsonObject>
+#include <physics/Color.hpp>
 #include <string>
+
+#include "physics/blackbody.hpp"
 
 class Star
 {
@@ -37,6 +41,8 @@ class Star
 	Star(Star const& copiedStar) = default;
 	std::string const& getName() { return name; };
 	Parameters getParameters() const { return parameters; };
+	// sRGB
+	Color getColor() const;
 	QJsonObject getJSONRepresentation() const;
 
   private:

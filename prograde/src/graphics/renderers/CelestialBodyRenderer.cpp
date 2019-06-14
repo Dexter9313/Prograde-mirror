@@ -18,12 +18,13 @@
 #include "../../../include/graphics/renderers/CelestialBodyRenderer.hpp"
 
 CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody* drawnBody,
-                                             double centralBodyRadius,
+                                             Star const* star,
                                              double declinationTilt)
     : drawnBody(drawnBody)
-    , centralBodyRadius(centralBodyRadius)
+    , centralBodyRadius(star->getParameters().radius)
     , declinationTilt(declinationTilt)
     , boundingSphere(drawnBody->getParameters().radius)
+    , lightcolor(Utils::toQt(star->getColor()))
     , pointShader(GLHandler::newShader("colored"))
     , pointMesh(GLHandler::newMesh())
     , unloadedShader(
@@ -57,9 +58,9 @@ CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody* drawnBody,
 
 	// POINT
 	Color color(drawnBody->getParameters().color);
-	color.r /= 4;
-	color.g /= 4;
-	color.b /= 4;
+	color.r *= lightcolor.redF() / 4;
+	color.g *= lightcolor.greenF() / 4;
+	color.b *= lightcolor.blueF() / 4;
 	GLHandler::setVertices(
 	    pointMesh,
 	    {0.f, 0.f, 0.f, color.r / 255.f, color.g / 255.f, color.b / 255.f, 1.f},
@@ -245,6 +246,7 @@ void CelestialBodyRenderer::render()
 	{
 		GLHandler::setShaderParam(unloadedShader, "lightpos", lightpos);
 		GLHandler::setShaderParam(unloadedShader, "lightradius", lightradius);
+		GLHandler::setShaderParam(unloadedShader, "lightcolor", lightcolor);
 		GLHandler::setShaderParam(unloadedShader, "neighborsPosRadius", 5,
 		                          &(neighborsPosRadius[0]));
 		GLHandler::setShaderParam(unloadedShader, "neighborsOblateness", 5,
@@ -256,7 +258,7 @@ void CelestialBodyRenderer::render()
 		return;
 	}
 
-	planet->render(model, lightpos, lightradius, neighborsPosRadius,
+	planet->render(model, lightpos, lightradius, lightcolor, neighborsPosRadius,
 	               neighborsOblateness, properRotation, customModel);
 }
 

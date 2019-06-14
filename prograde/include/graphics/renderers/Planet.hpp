@@ -50,12 +50,12 @@ class Planet
 	void initRings(float innerRing, float outerRing,
 	               QString const& texturePath = "");
 	void render(QVector3D const& pos, QVector3D const& lightpos,
-	            float lightradius,
+	            float lightradius, QColor const& lightcolor,
 	            std::array<QVector4D, 5> const& neighborsPosRadius,
 	            std::array<QVector3D, 5> const& neighborsOblateness,
 	            QMatrix4x4 const& properRotation, bool flipCoords = false);
 	void render(QMatrix4x4 const& model, QVector3D const& lightpos,
-	            float lightradius,
+	            float lightradius, QColor const& lightcolor,
 	            std::array<QVector4D, 5> const& neighborsPosRadius,
 	            std::array<QVector3D, 5> const& neighborsOblateness,
 	            QMatrix4x4 const& properRotation, bool flipCoords = false);
