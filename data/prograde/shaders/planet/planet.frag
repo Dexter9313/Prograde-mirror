@@ -110,6 +110,7 @@ void main()
 	const float minB = 0.45;
 	const float maxB = 1.0;
 
+	coeff_pos = dot(lightdir, norm_pos);
 	float atmosColorGrad = coeff_pos * 0.5 + 0.5;
 	float atmoscoeff     = clamp(atmosphere * (1.0 - coeff_pos), 0.0, 1.0);
 	vec3 atmosCol        = vec3(0.0);

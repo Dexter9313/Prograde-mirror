@@ -43,6 +43,10 @@ class OrbitalSystemRenderer //: public Renderer
 	double camDist;
 
 	double billboardOriginalEdgeSize;
+	// POINT
+	GLHandler::ShaderProgram pointShader;
+	GLHandler::Mesh pointMesh;
+	QVector3D pointPos;
 
 	// TEMP
 	/*GLHandler::Mesh mesh;

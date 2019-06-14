@@ -18,17 +18,16 @@
 
 #include "physics/Orbit.hpp"
 
-Orbit::Orbit(QJsonObject const& json)
-    : massiveBodyMass(json["massiveBodyMass"].toDouble())
+Orbit::Orbit(MassiveBodyMass const& massiveBodyMass, QJsonObject const& json)
+    : massiveBodyMass(massiveBodyMass.value)
 {
-	QJsonObject paramsJSON(json["parameters"].toObject());
-	parameters.inclination = paramsJSON["inclination"].toDouble();
+	parameters.inclination = json["inclination"].toDouble();
 	parameters.ascendingNodeLongitude
-	    = paramsJSON["ascendingNodeLongitude"].toDouble();
-	parameters.periapsisArgument  = paramsJSON["periapsisArgument"].toDouble();
-	parameters.eccentricity       = paramsJSON["eccentricity"].toDouble();
-	parameters.semiMajorAxis      = paramsJSON["semiMajorAxis"].toDouble();
-	parameters.meanAnomalyAtEpoch = paramsJSON["meanAnomalyAtEpoch"].toDouble();
+	    = json["ascendingNodeLongitude"].toDouble();
+	parameters.periapsisArgument  = json["periapsisArgument"].toDouble();
+	parameters.eccentricity       = json["eccentricity"].toDouble();
+	parameters.semiMajorAxis      = json["semiMajorAxis"].toDouble();
+	parameters.meanAnomalyAtEpoch = json["meanAnomalyAtEpoch"].toDouble();
 
 	updatePeriod();
 }
@@ -83,7 +82,7 @@ double Orbit::getMeanAnomalyAtUT(UniversalTime uT)
 	// if uT < period, then the result will be between 0 and 2*M_PI)
 	// several loops are done for performance (we don't want one loop which
 	// loops millions of times)
-	UniversalTime uT2 = fmod(uT, period);
+	UniversalTime uT2 = uT % period;
 	auto equivUT      = uT2.convert_to<double>();
 
 	double smaCubed = parameters.semiMajorAxis * parameters.semiMajorAxis
@@ -207,18 +206,13 @@ std::ostream& Orbit::displayAsText(std::ostream& stream) const
 QJsonObject Orbit::getJSONRepresentation() const
 {
 	QJsonObject result;
-	result["massiveBodyMass"] = massiveBodyMass;
 
-	QJsonObject parametersResult;
-	parametersResult["inclination"] = parameters.inclination;
-	parametersResult["ascendingNodeLongitude"]
-	    = parameters.ascendingNodeLongitude;
-	parametersResult["periapsisArgument"]  = parameters.periapsisArgument;
-	parametersResult["eccentricity"]       = parameters.eccentricity;
-	parametersResult["semiMajorAxis"]      = parameters.semiMajorAxis;
-	parametersResult["meanAnomalyAtEpoch"] = parameters.meanAnomalyAtEpoch;
-
-	result["parameters"] = parametersResult;
+	result["inclination"]            = parameters.inclination;
+	result["ascendingNodeLongitude"] = parameters.ascendingNodeLongitude;
+	result["periapsisArgument"]      = parameters.periapsisArgument;
+	result["eccentricity"]           = parameters.eccentricity;
+	result["semiMajorAxis"]          = parameters.semiMajorAxis;
+	result["meanAnomalyAtEpoch"]     = parameters.meanAnomalyAtEpoch;
 
 	return result;
 }

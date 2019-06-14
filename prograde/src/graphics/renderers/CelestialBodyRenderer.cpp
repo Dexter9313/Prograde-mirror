@@ -59,6 +59,9 @@ CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody* drawnBody,
 
 	// POINT
 	Color color(drawnBody->getParameters().color);
+	color.r /= 4;
+	color.g /= 4;
+	color.b /= 4;
 	GLHandler::setVertices(
 	    pointMesh,
 	    {0.f, 0.f, 0.f, color.r / 255.f, color.g / 255.f, color.b / 255.f, 1.f},
@@ -314,7 +317,7 @@ void CelestialBodyRenderer::loadPlanet()
 	}
 	else if(diffuse != "")
 	{
-		planet->initFromTex(diffuse);
+		planet->initFromTex(diffuse, drawnBody->getParameters().atmosphere);
 	}
 	else if(drawnBody->getParameters().type == CelestialBody::Type::GAZGIANT)
 	{

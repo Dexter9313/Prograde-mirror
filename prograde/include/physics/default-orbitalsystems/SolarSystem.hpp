@@ -61,7 +61,7 @@ class SolarSystem : public OrbitalSystem
 	void createTransNeptunianSubSystem();
 
 	double au = 149597870700.0;
-	float km  = 1000.f;
+	double km = 1000.f;
 
 	// TEMP
 	QProgressDialog* progress;

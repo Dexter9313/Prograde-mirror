@@ -17,20 +17,14 @@
 */
 
 #include "math/EccentricAnomalySolver.hpp"
+#include <iostream>
 
 // If too slow, don't use boost and program it yourself
 //(Newton method isn't hard at all to implement)
 double EccentricAnomalySolver::solveForEllipticOrbit(double meanAnomaly,
                                                      double eccentricity)
 {
-	while(meanAnomaly > 2.0 * constant::pi)
-	{
-		meanAnomaly -= 2.0 * constant::pi;
-	}
-	while(meanAnomaly < 0.0)
-	{
-		meanAnomaly += 2.0 * constant::pi;
-	}
+	meanAnomaly = mod(meanAnomaly, 2.0 * constant::pi);
 	double guess((eccentricity < 0.8 ? meanAnomaly : constant::pi));
 	boost::uintmax_t maxit = 100;
 
@@ -52,14 +46,7 @@ double EccentricAnomalySolver::solveForParabolicOrbit(double meanAnomaly)
 	// (french source, hope it's understandable anyway, better source needed,
 	// I don't find the english version is as clear in Wikipedia)
 	// https://fr.wikipedia.org/wiki/M%C3%A9thode_de_Cardan#Si_.CE.94_est_n.C3.A9gatif
-	while(meanAnomaly > 2.0 * constant::pi)
-	{
-		meanAnomaly -= 2.0 * constant::pi;
-	}
-	while(meanAnomaly < 0.0)
-	{
-		meanAnomaly += 2.0 * constant::pi;
-	}
+	meanAnomaly = mod(meanAnomaly, 2.0 * constant::pi);
 	double p(3), q(-6 * meanAnomaly);
 	double term(sqrt(q * q / 4.0 + p * p * p / 27.0));
 	return cbrt(-q / 2.0 + term) + cbrt(-q / 2.0 - term);
@@ -70,14 +57,7 @@ double EccentricAnomalySolver::solveForParabolicOrbit(double meanAnomaly)
 double EccentricAnomalySolver::solveForHyperbolicOrbit(double meanAnomaly,
                                                        double eccentricity)
 {
-	while(meanAnomaly > 2.0 * constant::pi)
-	{
-		meanAnomaly -= 2.0 * constant::pi;
-	}
-	while(meanAnomaly < 0.0)
-	{
-		meanAnomaly += 2.0 * constant::pi;
-	}
+	meanAnomaly = mod(meanAnomaly, 2.0 * constant::pi);
 	double guess(constant::pi);
 	boost::uintmax_t maxit = 100;
 

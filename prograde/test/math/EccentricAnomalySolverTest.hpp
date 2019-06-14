@@ -31,7 +31,7 @@ class EccentricAnomalySolverTest : public QObject
 	void EllipticZeroEccentricityEqualsSameAngle()
 	{
 		// mA = meanAnomaly
-		double mA1(0.0), mA2(constant::pi), mA3(2 * constant::pi),
+		double mA1(0.0), mA2(constant::pi), mA3(2 * constant::pi - 0.001),
 		    mA4(1.234567);
 
 		QVERIFY(qFuzzyCompare(

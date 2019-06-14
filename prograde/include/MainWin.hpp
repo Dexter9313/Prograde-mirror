@@ -77,8 +77,8 @@ class MainWin : public AbstractMainWin
 
 	SimulationTime clock = SimulationTime(loadStartUT());
 
-	//TEMP
-	const int textWidth = 225;
+	// TEMP
+	const int textWidth  = 225;
 	const int textHeight = 105;
 };
 

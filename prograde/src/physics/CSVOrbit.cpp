@@ -21,7 +21,7 @@
 CSVOrbit::CSVOrbit(MassiveBodyMass const& massiveBodyMass,
                    std::string const& bodyName)
     : Orbit(MassiveBodyMass(massiveBodyMass),
-            Parameters({0.f, 0.f, 0.f, 0.f, 1.f, 0.f}))
+            Parameters({0.0, 0.0, 0.0, 0.0, 1.0, 0.0}))
     , bodyName(bodyName)
 {
 	QString path(QSettings().value("simulation/planetsystemdir").toString()

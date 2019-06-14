@@ -19,6 +19,7 @@
 #ifndef CELESTIALBODY_HPP
 #define CELESTIALBODY_HPP
 
+#include <QJsonArray>
 #include <QJsonObject>
 #include <cmath>
 #include <vector>
@@ -26,6 +27,7 @@
 #include "CSVOrbit.hpp"
 #include "Color.hpp"
 #include "Orbit.hpp"
+#include "math/MathUtils.hpp"
 
 class CelestialBody
 {
@@ -44,23 +46,21 @@ class CelestialBody
 		double radius;
 		Vector3 oblateness = Vector3(1.0, 1.0, 1.0);
 		Color color;
-		float atmosphere = 0.f;
-		float innerRing  = 0.f;
-		float outerRing  = 0.f;
+		double atmosphere = 0.0;
+		double innerRing  = 0.0;
+		double outerRing  = 0.0;
 
 		/* ROTATION */
-		float siderealTimeAtEpoch = 0.f; // angle between FP of Aries and Prime
-		                                 // Meridian in radians
-		float siderealRotationPeriod = FLT_MAX; // in seconds
+		double siderealTimeAtEpoch = 0.0; // angle between FP of Aries and Prime
+		                                  // Meridian in radians
+		double siderealRotationPeriod = DBL_MAX; // in seconds
 
-		float northPoleRightAsc    = 0.f;                // in rad
-		float northPoleDeclination = constant::pi / 2.0; // in rad
+		double northPoleRightAsc    = 0.0;                // in rad
+		double northPoleDeclination = constant::pi / 2.0; // in rad
 	};
 
-	CelestialBody(QJsonObject const& json, std::string const& ownName,
-	              double influentBodyMass);
-	CelestialBody(QJsonObject const& json, std::string const& ownName,
-	              CelestialBody const& parent);
+	CelestialBody(QJsonObject const& json, double influentBodyMass);
+	CelestialBody(QJsonObject const& json, CelestialBody const& parent);
 
 	CelestialBody(double influentBodyMass, Orbit::Parameters orbitalParams,
 	              Parameters physicalParams);
@@ -74,12 +74,13 @@ class CelestialBody
 	CelestialBody(CelestialBody const& copiedBody) = default;
 	CelestialBody const* getParent() const;
 	std::vector<CelestialBody*> const& getChildren() const;
-	CelestialBody* createChild(QJsonObject const& json,
-	                           std::string const& childName);
+	std::vector<CelestialBody*> getAllDescendants() const;
+	CelestialBody* createChild(QJsonObject const& json);
 	CelestialBody* createChild(Orbit::Parameters const& orbitalParams,
 	                           Parameters const& physicalParams);
 	CelestialBody* createChild(std::string const& childName,
 	                           Parameters const& physicalParams);
+	std::string const& getName() { return name; };
 	Orbit const* getOrbit() const;
 	Orbit* getOrbit();
 	Parameters getParameters() const;
@@ -87,7 +88,7 @@ class CelestialBody
 	Vector3 getAbsolutePositionAtUT(UniversalTime uT) const;
 	Vector3 getAbsoluteVelocityAtUT(UniversalTime uT) const;
 	CoordinateSystem getAttachedCoordinateSystemAtUT(UniversalTime uT) const;
-	float getPrimeMeridianSiderealTimeAtUT(UniversalTime uT) const;
+	double getPrimeMeridianSiderealTimeAtUT(UniversalTime uT) const;
 	virtual ~CelestialBody();
 
 	// Will try to get more significant digits than the awful
@@ -98,6 +99,7 @@ class CelestialBody
 	QJsonObject getJSONRepresentation() const;
 
   private:
+	std::string name;
 	CelestialBody const* parent;
 	std::vector<CelestialBody*> children;
 	Orbit* orbit;
@@ -106,9 +108,11 @@ class CelestialBody
 	static std::string typeToStr(Type type);
 	static Type strToType(std::string const& str);
 	static QJsonObject vector3ToJSON(Vector3 const& v);
-	static Vector3 jsonToVector3(QJsonObject const& obj);
+	static Vector3 jsonToVector3(QJsonObject const& obj,
+	                             Vector3 const& defaultValue = Vector3());
 	static QJsonObject colorToJSON(Color const& c);
-	static Color jsonToColor(QJsonObject const& obj);
+	static Color jsonToColor(QJsonObject const& obj,
+	                         Color const& defaultValue = Color(255, 0, 0, 0));
 };
 
 #endif // CELESTIALBODY_HPP

@@ -19,13 +19,10 @@
 
 OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
     : drawnSystem(drawnSystem)
+    , pointShader(GLHandler::newShader("colored"))
+    , pointMesh(GLHandler::newMesh())
     , billboard("data/prograde/images/star.png")
 {
-	/*shader = GLHandler::newShader("default");
-	GLHandler::setShaderParam(shader, "color", QColor(255, 255, 255, 255));
-
-	mesh = Primitives::newUnitSphere(shader, 100, 100);*/
-
 	billboardOriginalEdgeSize = drawnSystem->getCentralRadius() * 512.0 / 30.0;
 
 	for(std::string name : drawnSystem->getAllCelestialBodiesNames())
@@ -34,6 +31,9 @@ OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
 		    (*drawnSystem)[name], drawnSystem->getCentralRadius(),
 		    drawnSystem->getDeclinationTilt(), name));
 	}
+	// POINT
+	GLHandler::setVertices(pointMesh, {0.f, 0.f, 0.f, 1.f, 1.f, 1.f, 1.f},
+	                       pointShader, {{"position", 3}, {"color", 4}});
 }
 
 void OrbitalSystemRenderer::updateMesh(UniversalTime uT, Camera const& camera)
@@ -50,60 +50,39 @@ void OrbitalSystemRenderer::updateMesh(UniversalTime uT, Camera const& camera)
 		    = bodyRenderer;
 		bodyRenderer->updateMesh(uT, camera);
 	}
-	bool centralBodyDrawn(false);
 
-	float centerPosition(100);
-	float increment(250 / (sortedRenderers.size() + 1));
+	float centerPosition(300.f);
+
+	double scale(centerPosition / camDist);
+	pointPos           = Utils::toQt(-1 * scale * camera.getAbsolutePosition());
+	billboard.position = pointPos;
+	billboard.width    = billboardOriginalEdgeSize * scale;
 
 	for(std::pair<double, CelestialBodyRenderer*> rendererPair :
 	    sortedRenderers)
 	{
-		if(rendererPair.first > camDist && !centralBodyDrawn)
-		{
-			/*model = QMatrix4x4();
-			double camDist(cameraPos.length());
-			double scale(centerPosition / camDist);
-			model.translate(Utils::toQt(-1 * scale * cameraPos));
-
-			double radiusScale(drawnSystem->getCentralRadius() * scale);
-			if(radiusScale / centerPosition < 0.002)
-			{
-			    radiusScale = 0.002 * centerPosition;
-			}
-			model.scale(radiusScale);*/
-
-			double scale(centerPosition / camDist);
-			billboard.position
-			    = Utils::toQt(-1 * scale * camera.getAbsolutePosition());
-			if((scale * drawnSystem->getCentralRadius()) / centerPosition
-			   < 0.0007)
-			{
-				scale
-				    = 0.0007 * centerPosition / drawnSystem->getCentralRadius();
-			}
-			billboard.width = billboardOriginalEdgeSize * scale;
-
-			centralBodyDrawn = true;
-			centerPosition += increment;
-		}
 		rendererPair.second->setCenterPosition(centerPosition);
 		rendererPair.second->updateMesh(uT, camera);
-		centerPosition += increment;
 	}
 }
 
 void OrbitalSystemRenderer::render(BasicCamera const& camera)
 {
+	if(drawnSystem->getCentralRadius() / camDist < 0.0007)
+	{
+		QMatrix4x4 model;
+		model.translate(pointPos);
+		GLHandler::setUpRender(pointShader, model);
+		GLHandler::render(pointMesh);
+	}
+	else
+	{
+		billboard.render(camera);
+	}
 	auto it(sortedRenderers.end());
-	bool centralBodyDrawn(false);
 	while(it != sortedRenderers.begin())
 	{
 		--it;
-		if(it->first < camDist && !centralBodyDrawn)
-		{
-			billboard.render(camera);
-			centralBodyDrawn = true;
-		}
 		GLHandler::clearDepthBuffer();
 		it->second->render();
 	}
@@ -115,4 +94,6 @@ OrbitalSystemRenderer::~OrbitalSystemRenderer()
 	{
 		delete bodyRenderer;
 	}
+	GLHandler::deleteMesh(pointMesh);
+	GLHandler::deleteShader(pointShader);
 }

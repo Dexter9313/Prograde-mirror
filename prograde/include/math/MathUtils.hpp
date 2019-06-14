@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 Florian Cabot <florian.cabot@epfl.ch>
+    Copyright (C) 2019 Florian Cabot <florian.cabot@hotmail.fr>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,23 +16,31 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "ProgradeSettings.hpp"
+#ifndef MATHUTILS_HPP
+#define MATHUTILS_HPP
 
-ProgradeSettings::ProgradeSettings(QWidget* parent)
-    : SettingsWidget(parent)
+#include <cmath>
+
+template <typename T>
+inline T& operator%=(T& a, double b);
+template <typename T>
+inline T operator%(T a, double b);
+
+template <typename T>
+T& operator%=(T& a, double b)
 {
-	insertGroup("simulation", tr("Simulation"), 0);
-	addDateTimeSetting("starttime", QDateTime().currentDateTimeUtc(),
-	                   tr("Start time (UTC)"));
-
-	addDirPathSetting(
-	    "planetsystemdir",
-	    QFileInfo(QSettings().fileName()).absoluteDir().absolutePath()
-	        + "/systems/",
-	    tr("Planetary System Root Directory"));
-
-	insertGroup("quality", tr("Quality"), 1);
-	addUIntSetting("texmaxsize", 16, tr("Textures max size (x512)"), 1, 32);
-
-	setCurrentIndex(0);
+	T div(a / b);
+	int q(floor(static_cast<double>(div)));
+	a -= q * b;
+	return a;
 }
+
+template <typename T>
+T operator%(T a, double b)
+{
+	operator%=<T>(a, b);
+	return a;
+}
+
+double mod(double a, double b);
+#endif // MATHUTILS_HPP

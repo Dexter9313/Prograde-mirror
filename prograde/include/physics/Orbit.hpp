@@ -58,7 +58,7 @@ class Orbit
 
   public:
 	Orbit() = delete;
-	Orbit(QJsonObject const& json);
+	Orbit(MassiveBodyMass const& massiveBodyMass, QJsonObject const& json);
 	Orbit(MassiveBodyMass const& massiveBodyMass, Parameters parameters);
 	Orbit(Period const& period, Parameters parameters);
 	Orbit(Orbit const& copiedOrbit) = default;

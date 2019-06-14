@@ -53,9 +53,9 @@ class KerbalSystem : public OrbitalSystem
 	void createDunaSubSystem();
 	void createJoolSubSystem();
 
-	float distanceMultiplier = 1.f;
-	float radiusMultiplier   = 1000.f;
-	float massMultiplier     = 1.f;
+	double distanceMultiplier = 1.f;
+	double radiusMultiplier   = 1000.f;
+	double massMultiplier     = 1.f;
 };
 
 #endif // KERBALSYSTEM_HPP

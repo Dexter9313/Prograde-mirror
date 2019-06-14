@@ -224,17 +224,19 @@ UniversalTime MainWin::loadStartUT()
 std::string MainWin::timeToStr(UniversalTime uT)
 {
 	uT /= 24.0 * 3600.0;
-	int64_t j2000d(static_cast<int64_t>(uT));
+	auto j2000d(static_cast<int64_t>(uT));
 	if(uT < 0)
 	{
 		--j2000d;
 	}
+	uT -= j2000d;
 
-	int timeOfDayInMSecs(
-	    static_cast<int>((uT - j2000d) * 24.0 * 3600.0 * 1000.0));
+	UniversalTime timeOfDayInMSecs(uT * 24.0 * 3600.0 * 1000.0);
 
-	QDateTime dt(QDate::fromJulianDay(j2000d + 2451545),
-	             QTime::fromMSecsSinceStartOfDay(timeOfDayInMSecs), Qt::UTC);
+	QDateTime dt(
+	    QDate::fromJulianDay(j2000d + 2451545),
+	    QTime::fromMSecsSinceStartOfDay(static_cast<int>(timeOfDayInMSecs)),
+	    Qt::UTC);
 
 	QString seconds
 	    = QString("%1").arg(dt.toUTC().time().second(), 2, 10, QChar('0'));
@@ -242,4 +244,3 @@ std::string MainWin::timeToStr(UniversalTime uT)
 	return (dt.toUTC().toString(Qt::SystemLocaleShortDate) + ":" + seconds)
 	    .toStdString();
 }
-
