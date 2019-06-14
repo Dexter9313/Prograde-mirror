@@ -17,11 +17,13 @@
 */
 #include "../../../include/physics/default-orbitalsystems/KerbalSystem.hpp"
 
-double kerbolMass   = 1.7565670 * 1e28;
-double kerbolRadius = 261600000.0;
+double kerbolMass        = 1.7565670 * 1e28;
+double kerbolRadius      = 261600000.0;
+double kerbolTemperature = 5840.0;
 
 KerbalSystem::KerbalSystem()
-    : OrbitalSystem(kerbolMass, kerbolRadius, 0.0)
+    : OrbitalSystem("Kerbol", {kerbolMass, kerbolRadius, kerbolTemperature},
+                    0.0)
 {
 	createPlanets();
 	createEveSubSystem();

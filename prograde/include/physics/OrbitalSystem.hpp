@@ -20,6 +20,7 @@
 #define ORBITALSYSTEM_HPP
 
 #include "CelestialBody.hpp"
+#include "Star.hpp"
 #include <QCoreApplication>
 #include <QJsonArray>
 #include <QProgressDialog>
@@ -31,13 +32,12 @@ class OrbitalSystem
 {
   public:
 	OrbitalSystem(QJsonObject const& json);
-	OrbitalSystem(double centralMass, double centralRadius,
-	              double declinationTilt);
+	OrbitalSystem(std::string const& starName,
+	              Star::Parameters const& starParams, double declinationTilt);
 	OrbitalSystem(OrbitalSystem const&) = delete;
 	OrbitalSystem& operator=(OrbitalSystem const&) = delete;
-	double getCentralMass() const { return centralMass; };
-	double getCentralRadius() const { return centralRadius; };
 	double getDeclinationTilt() const { return declinationTilt; };
+	Star* getStar() const { return star; };
 	void createChild(QJsonObject const& json);
 	void createChild(std::string const& name,
 	                 Orbit::Parameters const& orbitalParameters,
@@ -56,11 +56,10 @@ class OrbitalSystem
 	virtual ~OrbitalSystem();
 
   private:
-	double centralMass;
-	double centralRadius;
-	double declinationTilt;
-
+	Star* star;
 	std::map<std::string, CelestialBody*> bodies;
+
+	double declinationTilt;
 
 	// JSON loading
 	unsigned int current;

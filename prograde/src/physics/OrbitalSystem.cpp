@@ -30,8 +30,7 @@ OrbitalSystem::OrbitalSystem(QJsonObject const& json)
 
 	QJsonObject jsonStar(json["stars"].toArray()[0].toObject());
 
-	centralMass     = jsonStar["mass"].toDouble();
-	centralRadius   = jsonStar["radius"].toDouble();
+	star            = new Star(jsonStar);
 	declinationTilt = json["declinationTilt"].toDouble();
 
 	QJsonArray planets(jsonStar["planets"].toArray());
@@ -50,17 +49,17 @@ OrbitalSystem::OrbitalSystem(QJsonObject const& json)
 	delete progress;
 }
 
-OrbitalSystem::OrbitalSystem(double centralMass, double centralRadius,
+OrbitalSystem::OrbitalSystem(std::string const& starName,
+                             Star::Parameters const& starParams,
                              double declinationTilt)
-    : centralMass(centralMass)
-    , centralRadius(centralRadius)
+    : star(new Star(starName, starParams))
     , declinationTilt(declinationTilt)
 {
 }
 
 void OrbitalSystem::createChild(QJsonObject const& json)
 {
-	auto body               = new CelestialBody(json, centralMass);
+	auto body = new CelestialBody(json, star->getParameters().mass);
 	bodies[body->getName()] = body;
 	for(auto child : body->getAllDescendants())
 	{
@@ -80,8 +79,8 @@ void OrbitalSystem::createChild(
 	}
 	else
 	{
-		bodies[name] = new CelestialBody(centralMass, orbitalParameters,
-		                                 physicalParameters);
+		bodies[name] = new CelestialBody(star->getParameters().mass,
+		                                 orbitalParameters, physicalParameters);
 	}
 }
 
@@ -96,7 +95,8 @@ void OrbitalSystem::createChild(
 	}
 	else
 	{
-		bodies[name] = new CelestialBody(centralMass, name, physicalParameters);
+		bodies[name] = new CelestialBody(star->getParameters().mass, name,
+		                                 physicalParameters);
 	}
 }
 
@@ -170,9 +170,7 @@ QJsonObject OrbitalSystem::getJSONRepresentation() const
 	QJsonObject result;
 	result["declinationTilt"] = declinationTilt;
 	QJsonArray stars;
-	QJsonObject star;
-	star["mass"]   = centralMass;
-	star["radius"] = centralRadius;
+	QJsonObject starJSON(star->getJSONRepresentation());
 
 	QJsonArray planets;
 	for(auto body : getParentCelestialBodiesPointers())
@@ -180,9 +178,9 @@ QJsonObject OrbitalSystem::getJSONRepresentation() const
 		QJsonObject bodyObj = body->getJSONRepresentation();
 		planets.push_back(bodyObj);
 	}
-	star["planets"] = planets;
+	starJSON["planets"] = planets;
 
-	stars.push_back(star);
+	stars.push_back(starJSON);
 	result["stars"] = stars;
 
 	return result;

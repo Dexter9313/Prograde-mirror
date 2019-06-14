@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2018 Florian Cabot <florian.cabot@hotmail.fr>
+    Copyright (C) 2019 Florian Cabot <florian.cabot@hotmail.fr>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -15,34 +15,35 @@
     with this program; if not, write to the Free Software Foundation, Inc.,
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
-
-#ifndef ORBITALSYSTEMRENDERER_HPP
-#define ORBITALSYSTEMRENDERER_HPP
+#ifndef STARRENDERER_HPP
+#define STARRENDERER_HPP
 
 #include "Billboard.hpp"
-
 #include "Camera.hpp"
-#include "CelestialBodyRenderer.hpp"
-#include "StarRenderer.hpp"
-#include "physics/OrbitalSystem.hpp"
+#include "graphics/Utils.hpp"
+#include "physics/Star.hpp"
+#include "physics/UniversalTime.hpp"
 
-// TODO rethink Renderer (mesh attribute)
-class OrbitalSystemRenderer //: public Renderer
+class StarRenderer
 {
   public:
-	OrbitalSystemRenderer(OrbitalSystem* drawnSystem);
+	StarRenderer(Star const* drawnStar);
 	void updateMesh(UniversalTime uT, Camera const& camera);
 	void render(BasicCamera const& camera);
-	~OrbitalSystemRenderer();
+	~StarRenderer();
 
   private:
-	OrbitalSystem* drawnSystem;
-	std::vector<CelestialBodyRenderer*> bodyRenderers;
+	Star const* drawnStar;
 
-	std::map<double, CelestialBodyRenderer*> sortedRenderers;
 	double camDist;
 
-	StarRenderer starRenderer;
+	double billboardOriginalEdgeSize;
+	Billboard billboard;
+
+	// POINT
+	GLHandler::ShaderProgram pointShader;
+	GLHandler::Mesh pointMesh;
+	QVector3D pointPos;
 };
 
-#endif // ORBITALSYSTEMDRAWER_HPP
+#endif // STARRENDERER_HPP

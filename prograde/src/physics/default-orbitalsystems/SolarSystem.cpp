@@ -19,10 +19,12 @@
 
 double sunMass            = 1.9891e30;
 double sunRadius          = 696342.0 * 1000.0;
+double sunTemperature     = 5778.0;
 double solDeclinationTilt = 23.4392811 * constant::pi / 180.0;
 
 SolarSystem::SolarSystem()
-    : OrbitalSystem(sunMass, sunRadius, solDeclinationTilt)
+    : OrbitalSystem("Sun", {sunMass, sunRadius, sunTemperature},
+                    solDeclinationTilt)
 {
 	progress = new QProgressDialog(QObject::tr("Loading Solar System..."),
 	                               QString(), 0, bodiesNb);
