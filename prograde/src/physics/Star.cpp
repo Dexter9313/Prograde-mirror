@@ -26,8 +26,8 @@ Star::Star(QJsonObject const& json)
 	parameters.temperature = json["temperature"].toDouble(6000.0);
 }
 
-Star::Star(std::string const& name, Parameters const& params)
-    : name(name)
+Star::Star(std::string name, Parameters const& params)
+    : name(std::move(name))
     , parameters(params)
 {
 }

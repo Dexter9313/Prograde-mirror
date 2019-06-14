@@ -37,7 +37,7 @@ class Star
 	};
 
 	Star(QJsonObject const& json);
-	Star(std::string const& name, Parameters const& params);
+	Star(std::string name, Parameters const& params);
 	Star(Star const& copiedStar) = default;
 	std::string const& getName() { return name; };
 	Parameters getParameters() const { return parameters; };
