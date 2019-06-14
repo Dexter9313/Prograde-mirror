@@ -19,8 +19,7 @@
 
 CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody* drawnBody,
                                              double centralBodyRadius,
-                                             double declinationTilt,
-                                             std::string const& name)
+                                             double declinationTilt)
     : drawnBody(drawnBody)
     , centralBodyRadius(centralBodyRadius)
     , declinationTilt(declinationTilt)
@@ -30,7 +29,6 @@ CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody* drawnBody,
     , unloadedShader(
           GLHandler::newShader("planet/planet", "planet/uniformplanet"))
     , unloadedMesh(Primitives::newUnitSphere(unloadedShader, 50, 50))
-    , name(name.c_str())
 {
 	model = QMatrix4x4();
 	model.translate(Utils::toQt(this->drawnBody->getAbsolutePositionAtUT(0)));
@@ -277,6 +275,8 @@ void CelestialBodyRenderer::loadPlanet()
 	{
 		return;
 	}
+
+	QString name(drawnBody->getName().c_str());
 
 	planet
 	    = new Planet(1.f, Utils::toQt(drawnBody->getParameters().oblateness));

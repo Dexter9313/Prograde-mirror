@@ -29,7 +29,7 @@ OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
 	{
 		bodyRenderers.push_back(new CelestialBodyRenderer(
 		    (*drawnSystem)[name], drawnSystem->getCentralRadius(),
-		    drawnSystem->getDeclinationTilt(), name));
+		    drawnSystem->getDeclinationTilt()));
 	}
 	// POINT
 	GLHandler::setVertices(pointMesh, {0.f, 0.f, 0.f, 1.f, 1.f, 1.f, 1.f},

@@ -34,7 +34,7 @@ class CelestialBodyRenderer //: public Renderer
 {
   public:
 	CelestialBodyRenderer(CelestialBody* drawnBody, double centralBodyRadius,
-	                      double declinationTilt, std::string const& name);
+	                      double declinationTilt);
 	void updateMesh(UniversalTime uT, Camera const& camera);
 	void render();
 	CelestialBody const* getDrawnBody() const { return drawnBody; };
@@ -80,9 +80,6 @@ class CelestialBodyRenderer //: public Renderer
 	// UNLOADED
 	GLHandler::ShaderProgram unloadedShader;
 	GLHandler::Mesh unloadedMesh;
-
-	// TEMP
-	QString name;
 };
 
 #endif // CELESTIALBODYDRAWER_HPP
