@@ -84,6 +84,8 @@ class Orbit
 	Parameters parameters;
 
   private:
+	static double SMAfromPeriod(double period, double massiveBodyMass);
+
 	double massiveBodyMass;
 
 	// period is precomputed as it is often used and doesn't change

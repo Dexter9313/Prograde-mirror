@@ -21,11 +21,10 @@ OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
     : drawnSystem(drawnSystem)
     , starRenderer(drawnSystem->getStar())
 {
-	for(std::string name : drawnSystem->getAllCelestialBodiesNames())
+	for(auto body : drawnSystem->getAllCelestialBodiesPointers())
 	{
 		bodyRenderers.push_back(new CelestialBodyRenderer(
-		    (*drawnSystem)[name], drawnSystem->getStar(),
-		    drawnSystem->getDeclinationTilt()));
+		    body, drawnSystem->getStar(), drawnSystem->getDeclinationTilt()));
 	}
 }
 
