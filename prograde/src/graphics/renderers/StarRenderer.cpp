@@ -70,11 +70,13 @@ QImage StarRenderer::getBillboardImage(Star const* star)
 	{
 		for(int j(0); j < img.width(); ++j)
 		{
-			QColor col(img.pixelColor(i, j));
+			QRgb colRGB(img.pixel(i, j));
+			QColor col(colRGB);
+			col.setAlpha(colRGB >> 24);
 			col.setRedF(col.redF() * starCol.redF());
 			col.setGreenF(col.greenF() * starCol.greenF());
 			col.setBlueF(col.blueF() * starCol.blueF());
-			img.setPixelColor(i, j, col);
+			img.setPixel(i, j, col.rgba());
 		}
 	}
 	return img;
