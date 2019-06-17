@@ -21,13 +21,18 @@
 Orbit::Orbit(MassiveBodyMass const& massiveBodyMass, QJsonObject const& json)
     : massiveBodyMass(massiveBodyMass.value)
 {
+	if(massiveBodyMass.value == 0)
+	{
+		this->massiveBodyMass = massiveBodyMassFromElements(
+		    json["semiMajorAxis"].toDouble(), json["period"].toDouble());
+	}
 	parameters.inclination = json["inclination"].toDouble();
 	parameters.ascendingNodeLongitude
 	    = json["ascendingNodeLongitude"].toDouble();
 	parameters.periapsisArgument = json["periapsisArgument"].toDouble();
 	parameters.eccentricity      = json["eccentricity"].toDouble();
 	parameters.semiMajorAxis     = json["semiMajorAxis"].toDouble(
-        SMAfromPeriod(json["period"].toDouble(), massiveBodyMass.value));
+        SMAfromPeriodMass(json["period"].toDouble(), massiveBodyMass.value));
 	parameters.meanAnomalyAtEpoch = json["meanAnomalyAtEpoch"].toDouble();
 
 	updatePeriod();
@@ -233,10 +238,16 @@ void Orbit::updatePeriod()
 	}
 }
 
-double Orbit::SMAfromPeriod(double period, double massiveBodyMass)
+double Orbit::SMAfromPeriodMass(double period, double massiveBodyMass)
 {
 	return cbrt(constant::G * massiveBodyMass * period * period
 	            / (4.0 * constant::pi * constant::pi));
+}
+
+double Orbit::massiveBodyMassFromElements(double semiMajorAxis, double period)
+{
+	return semiMajorAxis * semiMajorAxis * semiMajorAxis * 4.0 * constant::pi
+	       * constant::pi / (constant::G * period * period);
 }
 
 std::ostream& operator<<(std::ostream& stream, Orbit const& orbit)

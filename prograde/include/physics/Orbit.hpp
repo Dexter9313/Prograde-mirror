@@ -78,14 +78,16 @@ class Orbit
 	QJsonObject getJSONRepresentation() const;
 	virtual ~Orbit(){};
 
+	static double SMAfromPeriodMass(double period, double massiveBodyMass);
+	static double massiveBodyMassFromElements(double semiMajorAxis,
+	                                          double period);
+
   protected:
 	void updatePeriod();
 
 	Parameters parameters;
 
   private:
-	static double SMAfromPeriod(double period, double massiveBodyMass);
-
 	double massiveBodyMass;
 
 	// period is precomputed as it is often used and doesn't change
