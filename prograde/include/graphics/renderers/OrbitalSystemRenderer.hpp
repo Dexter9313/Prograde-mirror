@@ -22,7 +22,7 @@
 #include "Billboard.hpp"
 
 #include "Camera.hpp"
-#include "CelestialBodyRenderer.hpp"
+#include "PlanetRenderer.hpp"
 #include "StarRenderer.hpp"
 #include "physics/OrbitalSystem.hpp"
 
@@ -38,11 +38,7 @@ class OrbitalSystemRenderer //: public Renderer
   private:
 	OrbitalSystem* drawnSystem;
 	std::vector<CelestialBodyRenderer*> bodyRenderers;
-
 	std::map<double, CelestialBodyRenderer*> sortedRenderers;
-	double camDist;
-
-	StarRenderer starRenderer;
 };
 
 #endif // ORBITALSYSTEMDRAWER_HPP

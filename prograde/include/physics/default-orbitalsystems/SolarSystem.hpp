@@ -63,6 +63,11 @@ class SolarSystem : public OrbitalSystem
 	double au = 149597870700.0;
 	double km = 1000.f;
 
+	void createChild(std::string name,
+	                 CelestialBody::Parameters const& physParams,
+	                 Planet::Parameters const& planetParams,
+	                 std::string const& parent = "");
+
 	// TEMP
 	QProgressDialog* progress;
 	const unsigned int bodiesNb = 38;

@@ -19,8 +19,6 @@
 #ifndef ORBITALSYSTEM_HPP
 #define ORBITALSYSTEM_HPP
 
-#include "CelestialBody.hpp"
-#include "Star.hpp"
 #include <QCoreApplication>
 #include <QJsonArray>
 #include <QProgressDialog>
@@ -28,42 +26,82 @@
 #include <map>
 #include <vector>
 
+#include "Orbitable.hpp"
+#include "Planet.hpp"
+#include "Star.hpp"
+
 class OrbitalSystem
 {
+  protected:
+	OrbitalSystem(std::string name);
+
   public:
-	OrbitalSystem(QJsonObject const& json);
-	OrbitalSystem(std::string const& starName,
-	              Star::Parameters const& starParams, double declinationTilt);
+	OrbitalSystem(std::string name, QJsonObject const& json);
+	OrbitalSystem(std::string name, Orbitable* rootOrbitable,
+	              double declinationTilt);
 	OrbitalSystem(OrbitalSystem const&) = delete;
 	OrbitalSystem& operator=(OrbitalSystem const&) = delete;
+
+	void generateStarsNames();
+
 	double getDeclinationTilt() const { return declinationTilt; };
-	Star* getStar() const { return star; };
-	void createChild(QJsonObject const& json);
-	void createChild(std::string const& name,
-	                 Orbit::Parameters const& orbitalParameters,
-	                 CelestialBody::Parameters const& physicalParameters,
-	                 std::string const& parent = std::string(""));
-	void createChild(std::string const& name,
-	                 CelestialBody::Parameters const& physicalParameters,
-	                 std::string const& parent = std::string(""));
-	CelestialBody* operator[](std::string const& name);
-	CelestialBody const* operator[](std::string const& name) const;
+	Orbitable const& getRootOrbitable() const { return *rootOrbitable; };
+
+	// will take ownership of child
+	void addChild(Orbitable* child,
+	              std::string const& parent = std::string(""));
+
+	Orbitable* operator[](std::string const& name);
+	Orbitable const* operator[](std::string const& name) const;
+
+	std::vector<std::string> getAllOrbitablesNames() const;
+	std::vector<Orbitable*> getAllOrbitablesPointers() const;
+
+	std::vector<std::string> getAllBinariesNames() const;
+	std::vector<Orbitable*> getAllBinariesPointers() const;
+
 	std::vector<std::string> getAllCelestialBodiesNames() const;
 	std::vector<CelestialBody*> getAllCelestialBodiesPointers() const;
-	std::vector<std::string> getParentCelestialBodiesNames() const;
-	std::vector<CelestialBody*> getParentCelestialBodiesPointers() const;
+
+	std::vector<std::string> getAllStarsNames() const;
+	std::vector<Star*> getAllStarsPointers() const;
+
+	std::vector<std::string> getAllPlanetsNames() const;
+	std::vector<Planet*> getAllPlanetsPointers() const;
+
+	// planets that don't orbit other planets
+	std::vector<std::string> getAllFirstClassPlanetsNames() const;
+	std::vector<Planet*> getAllFirstClassPlanetsPointers() const;
+
+	// planets that orbit other planets
+	std::vector<std::string> getAllSatellitePlanetsNames() const;
+	std::vector<Planet*> getAllSatellitePlanetsPointers() const;
+
+	std::string getName() const { return name; };
 	QJsonObject getJSONRepresentation() const;
 	virtual ~OrbitalSystem();
 
-  private:
-	Star* star;
-	std::map<std::string, CelestialBody*> bodies;
-
+  protected:
+	Orbitable* rootOrbitable;
 	double declinationTilt;
 
-	// JSON loading
-	unsigned int current;
-	QProgressDialog* progress;
+	void indexNewOrbitable(Orbitable* orbitable);
+
+  private:
+	std::string name;
+
+	// indexing dictionaries
+	std::map<std::string, Orbitable*> orbitables;
+	std::map<std::string, Orbitable*> binaries;
+	std::map<std::string, CelestialBody*> celestialBodies;
+	std::map<std::string, Star*> stars;
+	std::map<std::string, Planet*> planets;
+	std::map<std::string, Planet*> firstClassPlanets;
+	std::map<std::string, Planet*> satellitePlanets;
+
+	// JSON loading TEMP?
+	/*unsigned int current;
+	QProgressDialog* progress;*/
 };
 
 #endif // ORBITALSYSTEM_HPP

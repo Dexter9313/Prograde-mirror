@@ -18,103 +18,235 @@
 
 #include "../../include/physics/OrbitalSystem.hpp"
 
-OrbitalSystem::OrbitalSystem(QJsonObject const& json)
+OrbitalSystem::OrbitalSystem(std::string name)
+    : name(std::move(name))
 {
-	if(json["stars"] == QJsonValue::Undefined
-	   || json["stars"].toArray().size() > 1)
+}
+
+OrbitalSystem::OrbitalSystem(std::string name, QJsonObject const& json)
+    : name(std::move(name))
+{
+	/*if(json["stars"].toArray().size() != 1)
+	{
+	    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+	    qWarning() << "Only single-star systems are supported right now.";
+	    exit(EXIT_FAILURE);
+	}*/
+
+	if(json.contains("binaries"))
+	{
+		if(json.contains("stars") || json.contains("planets"))
+		{
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			qWarning() << "WARNING: Ill-formed JSON : Several root orbitable "
+			              "types declared. Taking binary as root...";
+		}
+
+		QJsonArray binArray(json["binaries"].toArray());
+		if(binArray.size() > 1)
+		{
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			qWarning()
+			    << "WARNING: Ill-formed JSON : Several binaries declared "
+			       "as root orbitable. Taking first binary as root...";
+		}
+		else if(binArray.empty())
+		{
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			qWarning()
+			    << "ERROR: Ill-formed JSON : Root \"binaries\" array is empty.";
+			exit(EXIT_FAILURE);
+		}
+		QJsonObject jsonBin(binArray[0].toObject());
+		rootOrbitable = new Orbitable(Orbitable::Type::BINARY, jsonBin, *this);
+		rootOrbitable->parseChildren(jsonBin);
+	}
+	else if(json.contains("stars"))
+	{
+		if(json.contains("planets"))
+		{
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			qWarning() << "WARNING: Ill-formed JSON : Several root orbitable "
+			              "types declared. Taking star as root...";
+		}
+
+		QJsonArray starArray(json["stars"].toArray());
+		if(starArray.size() > 1)
+		{
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			qWarning() << "WARNING: Ill-formed JSON : Several stars declared "
+			              "as root orbitable. Taking first star as root...";
+		}
+		else if(starArray.empty())
+		{
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			qWarning()
+			    << "ERROR: Ill-formed JSON : Root \"stars\" array is empty.";
+			exit(EXIT_FAILURE);
+		}
+		QJsonObject jsonStar(starArray[0].toObject());
+		rootOrbitable = new Star(jsonStar, *this);
+		rootOrbitable->parseChildren(jsonStar);
+	}
+	else if(json.contains("planets"))
+	{
+		QJsonArray planetArray(json["planets"].toArray());
+		if(planetArray.size() > 1)
+		{
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			qWarning() << "WARNING: Ill-formed JSON : Several planets declared "
+			              "as root orbitable. Taking first planet as root...";
+		}
+		else if(planetArray.empty())
+		{
+			// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+			qWarning()
+			    << "ERROR: Ill-formed JSON : Root \"planets\" array is empty.";
+			exit(EXIT_FAILURE);
+		}
+		QJsonObject jsonPlanet(planetArray[0].toObject());
+		rootOrbitable = new Planet(jsonPlanet, *this);
+		rootOrbitable->parseChildren(jsonPlanet);
+	}
+	else
 	{
 		// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-		qWarning() << "Only single-star systems are supported right now.";
+		qWarning() << "ERROR: Ill-formed JSON : System is empty or doesn't "
+		              "contain a root binary, star or planet (can't find keys "
+		              "\"binaries\", \"stars\" or \"planets\" at root level).";
 		exit(EXIT_FAILURE);
 	}
-
-	QJsonObject jsonStar(json["stars"].toArray()[0].toObject());
-
-	star            = new Star(jsonStar);
+	// generate names for orbitables that don't have any
+	generateStarsNames();
+	rootOrbitable->generateBinariesNames();
+	rootOrbitable->generatePlanetsNames();
+	indexNewOrbitable(rootOrbitable);
 	declinationTilt = json["declinationTilt"].toDouble();
 
-	QJsonArray planets(jsonStar["planets"].toArray());
-
-	current  = 0;
-	progress = new QProgressDialog(QObject::tr("Loading System..."), QString(),
-	                               0, planets.size());
-	for(auto val : planets)
+	for(auto orbitable : rootOrbitable->getAllDescendants())
 	{
-		createChild(val.toObject());
-
-		++current;
-		progress->setValue(current);
-		QCoreApplication::processEvents();
+		indexNewOrbitable(orbitable);
 	}
-	delete progress;
 }
 
-OrbitalSystem::OrbitalSystem(std::string const& starName,
-                             Star::Parameters const& starParams,
+OrbitalSystem::OrbitalSystem(std::string name, Orbitable* rootOrbitable,
                              double declinationTilt)
-    : star(new Star(starName, starParams))
+    : rootOrbitable(rootOrbitable)
     , declinationTilt(declinationTilt)
+    , name(std::move(name))
 {
-}
-
-void OrbitalSystem::createChild(QJsonObject const& json)
-{
-	auto body = new CelestialBody(json, star->getParameters().mass);
-	bodies[body->getName()] = body;
-	for(auto child : body->getAllDescendants())
+	indexNewOrbitable(rootOrbitable);
+	for(auto orbitable : rootOrbitable->getAllDescendants())
 	{
-		bodies[child->getName()] = child;
+		indexNewOrbitable(orbitable);
 	}
 }
 
-void OrbitalSystem::createChild(
-    std::string const& name, Orbit::Parameters const& orbitalParameters,
-    CelestialBody::Parameters const& physicalParameters,
-    std::string const& parent)
+void OrbitalSystem::generateStarsNames()
 {
-	if(!parent.empty())
+	if(rootOrbitable->getOrbitableType() == Orbitable::Type::STAR)
 	{
-		bodies[name] = bodies[parent]->createChild(orbitalParameters,
-		                                           physicalParameters);
+		rootOrbitable->setName(name);
+		return;
+	}
+
+	std::vector<Orbitable*> stars(
+	    rootOrbitable->getAllDescendants(Orbitable::Type::STAR));
+
+	// sort by mass
+	std::map<double, Orbitable*> sorted;
+	for(auto star : stars)
+	{
+		sorted[dynamic_cast<Star*>(star)->getCelestialBodyParameters().mass]
+		    = star;
+	}
+
+	// set their name by decreasing mass
+	char starLetter('A');
+	for(auto iter = sorted.rbegin(); iter != sorted.rend(); ++iter)
+	{
+		iter->second->setName(name + " " + starLetter);
+		++starLetter;
+	}
+}
+
+void OrbitalSystem::addChild(Orbitable* child, std::string const& parent)
+{
+	if(parent.empty())
+	{
+		rootOrbitable->addChild(child);
 	}
 	else
 	{
-		bodies[name] = new CelestialBody(star->getParameters().mass,
-		                                 orbitalParameters, physicalParameters);
+		orbitables[parent]->addChild(child);
 	}
+
+	indexNewOrbitable(child);
 }
 
-void OrbitalSystem::createChild(
-    std::string const& name,
-    CelestialBody::Parameters const& physicalParameters,
-    std::string const& parent)
+Orbitable* OrbitalSystem::operator[](std::string const& name)
 {
-	if(!parent.empty())
+	return orbitables[name];
+}
+
+Orbitable const* OrbitalSystem::operator[](std::string const& name) const
+{
+	return orbitables.at(name);
+}
+
+std::vector<std::string> OrbitalSystem::getAllOrbitablesNames() const
+{
+	std::vector<std::string> result;
+
+	for(auto pair : orbitables)
 	{
-		bodies[name] = bodies[parent]->createChild(name, physicalParameters);
+		result.push_back(pair.first);
 	}
-	else
+
+	return result;
+}
+
+std::vector<Orbitable*> OrbitalSystem::getAllOrbitablesPointers() const
+{
+	std::vector<Orbitable*> result;
+
+	for(auto pair : orbitables)
 	{
-		bodies[name] = new CelestialBody(star->getParameters().mass, name,
-		                                 physicalParameters);
+		result.push_back(pair.second);
 	}
+
+	return result;
 }
 
-CelestialBody* OrbitalSystem::operator[](std::string const& name)
+std::vector<std::string> OrbitalSystem::getAllBinariesNames() const
 {
-	return bodies[name];
+	std::vector<std::string> result;
+
+	for(auto pair : binaries)
+	{
+		result.push_back(pair.first);
+	}
+
+	return result;
 }
 
-CelestialBody const* OrbitalSystem::operator[](std::string const& name) const
+std::vector<Orbitable*> OrbitalSystem::getAllBinariesPointers() const
 {
-	return bodies.at(name);
+	std::vector<Orbitable*> result;
+
+	for(auto pair : binaries)
+	{
+		result.push_back(pair.second);
+	}
+
+	return result;
 }
 
 std::vector<std::string> OrbitalSystem::getAllCelestialBodiesNames() const
 {
 	std::vector<std::string> result;
 
-	for(auto pair : bodies)
+	for(auto pair : celestialBodies)
 	{
 		result.push_back(pair.first);
 	}
@@ -126,7 +258,7 @@ std::vector<CelestialBody*> OrbitalSystem::getAllCelestialBodiesPointers() const
 {
 	std::vector<CelestialBody*> result;
 
-	for(auto pair : bodies)
+	for(auto pair : celestialBodies)
 	{
 		result.push_back(pair.second);
 	}
@@ -134,32 +266,97 @@ std::vector<CelestialBody*> OrbitalSystem::getAllCelestialBodiesPointers() const
 	return result;
 }
 
-std::vector<std::string> OrbitalSystem::getParentCelestialBodiesNames() const
+std::vector<std::string> OrbitalSystem::getAllStarsNames() const
 {
 	std::vector<std::string> result;
 
-	for(auto pair : bodies)
+	for(auto pair : stars)
 	{
-		if(pair.second->getParent() == nullptr)
-		{
-			result.push_back(pair.first);
-		}
+		result.push_back(pair.first);
 	}
 
 	return result;
 }
 
-std::vector<CelestialBody*>
-    OrbitalSystem::getParentCelestialBodiesPointers() const
+std::vector<Star*> OrbitalSystem::getAllStarsPointers() const
 {
-	std::vector<CelestialBody*> result;
+	std::vector<Star*> result;
 
-	for(auto pair : bodies)
+	for(auto pair : stars)
 	{
-		if(pair.second->getParent() == nullptr)
-		{
-			result.push_back(pair.second);
-		}
+		result.push_back(pair.second);
+	}
+
+	return result;
+}
+
+std::vector<std::string> OrbitalSystem::getAllPlanetsNames() const
+{
+	std::vector<std::string> result;
+
+	for(auto pair : planets)
+	{
+		result.push_back(pair.first);
+	}
+
+	return result;
+}
+
+std::vector<Planet*> OrbitalSystem::getAllPlanetsPointers() const
+{
+	std::vector<Planet*> result;
+
+	for(auto pair : planets)
+	{
+		result.push_back(pair.second);
+	}
+
+	return result;
+}
+
+std::vector<std::string> OrbitalSystem::getAllFirstClassPlanetsNames() const
+{
+	std::vector<std::string> result;
+
+	for(auto pair : firstClassPlanets)
+	{
+		result.push_back(pair.first);
+	}
+
+	return result;
+}
+
+std::vector<Planet*> OrbitalSystem::getAllFirstClassPlanetsPointers() const
+{
+	std::vector<Planet*> result;
+
+	for(auto pair : firstClassPlanets)
+	{
+		result.push_back(pair.second);
+	}
+
+	return result;
+}
+
+std::vector<std::string> OrbitalSystem::getAllSatellitePlanetsNames() const
+{
+	std::vector<std::string> result;
+
+	for(auto pair : satellitePlanets)
+	{
+		result.push_back(pair.first);
+	}
+
+	return result;
+}
+
+std::vector<Planet*> OrbitalSystem::getAllSatellitePlanetsPointers() const
+{
+	std::vector<Planet*> result;
+
+	for(auto pair : satellitePlanets)
+	{
+		result.push_back(pair.second);
 	}
 
 	return result;
@@ -169,27 +366,61 @@ QJsonObject OrbitalSystem::getJSONRepresentation() const
 {
 	QJsonObject result;
 	result["declinationTilt"] = declinationTilt;
-	QJsonArray stars;
-	QJsonObject starJSON(star->getJSONRepresentation());
 
-	QJsonArray planets;
-	for(auto body : getParentCelestialBodiesPointers())
+	QJsonArray arr;
+	arr.push_back(rootOrbitable->getJSONRepresentation());
+
+	if(rootOrbitable->getOrbitableType() == Orbitable::Type::BINARY)
 	{
-		QJsonObject bodyObj = body->getJSONRepresentation();
-		planets.push_back(bodyObj);
+		result["binaries"] = arr;
 	}
-	starJSON["planets"] = planets;
-
-	stars.push_back(starJSON);
-	result["stars"] = stars;
+	else if(rootOrbitable->getOrbitableType() == Orbitable::Type::STAR)
+	{
+		result["stars"] = arr;
+	}
+	else
+	{
+		result["planets"] = arr;
+	}
 
 	return result;
 }
 
 OrbitalSystem::~OrbitalSystem()
 {
-	for(CelestialBody* parentBody : getParentCelestialBodiesPointers())
+	delete rootOrbitable;
+}
+
+void OrbitalSystem::indexNewOrbitable(Orbitable* orbitable)
+{
+	orbitables[orbitable->getName()] = orbitable;
+	if(orbitable->getOrbitableType() == Orbitable::Type::BINARY)
 	{
-		delete parentBody;
+		binaries[orbitable->getName()] = orbitable;
+	}
+	else
+	{
+		auto celestialBody(dynamic_cast<CelestialBody*>(orbitable));
+		celestialBodies[orbitable->getName()] = celestialBody;
+		if(celestialBody->getCelestialBodyType() == CelestialBody::Type::STAR)
+		{
+			auto star(dynamic_cast<Star*>(celestialBody));
+			stars[star->getName()] = star;
+		}
+		else
+		{
+			auto planet(dynamic_cast<Planet*>(celestialBody));
+			planets[planet->getName()] = planet;
+			if(planet->getParent() == nullptr
+			   || planet->getParent()->getOrbitableType()
+			          != Orbitable::Type::PLANET)
+			{
+				firstClassPlanets[planet->getName()] = planet;
+			}
+			else
+			{
+				satellitePlanets[planet->getName()] = planet;
+			}
+		}
 	}
 }

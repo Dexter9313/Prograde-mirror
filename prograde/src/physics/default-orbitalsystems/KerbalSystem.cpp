@@ -22,9 +22,16 @@ double kerbolRadius      = 261600000.0;
 double kerbolTemperature = 5840.0;
 
 KerbalSystem::KerbalSystem()
-    : OrbitalSystem("Kerbol", {kerbolMass, kerbolRadius, kerbolTemperature},
-                    0.0)
+    : OrbitalSystem("Kerbal System")
 {
+	CelestialBody::Parameters physicalParams;
+	physicalParams.mass   = kerbolMass;
+	physicalParams.radius = kerbolRadius;
+	rootOrbitable
+	    = new Star("Kerbol", physicalParams, kerbolTemperature, *this);
+
+	indexNewOrbitable(rootOrbitable);
+
 	createPlanets();
 	createEveSubSystem();
 	createKerbinSubSystem();
@@ -36,6 +43,10 @@ void KerbalSystem::createPlanets()
 {
 	Orbit::Parameters orbitalParams;
 	CelestialBody::Parameters physicalParams;
+	Planet::Parameters planetParams;
+
+	Orbit* orbit;
+	Planet* planet;
 
 	// moho
 	orbitalParams.inclination            = constant::pi * 7.0 / 180.0;
@@ -46,7 +57,10 @@ void KerbalSystem::createPlanets()
 	orbitalParams.meanAnomalyAtEpoch     = 3.14;
 	physicalParams.radius                = 250.0 * radiusMultiplier;
 	physicalParams.color                 = Color(121, 85, 72);
-	createChild("Moho", orbitalParams, physicalParams);
+	orbit  = new Orbit(Orbit::MassiveBodyMass(kerbolMass), orbitalParams);
+	planet = new Planet("Moho", physicalParams, planetParams, *rootOrbitable,
+	                    orbit);
+	addChild(planet, "Kerbol");
 
 	// eve
 	orbitalParams.inclination            = constant::pi * 2.1 / 180.0;
@@ -58,8 +72,11 @@ void KerbalSystem::createPlanets()
 	physicalParams.mass                  = 1.2244127 * 1e23 * massMultiplier;
 	physicalParams.radius                = 700.0 * radiusMultiplier;
 	physicalParams.color                 = Color(106, 27, 154);
-	physicalParams.type                  = CelestialBody::Type::GAZGIANT;
-	createChild("Eve", orbitalParams, physicalParams);
+	planetParams.type                    = Planet::Type::GAZGIANT;
+	orbit  = new Orbit(Orbit::MassiveBodyMass(kerbolMass), orbitalParams);
+	planet = new Planet("Eve", physicalParams, planetParams, *rootOrbitable,
+	                    orbit);
+	addChild(planet, "Kerbol");
 
 	// kerbin
 	orbitalParams.inclination            = constant::pi * 0.0 / 180.0;
@@ -71,8 +88,12 @@ void KerbalSystem::createPlanets()
 	physicalParams.mass                  = 5.2915793 * 1e22 * massMultiplier;
 	physicalParams.radius                = 600.0 * radiusMultiplier;
 	physicalParams.color                 = Color(40, 53, 147);
-	physicalParams.type                  = CelestialBody::Type::TERRESTRIAL;
-	createChild("Kerbin", orbitalParams, physicalParams);
+	planetParams.type                    = Planet::Type::TERRESTRIAL;
+	planetParams.atmosphere              = 0.3;
+	orbit  = new Orbit(Orbit::MassiveBodyMass(kerbolMass), orbitalParams);
+	planet = new Planet("Kerbin", physicalParams, planetParams, *rootOrbitable,
+	                    orbit);
+	addChild(planet, "Kerbol");
 
 	// duna
 	orbitalParams.inclination            = constant::pi * 0.060 / 180.0;
@@ -84,7 +105,11 @@ void KerbalSystem::createPlanets()
 	physicalParams.mass                  = 4.5154812 * 1e21 * massMultiplier;
 	physicalParams.radius                = 320.0 * radiusMultiplier;
 	physicalParams.color                 = Color(244, 67, 54);
-	createChild("Duna", orbitalParams, physicalParams);
+	planetParams.atmosphere              = 0.075;
+	orbit  = new Orbit(Orbit::MassiveBodyMass(kerbolMass), orbitalParams);
+	planet = new Planet("Duna", physicalParams, planetParams, *rootOrbitable,
+	                    orbit);
+	addChild(planet, "Kerbol");
 
 	// dres
 	orbitalParams.inclination            = constant::pi * 5.0 / 180.0;
@@ -95,7 +120,10 @@ void KerbalSystem::createPlanets()
 	orbitalParams.meanAnomalyAtEpoch     = 314;
 	physicalParams.radius                = 138.0 * radiusMultiplier;
 	physicalParams.color                 = Color(158, 158, 158);
-	createChild("Dres", orbitalParams, physicalParams);
+	orbit  = new Orbit(Orbit::MassiveBodyMass(kerbolMass), orbitalParams);
+	planet = new Planet("Dres", physicalParams, planetParams, *rootOrbitable,
+	                    orbit);
+	addChild(planet, "Kerbol");
 
 	// jool
 	orbitalParams.inclination            = constant::pi * 1.3040 / 180.0;
@@ -107,8 +135,11 @@ void KerbalSystem::createPlanets()
 	physicalParams.mass                  = 4.2332635 * 1e24 * massMultiplier;
 	physicalParams.radius                = 6000.0 * radiusMultiplier;
 	physicalParams.color                 = Color(104, 159, 56);
-	physicalParams.type                  = CelestialBody::Type::GAZGIANT;
-	createChild("Jool", orbitalParams, physicalParams);
+	planetParams.type                    = Planet::Type::GAZGIANT;
+	orbit  = new Orbit(Orbit::MassiveBodyMass(kerbolMass), orbitalParams);
+	planet = new Planet("Jool", physicalParams, planetParams, *rootOrbitable,
+	                    orbit);
+	addChild(planet, "Kerbol");
 
 	// eeloo
 	orbitalParams.inclination            = constant::pi * 6.150 / 180.0;
@@ -119,14 +150,24 @@ void KerbalSystem::createPlanets()
 	orbitalParams.meanAnomalyAtEpoch     = 3.14;
 	physicalParams.radius                = 210.0 * radiusMultiplier;
 	physicalParams.color                 = Color(240, 240, 240);
-	physicalParams.type                  = CelestialBody::Type::TERRESTRIAL;
-	createChild("Eeloo", orbitalParams, physicalParams);
+	planetParams.type                    = Planet::Type::TERRESTRIAL;
+	orbit  = new Orbit(Orbit::MassiveBodyMass(kerbolMass), orbitalParams);
+	planet = new Planet("Eeloo", physicalParams, planetParams, *rootOrbitable,
+	                    orbit);
+	addChild(planet, "Kerbol");
 }
 
 void KerbalSystem::createEveSubSystem()
 {
 	Orbit::Parameters orbitalParams;
 	CelestialBody::Parameters physicalParams;
+
+	Orbitable* eve((*this)["Eve"]);
+	double eveMass(
+	    dynamic_cast<CelestialBody*>(eve)->getCelestialBodyParameters().mass);
+
+	Orbit* orbit;
+	Planet* planet;
 
 	// gilly
 	orbitalParams.inclination            = constant::pi * 12.0 / 180.0;
@@ -137,13 +178,23 @@ void KerbalSystem::createEveSubSystem()
 	orbitalParams.meanAnomalyAtEpoch     = 0.9;
 	physicalParams.radius                = 13.0 * radiusMultiplier;
 	physicalParams.color                 = Color(188, 170, 164);
-	createChild("Gilly", orbitalParams, physicalParams, "Eve");
+	orbit  = new Orbit(Orbit::MassiveBodyMass(eveMass), orbitalParams);
+	planet = new Planet("Gilly", physicalParams, {}, *eve, orbit);
+	addChild(planet, "Eve");
 }
 
 void KerbalSystem::createKerbinSubSystem()
 {
 	Orbit::Parameters orbitalParams;
 	CelestialBody::Parameters physicalParams;
+
+	Orbitable* kerbin((*this)["Kerbin"]);
+	double kerbinMass(dynamic_cast<CelestialBody*>(kerbin)
+	                      ->getCelestialBodyParameters()
+	                      .mass);
+
+	Orbit* orbit;
+	Planet* planet;
 
 	// mun
 	orbitalParams.inclination            = constant::pi * 0.0 / 180.0;
@@ -154,7 +205,9 @@ void KerbalSystem::createKerbinSubSystem()
 	orbitalParams.meanAnomalyAtEpoch     = 1.7;
 	physicalParams.radius                = 200.0 * radiusMultiplier;
 	physicalParams.color                 = Color(158, 158, 158);
-	createChild("Mun", orbitalParams, physicalParams, "Kerbin");
+	orbit  = new Orbit(Orbit::MassiveBodyMass(kerbinMass), orbitalParams);
+	planet = new Planet("Mun", physicalParams, {}, *kerbin, orbit);
+	addChild(planet, "Kerbin");
 
 	// minmus
 	orbitalParams.inclination            = constant::pi * 6.0 / 180.0;
@@ -165,13 +218,22 @@ void KerbalSystem::createKerbinSubSystem()
 	orbitalParams.meanAnomalyAtEpoch     = 0.9;
 	physicalParams.radius                = 60.0 * radiusMultiplier;
 	physicalParams.color                 = Color(178, 223, 219);
-	createChild("Minmus", orbitalParams, physicalParams, "Kerbin");
+	orbit  = new Orbit(Orbit::MassiveBodyMass(kerbinMass), orbitalParams);
+	planet = new Planet("Minmus", physicalParams, {}, *kerbin, orbit);
+	addChild(planet, "Kerbin");
 }
 
 void KerbalSystem::createDunaSubSystem()
 {
 	Orbit::Parameters orbitalParams;
 	CelestialBody::Parameters physicalParams;
+
+	Orbitable* duna((*this)["Duna"]);
+	double dunaMass(
+	    dynamic_cast<CelestialBody*>(duna)->getCelestialBodyParameters().mass);
+
+	Orbit* orbit;
+	Planet* planet;
 
 	// ike
 	orbitalParams.inclination            = constant::pi * 0.2 / 180.0;
@@ -182,13 +244,23 @@ void KerbalSystem::createDunaSubSystem()
 	orbitalParams.meanAnomalyAtEpoch     = 1.7;
 	physicalParams.radius                = 130.0 * radiusMultiplier;
 	physicalParams.color                 = Color(158, 158, 158);
-	createChild("Ike", orbitalParams, physicalParams, "Duna");
+	orbit  = new Orbit(Orbit::MassiveBodyMass(dunaMass), orbitalParams);
+	planet = new Planet("Ike", physicalParams, {}, *duna, orbit);
+	addChild(planet, "Duna");
 }
 
 void KerbalSystem::createJoolSubSystem()
 {
 	Orbit::Parameters orbitalParams;
 	CelestialBody::Parameters physicalParams;
+	Planet::Parameters planetParams;
+
+	Orbitable* jool((*this)["Jool"]);
+	double joolMass(
+	    dynamic_cast<CelestialBody*>(jool)->getCelestialBodyParameters().mass);
+
+	Orbit* orbit;
+	Planet* planet;
 
 	// laythe
 	orbitalParams.inclination            = constant::pi * 0.0 / 180.0;
@@ -199,7 +271,10 @@ void KerbalSystem::createJoolSubSystem()
 	orbitalParams.meanAnomalyAtEpoch     = 3.14;
 	physicalParams.radius                = 500.0 * radiusMultiplier;
 	physicalParams.color                 = Color(26, 35, 126);
-	createChild("Laythe", orbitalParams, physicalParams, "Jool");
+	planetParams.atmosphere              = 0.3;
+	orbit  = new Orbit(Orbit::MassiveBodyMass(joolMass), orbitalParams);
+	planet = new Planet("Laythe", physicalParams, {}, *jool, orbit);
+	addChild(planet, "Jool");
 
 	// vall
 	orbitalParams.inclination            = constant::pi * 0.0 / 180.0;
@@ -210,7 +285,9 @@ void KerbalSystem::createJoolSubSystem()
 	orbitalParams.meanAnomalyAtEpoch     = 0.9;
 	physicalParams.radius                = 300.0 * radiusMultiplier;
 	physicalParams.color                 = Color(187, 222, 251);
-	createChild("Vall", orbitalParams, physicalParams, "Jool");
+	orbit  = new Orbit(Orbit::MassiveBodyMass(joolMass), orbitalParams);
+	planet = new Planet("Vall", physicalParams, {}, *jool, orbit);
+	addChild(planet, "Jool");
 
 	// tylo
 	orbitalParams.inclination            = constant::pi * 0.0250 / 180.0;
@@ -221,7 +298,9 @@ void KerbalSystem::createJoolSubSystem()
 	orbitalParams.meanAnomalyAtEpoch     = 3.14;
 	physicalParams.radius                = 600.0 * radiusMultiplier;
 	physicalParams.color                 = Color(215, 204, 233);
-	createChild("Tylo", orbitalParams, physicalParams, "Jool");
+	orbit  = new Orbit(Orbit::MassiveBodyMass(joolMass), orbitalParams);
+	planet = new Planet("Tylo", physicalParams, {}, *jool, orbit);
+	addChild(planet, "Jool");
 
 	// bop
 	orbitalParams.inclination            = constant::pi * 15.0 / 180.0;
@@ -232,7 +311,9 @@ void KerbalSystem::createJoolSubSystem()
 	orbitalParams.meanAnomalyAtEpoch     = 0.9;
 	physicalParams.radius                = 65.0 * radiusMultiplier;
 	physicalParams.color                 = Color(121, 85, 72);
-	createChild("Bop", orbitalParams, physicalParams, "Jool");
+	orbit  = new Orbit(Orbit::MassiveBodyMass(joolMass), orbitalParams);
+	planet = new Planet("Bop", physicalParams, {}, *jool, orbit);
+	addChild(planet, "Jool");
 
 	// pol
 	orbitalParams.inclination            = constant::pi * 4.250 / 180.0;
@@ -243,5 +324,7 @@ void KerbalSystem::createJoolSubSystem()
 	orbitalParams.meanAnomalyAtEpoch     = 0.9;
 	physicalParams.radius                = 44.0 * radiusMultiplier;
 	physicalParams.color                 = Color(215, 204, 233);
-	createChild("Pol", orbitalParams, physicalParams, "Jool");
+	orbit  = new Orbit(Orbit::MassiveBodyMass(joolMass), orbitalParams);
+	planet = new Planet("Pol", physicalParams, {}, *jool, orbit);
+	addChild(planet, "Jool");
 }

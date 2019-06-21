@@ -16,8 +16,8 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef PLANET_H
-#define PLANET_H
+#ifndef DETAILEDPLANETRENDERER_H
+#define DETAILEDPLANETRENDERER_H
 
 #include <QImageReader>
 #include <QtConcurrent>
@@ -30,11 +30,11 @@
 
 #include "graphics/renderers/Rings.hpp"
 
-class Planet
+class DetailedPlanetRenderer
 {
   public:
-	Planet(float radius                = 1.f,
-	       QVector3D const& oblateness = QVector3D(1.0, 1.0, 1.0));
+	DetailedPlanetRenderer(float radius = 1.f, QVector3D const& oblateness
+	                                           = QVector3D(1.0, 1.0, 1.0));
 
 	void initTerrestrial(QColor const& color = QColor(255, 255, 255),
 	                     float polarLatitude = 90.f, float atmosphere = 0.f);
@@ -61,7 +61,7 @@ class Planet
 	            QMatrix4x4 const& properRotation, bool flipCoords = false);
 	bool isValid() const { return valid && !modelIsLoading; };
 	bool isLoading() const { return modelIsLoading || !futures.empty(); };
-	~Planet();
+	~DetailedPlanetRenderer();
 
   private:
 	void loadParallel(QString const& path, unsigned int index);
@@ -99,4 +99,4 @@ class Planet
 	GLHandler::PixelBufferObject pbos[2];
 };
 
-#endif // PLANET_H
+#endif // DETAILEDPLANETRENDERER_H

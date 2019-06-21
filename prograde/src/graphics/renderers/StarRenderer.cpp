@@ -19,42 +19,28 @@
 #include "graphics/renderers/StarRenderer.hpp"
 
 StarRenderer::StarRenderer(Star const* drawnStar)
-    : drawnStar(drawnStar)
+    : CelestialBodyRenderer(drawnStar,
+                            GLHandler::sRGBToLinear(Utils::toQt(
+                                drawnStar->getCelestialBodyParameters().color)))
     , billboard(getBillboardImage(drawnStar))
-    , pointShader(GLHandler::newShader("colored"))
-    , pointMesh(GLHandler::newMesh())
 {
 	billboardOriginalEdgeSize
-	    = drawnStar->getParameters().radius * 512.0 / 30.0;
-
-	// POINT
-	QColor color(GLHandler::sRGBToLinear(Utils::toQt(drawnStar->getColor())));
-	float r, g, b;
-	r = color.redF();
-	g = color.greenF();
-	b = color.blueF();
-	GLHandler::setVertices(pointMesh, {0.f, 0.f, 0.f, r, g, b, 1.f},
-	                       pointShader, {{"position", 3}, {"color", 4}});
+	    = drawnStar->getCelestialBodyParameters().radius * 39.253; // eyeballed
 }
 
-void StarRenderer::updateMesh(UniversalTime /* uT */, Camera const& camera)
+void StarRenderer::updateMesh(UniversalTime uT, Camera const& camera)
 {
-	camDist = camera.getAbsolutePosition().length();
-	float centerPosition(300.f);
-	double scale(centerPosition / camDist);
-	pointPos           = Utils::toQt(-1 * scale * camera.getAbsolutePosition());
-	billboard.position = pointPos;
+	CelestialBodyRenderer::updateMesh(uT, camera);
+	billboard.position = position;
 	billboard.width    = billboardOriginalEdgeSize * scale;
 }
 
 void StarRenderer::render(BasicCamera const& camera)
 {
-	if(drawnStar->getParameters().radius / camDist < 0.0007)
+	double camDist(camRelPos.length());
+	if(drawnBody->getCelestialBodyParameters().radius / camDist < 0.0007)
 	{
-		QMatrix4x4 model;
-		model.translate(pointPos);
-		GLHandler::setUpRender(pointShader, model);
-		GLHandler::render(pointMesh);
+		CelestialBodyRenderer::render(camera);
 	}
 	else
 	{
@@ -64,7 +50,7 @@ void StarRenderer::render(BasicCamera const& camera)
 
 QImage StarRenderer::getBillboardImage(Star const* star)
 {
-	QColor starCol(Utils::toQt(star->getColor()));
+	QColor starCol(Utils::toQt(star->getCelestialBodyParameters().color));
 	QImage img("data/prograde/images/star.png");
 	for(int i(0); i < img.height(); ++i)
 	{
@@ -80,10 +66,4 @@ QImage StarRenderer::getBillboardImage(Star const* star)
 		}
 	}
 	return img;
-}
-
-StarRenderer::~StarRenderer()
-{
-	GLHandler::deleteMesh(pointMesh);
-	GLHandler::deleteShader(pointShader);
 }

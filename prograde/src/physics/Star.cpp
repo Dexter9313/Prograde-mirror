@@ -18,32 +18,45 @@
 
 #include "physics/Star.hpp"
 
-Star::Star(QJsonObject const& json)
+Star::Star(QJsonObject const& json, OrbitalSystem const& system)
+    : CelestialBody(CelestialBody::Type::STAR, json, system)
 {
-	name                   = json["name"].toString().toStdString();
-	parameters.mass        = json["mass"].toDouble();
-	parameters.radius      = json["radius"].toDouble(70000000.0);
-	parameters.temperature = json["temperature"].toDouble(6000.0);
+	temperature      = json["temperature"].toDouble(6000.0);
+	parameters.color = computeColor();
 }
 
-Star::Star(std::string name, Parameters const& params)
-    : name(std::move(name))
-    , parameters(params)
+Star::Star(QJsonObject const& json, Orbitable const& parent)
+    : CelestialBody(CelestialBody::Type::STAR, json, parent)
 {
+	temperature      = json["temperature"].toDouble(6000.0);
+	parameters.color = computeColor();
 }
 
-Color Star::getColor() const
+Star::Star(std::string const name, CelestialBody::Parameters const& parameters,
+           double temperature, Orbitable const& parent, Orbit* orbit)
+    : CelestialBody(CelestialBody::Type::STAR, name, parameters, parent, orbit)
+    , temperature(temperature)
 {
-	Color sRGBcolor(blackbody::colorFromTemperature(parameters.temperature));
+	this->parameters.color = computeColor();
+}
+
+Star::Star(std::string const name, CelestialBody::Parameters const& parameters,
+           double temperature, OrbitalSystem const& system, Orbit* orbit)
+    : CelestialBody(CelestialBody::Type::STAR, name, parameters, system, orbit)
+    , temperature(temperature)
+{
+	this->parameters.color = computeColor();
+}
+
+Color Star::computeColor() const
+{
+	Color sRGBcolor(blackbody::colorFromTemperature(temperature));
 	return sRGBcolor;
 }
 
 QJsonObject Star::getJSONRepresentation() const
 {
-	QJsonObject result;
-	result["name"]        = name.c_str();
-	result["mass"]        = parameters.mass;
-	result["radius"]      = parameters.radius;
-	result["temperature"] = parameters.temperature;
+	QJsonObject result(CelestialBody::getJSONRepresentation());
+	result["temperature"] = temperature;
 	return result;
 }

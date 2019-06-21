@@ -24,31 +24,30 @@
 #include <physics/Color.hpp>
 #include <string>
 
+#include "CelestialBody.hpp"
 #include "physics/blackbody.hpp"
 
-class Star
+class Star : public CelestialBody
 {
   public:
-	struct Parameters
-	{
-		double mass;        // kg
-		double radius;      // m
-		double temperature; // K
-	};
+	// constructors recompute CelestialBody::Parameters' color depending on
+	// temperature
+	Star(QJsonObject const& json, OrbitalSystem const& system);
+	Star(QJsonObject const& json, Orbitable const& parent);
+	Star(std::string const name, CelestialBody::Parameters const& parameters,
+	     double temperature, Orbitable const& parent, Orbit* orbit = nullptr);
+	Star(std::string const name, CelestialBody::Parameters const& parameters,
+	     double temperature, OrbitalSystem const& system,
+	     Orbit* orbit = nullptr);
 
-	Star(QJsonObject const& json);
-	Star(std::string name, Parameters const& params);
-	Star(Star const& copiedStar) = default;
-	std::string const& getName() { return name; };
-	Parameters getParameters() const { return parameters; };
-	// sRGB
-	Color getColor() const;
-	QJsonObject getJSONRepresentation() const;
+	double getTemperature() const { return temperature; };
+	virtual QJsonObject getJSONRepresentation() const override;
 
   private:
-	std::string name;
+	double temperature;
 
-	Parameters parameters;
+	// sRGB
+	Color computeColor() const;
 };
 
 #endif // STAR_HPP

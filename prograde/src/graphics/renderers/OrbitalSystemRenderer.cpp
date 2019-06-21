@@ -19,21 +19,21 @@
 
 OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
     : drawnSystem(drawnSystem)
-    , starRenderer(drawnSystem->getStar())
 {
-	for(auto body : drawnSystem->getAllCelestialBodiesPointers())
+	for(auto body : drawnSystem->getAllPlanetsPointers())
 	{
-		bodyRenderers.push_back(new CelestialBodyRenderer(
-		    body, drawnSystem->getStar(), drawnSystem->getDeclinationTilt()));
+		bodyRenderers.push_back(new PlanetRenderer(body));
+	}
+	for(auto star : drawnSystem->getAllStarsPointers())
+	{
+		bodyRenderers.push_back(new StarRenderer(star));
 	}
 }
 
 void OrbitalSystemRenderer::updateMesh(UniversalTime uT, Camera const& camera)
 {
-	starRenderer.updateMesh(uT, camera);
-
 	sortedRenderers.clear();
-	for(CelestialBodyRenderer* bodyRenderer : bodyRenderers)
+	for(auto bodyRenderer : bodyRenderers)
 	{
 		sortedRenderers[camera
 		                    .getRelativePositionTo(bodyRenderer->getDrawnBody(),
@@ -43,31 +43,26 @@ void OrbitalSystemRenderer::updateMesh(UniversalTime uT, Camera const& camera)
 		bodyRenderer->updateMesh(uT, camera);
 	}
 
-	float centerPosition(300.f);
-	for(std::pair<double, CelestialBodyRenderer*> rendererPair :
-	    sortedRenderers)
+	for(auto rendererPair : sortedRenderers)
 	{
-		rendererPair.second->setCenterPosition(centerPosition);
 		rendererPair.second->updateMesh(uT, camera);
 	}
 }
 
 void OrbitalSystemRenderer::render(BasicCamera const& camera)
 {
-	starRenderer.render(camera);
-
 	auto it(sortedRenderers.end());
 	while(it != sortedRenderers.begin())
 	{
 		--it;
 		GLHandler::clearDepthBuffer();
-		it->second->render();
+		it->second->render(camera);
 	}
 }
 
 OrbitalSystemRenderer::~OrbitalSystemRenderer()
 {
-	for(CelestialBodyRenderer* bodyRenderer : bodyRenderers)
+	for(auto bodyRenderer : bodyRenderers)
 	{
 		delete bodyRenderer;
 	}

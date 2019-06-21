@@ -22,7 +22,8 @@ void Camera::updateUT(UniversalTime uT)
 	angleAboveXY = angleAboveXY > 3.1415f / 2.f ? 3.1415f / 2.f : angleAboveXY;
 	angleAboveXY
 	    = angleAboveXY < -3.1415f / 2.f ? -3.1415f / 2.f : angleAboveXY;
-	relativePosition.setXYZ(distance + target->getParameters().radius, 0, 0);
+	relativePosition.setXYZ(
+	    distance + target->getCelestialBodyParameters().radius, 0, 0);
 	relativePosition.rotateAlongY(angleAboveXY);
 	relativePosition.rotateAlongZ(angleAroundZ);
 

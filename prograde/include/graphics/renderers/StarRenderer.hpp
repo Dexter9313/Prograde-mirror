@@ -21,29 +21,20 @@
 #include "Billboard.hpp"
 #include "Camera.hpp"
 #include "graphics/Utils.hpp"
+#include "graphics/renderers/CelestialBodyRenderer.hpp"
 #include "physics/Star.hpp"
 #include "physics/UniversalTime.hpp"
 
-class StarRenderer
+class StarRenderer : public CelestialBodyRenderer
 {
   public:
 	StarRenderer(Star const* drawnStar);
-	void updateMesh(UniversalTime uT, Camera const& camera);
-	void render(BasicCamera const& camera);
-	~StarRenderer();
+	virtual void updateMesh(UniversalTime uT, Camera const& camera) override;
+	virtual void render(BasicCamera const& camera) override;
 
   private:
-	Star const* drawnStar;
-
-	double camDist;
-
 	double billboardOriginalEdgeSize;
 	Billboard billboard;
-
-	// POINT
-	GLHandler::ShaderProgram pointShader;
-	GLHandler::Mesh pointMesh;
-	QVector3D pointPos;
 
 	static QImage getBillboardImage(Star const* star);
 };

@@ -16,15 +16,16 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "graphics/renderers/Planet.hpp"
+#include "graphics/renderers/DetailedPlanetRenderer.hpp"
 
-unsigned int& Planet::cubemapsSize()
+unsigned int& DetailedPlanetRenderer::cubemapsSize()
 {
 	static unsigned int cubemapsSize = 2048;
 	return cubemapsSize;
 }
 
-Planet::Planet(float radius, QVector3D const& oblateness)
+DetailedPlanetRenderer::DetailedPlanetRenderer(float radius,
+                                               QVector3D const& oblateness)
     : radius(radius)
     , oblateness(oblateness)
 {
@@ -32,8 +33,9 @@ Planet::Planet(float radius, QVector3D const& oblateness)
 	                                            GL_RGBA16F, true);
 }
 
-void Planet::initTerrestrial(QColor const& color, float polarLatitude,
-                             float atmosphere)
+void DetailedPlanetRenderer::initTerrestrial(QColor const& color,
+                                             float polarLatitude,
+                                             float atmosphere)
 {
 	valid         = true;
 	shader        = GLHandler::newShader("planet/planet", {{"NORMAL", ""}});
@@ -75,8 +77,9 @@ void Planet::initTerrestrial(QColor const& color, float polarLatitude,
 	GLHandler::deleteShader(snorm);
 }
 
-void Planet::initGazGiant(QColor const& color, float bandsIntensity,
-                          float stormsIntensity)
+void DetailedPlanetRenderer::initGazGiant(QColor const& color,
+                                          float bandsIntensity,
+                                          float stormsIntensity)
 {
 	valid  = true;
 	shader = GLHandler::newShader("planet/planet");
@@ -101,7 +104,8 @@ void Planet::initGazGiant(QColor const& color, float bandsIntensity,
 	GLHandler::deleteShader(sdiff);
 }
 
-void Planet::initFromTex(QString const& diffusePath, float atmosphere)
+void DetailedPlanetRenderer::initFromTex(QString const& diffusePath,
+                                         float atmosphere)
 {
 	shader = GLHandler::newShader("planet/planet");
 	mesh   = Primitives::newUnitSphere(shader, 50, 50);
@@ -110,8 +114,9 @@ void Planet::initFromTex(QString const& diffusePath, float atmosphere)
 	this->atmosphere = atmosphere;
 }
 
-void Planet::initFromTex(QString const& diffusePath, QString const& normalPath,
-                         float atmosphere)
+void DetailedPlanetRenderer::initFromTex(QString const& diffusePath,
+                                         QString const& normalPath,
+                                         float atmosphere)
 {
 	shader = GLHandler::newShader("planet/planet", {{"NORMAL", ""}});
 	mesh   = Primitives::newUnitSphere(shader, 50, 50);
@@ -121,12 +126,12 @@ void Planet::initFromTex(QString const& diffusePath, QString const& normalPath,
 	this->atmosphere = atmosphere;
 }
 
-void Planet::updateModel(QString const& modelName)
+void DetailedPlanetRenderer::updateModel(QString const& modelName)
 {
 	loadModelParallel(modelName);
 }
 
-void Planet::updateTextureLoading(bool cancelLoading)
+void DetailedPlanetRenderer::updateTextureLoading(bool cancelLoading)
 {
 	if(futures.empty())
 	{
@@ -202,7 +207,7 @@ void Planet::updateTextureLoading(bool cancelLoading)
 	futures.shrink_to_fit();
 }
 
-float Planet::updateModelLoading()
+float DetailedPlanetRenderer::updateModelLoading()
 {
 	if(!modelIsLoading)
 	{
@@ -251,19 +256,20 @@ float Planet::updateModelLoading()
 	return lastSphereVal;
 }
 
-void Planet::initRings(float innerRing, float outerRing,
-                       QString const& texturePath)
+void DetailedPlanetRenderer::initRings(float innerRing, float outerRing,
+                                       QString const& texturePath)
 {
 	rings = new Rings(innerRing, outerRing, radius, oblateness, texturePath);
 	GLHandler::setShaderParam(shader, "innerRing", innerRing);
 	GLHandler::setShaderParam(shader, "outerRing", outerRing);
 }
 
-void Planet::render(QVector3D const& pos, QVector3D const& lightpos,
-                    float lightradius, QColor const& lightcolor,
-                    std::array<QVector4D, 5> const& neighborsPosRadius,
-                    std::array<QVector3D, 5> const& neighborsOblateness,
-                    QMatrix4x4 const& properRotation, bool flipCoords)
+void DetailedPlanetRenderer::render(
+    QVector3D const& pos, QVector3D const& lightpos, float lightradius,
+    QColor const& lightcolor,
+    std::array<QVector4D, 5> const& neighborsPosRadius,
+    std::array<QVector3D, 5> const& neighborsOblateness,
+    QMatrix4x4 const& properRotation, bool flipCoords)
 {
 	QMatrix4x4 model;
 
@@ -274,11 +280,12 @@ void Planet::render(QVector3D const& pos, QVector3D const& lightpos,
 	       neighborsOblateness, properRotation, flipCoords);
 }
 
-void Planet::render(QMatrix4x4 const& model, QVector3D const& lightpos,
-                    float lightradius, QColor const& lightcolor,
-                    std::array<QVector4D, 5> const& neighborsPosRadius,
-                    std::array<QVector3D, 5> const& neighborsOblateness,
-                    QMatrix4x4 const& properRotation, bool flipCoords)
+void DetailedPlanetRenderer::render(
+    QMatrix4x4 const& model, QVector3D const& lightpos, float lightradius,
+    QColor const& lightcolor,
+    std::array<QVector4D, 5> const& neighborsPosRadius,
+    std::array<QVector3D, 5> const& neighborsOblateness,
+    QMatrix4x4 const& properRotation, bool flipCoords)
 {
 	GLHandler::setShaderParam(shader, "lightpos", lightpos);
 	GLHandler::setShaderParam(shader, "lightradius", lightradius);
@@ -321,7 +328,8 @@ void Planet::render(QMatrix4x4 const& model, QVector3D const& lightpos,
 	}
 }
 
-void Planet::loadParallel(QString const& path, unsigned int index)
+void DetailedPlanetRenderer::loadParallel(QString const& path,
+                                          unsigned int index)
 {
 	unsigned int texmaxsize(QSettings().value("quality/texmaxsize").toUInt());
 	pbos[index]
@@ -344,7 +352,7 @@ void Planet::loadParallel(QString const& path, unsigned int index)
 	}));
 }
 
-void Planet::loadModelParallel(QString const& path)
+void DetailedPlanetRenderer::loadModelParallel(QString const& path)
 {
 	modelIsLoading = true;
 	modelFuture    = QtConcurrent::run([path, this]() {
@@ -353,8 +361,9 @@ void Planet::loadModelParallel(QString const& path)
     });
 }
 
-void Planet::envMap(GLHandler::ShaderProgram& shader, GLHandler::Mesh& mesh,
-                    GLHandler::RenderTarget& renderTarget)
+void DetailedPlanetRenderer::envMap(GLHandler::ShaderProgram& shader,
+                                    GLHandler::Mesh& mesh,
+                                    GLHandler::RenderTarget& renderTarget)
 {
 	GLHandler::generateEnvironmentMap(renderTarget, [shader, mesh]() {
 		GLHandler::setBackfaceCulling(false);
@@ -364,7 +373,7 @@ void Planet::envMap(GLHandler::ShaderProgram& shader, GLHandler::Mesh& mesh,
 	});
 }
 
-Planet::~Planet()
+DetailedPlanetRenderer::~DetailedPlanetRenderer()
 {
 	for(auto& future : futures)
 	{

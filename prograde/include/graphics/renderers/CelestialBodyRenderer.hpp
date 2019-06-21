@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2018 Florian Cabot <florian.cabot@hotmail.fr>
+    Copyright (C) 2019 Florian Cabot <florian.cabot@hotmail.fr>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,72 +16,45 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef CELESTIALBODYRENDERER_HPP
-#define CELESTIALBODYRENDERER_HPP
+#ifndef CELESTIALBODYRENDERER_H
+#define CELESTIALBODYRENDERER_H
 
-#include <QFileInfo>
+#include <QMatrix4x4>
 
 #include "Camera.hpp"
 #include "GLHandler.hpp"
-#include "Planet.hpp"
-#include "Primitives.hpp"
-#include "physics/Star.hpp"
-
 #include "graphics/Utils.hpp"
 #include "physics/CelestialBody.hpp"
-//#include "../shaders/FarCelestialBodyShader.hpp"
+#include "physics/OrbitalSystem.hpp"
 
-class CelestialBodyRenderer //: public Renderer
+class CelestialBodyRenderer
 {
   public:
-	CelestialBodyRenderer(CelestialBody* drawnBody, Star const* star,
-	                      double declinationTilt);
-	void updateMesh(UniversalTime uT, Camera const& camera);
-	void render();
+	CelestialBodyRenderer(CelestialBody const* drawnBody,
+	                      QColor const& pointColor);
+	virtual void updateMesh(UniversalTime uT, Camera const& camera);
+	virtual void render(BasicCamera const& /*camera*/) { renderPoint(); };
 	CelestialBody const* getDrawnBody() const { return drawnBody; };
-	void setCenterPosition(float centerPosition)
-	{
-		this->centerPosition = centerPosition;
-	};
-	~CelestialBodyRenderer();
+	virtual ~CelestialBodyRenderer();
 
-  private:
-	void loadPlanet();
-	void unloadPlanet(bool waitIfPlanetNotLoaded = false);
+  protected:
+	CelestialBody const* drawnBody;
 
-	CelestialBody* drawnBody;
-	const double centralBodyRadius;
-	const double declinationTilt;
-	float centerPosition;
-	int shaderParametersId;
-
-	/*
-	GLHandler::Mesh mesh;
-	GLHandler::ShaderProgram shader;*/
 	QMatrix4x4 model;
-	float boundingSphere;
-	bool culled = false;
+	QVector3D position;
+	Vector3 camRelPos;
+	double scale;
 	double apparentAngle;
 
-	Planet* planet   = nullptr;
-	bool customModel = false;
-	QVector3D lightpos;
-	float lightradius;
-	QColor lightcolor;
 	QMatrix4x4 baseRotation;   // only align axis, no sideral time
 	QMatrix4x4 properRotation; // full rotation, sideral time included
-	std::array<QVector4D, 5>
-	    neighborsPosRadius; // 3D position + radius of 5 closest neighbors
-	std::array<QVector3D, 5>
-	    neighborsOblateness; // oblateness of 5 closest neighbors
 
+  private:
 	// POINT
 	GLHandler::ShaderProgram pointShader;
 	GLHandler::Mesh pointMesh;
 
-	// UNLOADED
-	GLHandler::ShaderProgram unloadedShader;
-	GLHandler::Mesh unloadedMesh;
+	void renderPoint();
 };
 
-#endif // CELESTIALBODYDRAWER_HPP
+#endif // CELESTIALBODYRENDERER_H

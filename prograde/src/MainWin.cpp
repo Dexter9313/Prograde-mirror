@@ -3,13 +3,50 @@
 MainWin::MainWin()
     : AbstractMainWin()
 {
-	QFile jsonFile(QSettings().value("simulation/planetsystemdir").toString()
-	               + "/definition.json");
+	QString planetsystemdir(
+	    QSettings().value("simulation/planetsystemdir").toString());
+	QFile jsonFile(planetsystemdir + "/definition.json");
 	if(jsonFile.exists())
 	{
 		jsonFile.open(QIODevice::ReadOnly);
 		QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonFile.readAll());
-		orbitalSystem         = new OrbitalSystem(jsonDoc.object());
+		QString name(QFileInfo(jsonFile).dir().dirName());
+		orbitalSystem = new OrbitalSystem(name.toStdString(), jsonDoc.object());
+
+		auto barycenters = orbitalSystem->getAllBinariesNames();
+		auto stars       = orbitalSystem->getAllStarsNames();
+		auto fcPlanets   = orbitalSystem->getAllFirstClassPlanetsNames();
+		auto satellites  = orbitalSystem->getAllSatellitePlanetsNames();
+
+		std::cout << "Barycenters : " << barycenters.size() << std::endl;
+		for(auto name : barycenters)
+		{
+			std::cout << name << std::endl;
+		}
+		std::cout << std::endl;
+
+		std::cout << "Stars : " << stars.size() << std::endl;
+		for(auto name : stars)
+		{
+			std::cout << name << std::endl;
+		}
+		std::cout << std::endl;
+
+		std::cout << "Main Planets : " << fcPlanets.size() << std::endl;
+		for(auto name : fcPlanets)
+		{
+			std::cout << name << std::endl;
+		}
+		std::cout << std::endl;
+
+		std::cout << "Satellites : " << satellites.size() << std::endl;
+		for(auto name : satellites)
+		{
+			std::cout << name << "("
+			          << (*orbitalSystem)[name]->getParent()->getName() << ")"
+			          << std::endl;
+		}
+		std::cout << std::endl;
 	}
 	else
 	{
