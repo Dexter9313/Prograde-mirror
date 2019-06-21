@@ -19,6 +19,7 @@
 #ifndef ORBITABLE_HPP
 #define ORBITABLE_HPP
 
+#include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonObject>
 
@@ -71,6 +72,7 @@ class Orbitable
 			this->name = name;
 		}
 	};
+	float getPseudoRandomSeed() const;
 	Orbitable const* getParent() const { return parent; };
 	Orbit const* getOrbit() const { return orbit; };
 	Orbit* getOrbit() { return orbit; };

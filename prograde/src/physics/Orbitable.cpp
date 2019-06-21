@@ -213,6 +213,19 @@ void Orbitable::parseChildren(QJsonObject const& json)
 	}
 }
 
+float Orbitable::getPseudoRandomSeed() const
+{
+	QString hash(
+	    QCryptographicHash::hash(name.data(), QCryptographicHash::Md5).toHex());
+
+	float seed(0.f);
+	for(auto c : hash)
+	{
+		seed += c.toLatin1();
+	}
+	return seed;
+}
+
 std::vector<Orbitable*> Orbitable::getAllDescendants() const
 {
 	std::vector<Orbitable*> result(children);
