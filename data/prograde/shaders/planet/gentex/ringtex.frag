@@ -18,5 +18,7 @@ void main()
 	float dc = noise(vec4(1.0, 1.0, alt, 2.0 + seed), 24, 1, 0.8);
 
 	outColor = vec4(color + vec3(dc * 0.8), 1.0);
-	outColor *= colorBands;
+	outColor *= pow(colorBands, 15.0);
+	outColor *= 200.0;
+	outColor = clamp(outColor, vec4(0.0), vec4(1.0));
 }
