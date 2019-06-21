@@ -61,6 +61,7 @@ float craterDerivative(in float len)
 	// derivative of radius over t
 	// return (-32.0*pow(t,3.0)*cos(x) + 1.5708 * sin(pi*t));
 	return -0.666666666 * dxdl * cos(x) + pi * dtdl * sin(pi * t) / 3.0;
+	// return 0.0;
 }
 
 vec3 craterNormal(in vec3 pos, in float size)
@@ -137,9 +138,9 @@ void main()
 	vec3 normal = normalmap(f_position);
 	normal.x *= -1.0;
 
-	normal = f_tantoworld * normal;
+	normal = f_tantoworld * (mountainishNormal * 0.55 + normal * 0.45);
 
-	outColor.xyz = (mountainishNormal * 1.1 + normal * 0.9) * 0.25 + 0.5;
-	// outColor.xyz = f_tantoworld * vec3(0.5, 0.5, 1.0);
+	outColor.xyz = normal*0.5 + vec3(0.5);
 	outColor.a = 1.0;
 }
+
