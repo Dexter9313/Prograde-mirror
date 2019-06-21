@@ -22,7 +22,6 @@
 #include "physics/Planet.hpp"
 #include "physics/Star.hpp"
 
-#include <QtDebug>
 Orbitable::Orbitable(Type type, QJsonObject const& json,
                      OrbitalSystem const& system)
     : system(system)
