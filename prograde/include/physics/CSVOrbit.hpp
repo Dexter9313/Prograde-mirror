@@ -38,6 +38,7 @@ class CSVOrbit : public Orbit
 		updateParameters(uT);
 		return parameters.meanAnomalyAtEpoch;
 	};
+	static bool csvExistsFor(std::string const& name);
 
   private:
 	static double interpolateAngle(double before, double after, double frac);

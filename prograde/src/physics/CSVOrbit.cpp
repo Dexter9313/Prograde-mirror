@@ -24,6 +24,14 @@ CSVOrbit::CSVOrbit(MassiveBodyMass const& massiveBodyMass,
             Parameters({0.0, 0.0, 0.0, 0.0, 1.0, 0.0}))
     , bodyName(bodyName)
 {
+	if(bodyName.empty())
+	{
+		std::cerr << std::string(
+		                 "Trying to load CSV orbit files from an empty name...")
+		          << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
 	QString path(QSettings().value("simulation/planetsystemdir").toString()
 	             + "/orbital-params/");
 	path += bodyName.c_str();
@@ -31,8 +39,9 @@ CSVOrbit::CSVOrbit(MassiveBodyMass const& massiveBodyMass,
 	QDir csvdir(path);
 	if(!csvdir.exists())
 	{
-		std::cout << std::string("No CSV orbital params directory related to ")
-		                 + bodyName + "...";
+		std::cerr << std::string("No CSV orbital params directory related to ")
+		                 + bodyName + "..."
+		          << std::endl;
 		exit(EXIT_FAILURE);
 	}
 	QStringList csvfiles
@@ -158,6 +167,21 @@ void CSVOrbit::updateParameters(UniversalTime uT)
 			       * 2.0 * constant::pi;
 		}
 	}
+}
+
+bool CSVOrbit::csvExistsFor(std::string const& name)
+{
+	if(name.empty())
+	{
+		return false;
+	}
+
+	QString path(QSettings().value("simulation/planetsystemdir").toString()
+	             + "/orbital-params/");
+	path += name.c_str();
+
+	QDir csvdir(path);
+	return csvdir.exists();
 }
 
 double CSVOrbit::interpolateAngle(double before, double after, double frac)
