@@ -166,6 +166,7 @@ void MainWin::wheelEvent(QWheelEvent* e)
 
 void MainWin::initScene()
 {
+	clock.setTargetFPS(0.f);
 	stars.initFromFile(23.4392811 * constant::pi / 180.f);
 
 	debugText = new Text3D(textWidth, textHeight);
@@ -202,11 +203,16 @@ void MainWin::updateScene(BasicCamera& camera)
 	stream.precision(10);
 	stream << "Distance : " << cam.distance << std::endl;
 	stream.precision(4);
-	stream << "UT = " << timeToStr(clock.getCurrentUt()) << std::endl;
+	stream << "UT = " << SimulationTime::UTToStr(clock.getCurrentUt())
+	       << std::endl;
 	stream.precision(12);
 	stream << "Raw UT = " << floor(clock.getCurrentUt() * 10) / 10 << std::endl;
 	stream.precision(8);
 	stream << "x" << clock.getTimeCoeff();
+	if(clock.getLockedRealTime())
+	{
+		stream << " (locked)";
+	}
 	/*
 	// GPU memory usage
 	stream << std::endl << std::endl;
@@ -241,43 +247,4 @@ MainWin::~MainWin()
 {
 	delete systemRenderer;
 	delete orbitalSystem;
-}
-
-UniversalTime MainWin::loadStartUT()
-{
-	QDateTime startDateTime(
-	    QSettings().value("simulation/starttime").value<QDateTime>());
-
-	UniversalTime result(startDateTime.date().toJulianDay() - 2451545.0);
-	result *= 24 * 3600;
-	QTime t(startDateTime.toLocalTime().time());
-	result += t.hour() * 3600.0;
-	result += t.minute() * 60.0;
-	result += t.second();
-
-	return result;
-}
-
-std::string MainWin::timeToStr(UniversalTime uT)
-{
-	uT /= 24.0 * 3600.0;
-	auto j2000d(static_cast<int64_t>(uT));
-	if(uT < 0)
-	{
-		--j2000d;
-	}
-	uT -= j2000d;
-
-	UniversalTime timeOfDayInMSecs(uT * 24.0 * 3600.0 * 1000.0);
-
-	QDateTime dt(
-	    QDate::fromJulianDay(j2000d + 2451545),
-	    QTime::fromMSecsSinceStartOfDay(static_cast<int>(timeOfDayInMSecs)),
-	    Qt::UTC);
-
-	QString seconds
-	    = QString("%1").arg(dt.toUTC().time().second(), 2, 10, QChar('0'));
-
-	return (dt.toUTC().toString(Qt::SystemLocaleShortDate) + ":" + seconds)
-	    .toStdString();
 }

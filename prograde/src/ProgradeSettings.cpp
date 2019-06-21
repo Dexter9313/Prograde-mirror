@@ -24,6 +24,7 @@ ProgradeSettings::ProgradeSettings(QWidget* parent)
 	insertGroup("simulation", tr("Simulation"), 0);
 	addDateTimeSetting("starttime", QDateTime().currentDateTimeUtc(),
 	                   tr("Start time (UTC)"));
+	addBoolSetting("lockedrealtime", false, tr("Lock to Real Time"));
 
 	addDirPathSetting(
 	    "planetsystemdir",

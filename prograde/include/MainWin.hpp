@@ -53,7 +53,6 @@ class MainWin : public AbstractMainWin
 	Text3D* debugText;
 	float timeSinceTextUpdate = FLT_MAX;
 
-	static UniversalTime loadStartUT();
 	static std::string timeToStr(UniversalTime uT);
 
 	OrbitalSystem* orbitalSystem;
@@ -75,7 +74,8 @@ class MainWin : public AbstractMainWin
 
 	// SimulationTime clock = SimulationTime(6852600); // March equinox
 
-	SimulationTime clock = SimulationTime(loadStartUT());
+	SimulationTime clock = SimulationTime(
+	    QSettings().value("simulation/starttime").value<QDateTime>());
 
 	// TEMP
 	const int textWidth  = 225;

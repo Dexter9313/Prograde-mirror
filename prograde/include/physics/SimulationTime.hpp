@@ -19,6 +19,8 @@
 #ifndef SIMULATIONTIME_HPP
 #define SIMULATIONTIME_HPP
 
+#include <QDateTime>
+#include <QSettings>
 #include <chrono>
 
 #include "UniversalTime.hpp"
@@ -79,6 +81,9 @@ class SimulationTime
 	 */
 	SimulationTime(UniversalTime startingUt = 0.f);
 
+	SimulationTime(QDateTime const& startingDateTime);
+
+	bool getLockedRealTime() const { return lockedRealTime; };
 	/*! Returns the UniversalTime where the simulation was at last #update()
 	 * call.
 	 */
@@ -87,7 +92,13 @@ class SimulationTime
 	 *
 	 * \param timeCoeff time coefficient to be set
 	 */
-	void setTimeCoeff(float timeCoeff) { this->timeCoeff = timeCoeff; };
+	void setTimeCoeff(float timeCoeff)
+	{
+		if(!lockedRealTime)
+		{
+			this->timeCoeff = timeCoeff;
+		}
+	};
 	/*! Returns the currently set time coefficient.
 	 */
 	float getTimeCoeff() const { return timeCoeff; };
@@ -130,15 +141,22 @@ class SimulationTime
 	 */
 	bool drawableFrame();
 
-  private:
-	stdclock::time_point lastTime;
-	UniversalTime currentUt;
-	float timeCoeff;
+	static UniversalTime dateTimeToUT(QDateTime const& dateTime,
+	                                  bool utc = true);
+	static std::string UTToStr(UniversalTime ut);
 
-	stdclock::time_point lastFrameTime;
-	float currentFPS;
-	float targetFPS;
-	bool drawFrame;
+  private:
+	stdclock::time_point lastTime = stdclock::now();
+	UniversalTime currentUt;
+	float timeCoeff = 1.f;
+
+	const bool lockedRealTime
+	    = QSettings().value("simulation/lockedrealtime").toBool();
+
+	stdclock::time_point lastFrameTime = stdclock::now();
+	float currentFPS                   = 0.f;
+	float targetFPS                    = 60.f;
+	bool drawFrame                     = false;
 };
 
 #endif // SIMULATIONTIME_HPP
