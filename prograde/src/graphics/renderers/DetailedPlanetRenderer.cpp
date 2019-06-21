@@ -33,7 +33,7 @@ DetailedPlanetRenderer::DetailedPlanetRenderer(float radius,
 	                                            GL_RGBA16F, true);
 }
 
-void DetailedPlanetRenderer::initTerrestrial(QColor const& color,
+void DetailedPlanetRenderer::initTerrestrial(float seed, QColor const& color,
                                              float polarLatitude,
                                              float atmosphere)
 {
@@ -50,7 +50,7 @@ void DetailedPlanetRenderer::initTerrestrial(QColor const& color,
 	GLHandler::setShaderParam(shader, "atmosphere", atmosphere);
 
 	// NOLINTNEXTLINE(cert-msc30-c, cert-msc50-c, cert-msc50-cpp)
-	float seed = 10000.f * static_cast<float>(rand()) / INT_MAX;
+	// float seed = 10000.f * static_cast<float>(rand()) / INT_MAX;
 
 	GLHandler::ShaderProgram sdiff = GLHandler::newShader(
 	    "planet/planet", "planet/gentex/terrestrialdiff");
@@ -77,7 +77,7 @@ void DetailedPlanetRenderer::initTerrestrial(QColor const& color,
 	GLHandler::deleteShader(snorm);
 }
 
-void DetailedPlanetRenderer::initGazGiant(QColor const& color,
+void DetailedPlanetRenderer::initGazGiant(float seed, QColor const& color,
                                           float bandsIntensity,
                                           float stormsIntensity)
 {
@@ -88,7 +88,7 @@ void DetailedPlanetRenderer::initGazGiant(QColor const& color,
 	GLHandler::setShaderParam(shader, "diff", 0);
 	GLHandler::setShaderParam(shader, "texRing", 1);
 	// NOLINTNEXTLINE(cert-msc30-c, cert-msc50-c, cert-msc50-cpp)
-	float seed = 10000.f * static_cast<float>(rand()) / INT_MAX;
+	// float seed = 10000.f * static_cast<float>(rand()) / INT_MAX;
 
 	GLHandler::ShaderProgram sdiff
 	    = GLHandler::newShader("planet/planet", "planet/gentex/gazgiantdiff");
@@ -256,10 +256,12 @@ float DetailedPlanetRenderer::updateModelLoading()
 	return lastSphereVal;
 }
 
-void DetailedPlanetRenderer::initRings(float innerRing, float outerRing,
+void DetailedPlanetRenderer::initRings(float seed, float innerRing,
+                                       float outerRing,
                                        QString const& texturePath)
 {
-	rings = new Rings(innerRing, outerRing, radius, oblateness, texturePath);
+	rings = new Rings(seed, innerRing, outerRing, radius, oblateness,
+	                  texturePath);
 	GLHandler::setShaderParam(shader, "innerRing", innerRing);
 	GLHandler::setShaderParam(shader, "outerRing", outerRing);
 }

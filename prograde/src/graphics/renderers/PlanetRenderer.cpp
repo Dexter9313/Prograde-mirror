@@ -300,12 +300,16 @@ void PlanetRenderer::loadPlanet()
 	else if(drawnPlanet->getPlanetParameters().type == Planet::Type::GAZGIANT)
 	{
 		planet->initGazGiant(
-		    Utils::toQt(drawnPlanet->getCelestialBodyParameters().color));
+		    drawnBody->getPseudoRandomSeed(),
+		    Utils::toQt(drawnPlanet->getCelestialBodyParameters().color), 0.75f,
+		    0.75f);
 	}
 	else
 	{
 		planet->initTerrestrial(
-		    Utils::toQt(drawnPlanet->getCelestialBodyParameters().color));
+		    drawnBody->getPseudoRandomSeed(),
+		    Utils::toQt(drawnPlanet->getCelestialBodyParameters().color), 90.f,
+		    drawnPlanet->getPlanetParameters().atmosphere);
 	}
 
 	if(QFileInfo(QSettings().value("simulation/planetsystemdir").toString()
@@ -338,7 +342,8 @@ void PlanetRenderer::loadPlanet()
 			rings = str;
 		}
 
-		planet->initRings(innerRing / radius, outerRing / radius, rings);
+		planet->initRings(drawnBody->getPseudoRandomSeed(), innerRing / radius,
+		                  outerRing / radius, rings);
 	}
 }
 

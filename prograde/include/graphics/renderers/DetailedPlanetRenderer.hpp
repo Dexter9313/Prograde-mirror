@@ -36,9 +36,10 @@ class DetailedPlanetRenderer
 	DetailedPlanetRenderer(float radius = 1.f, QVector3D const& oblateness
 	                                           = QVector3D(1.0, 1.0, 1.0));
 
-	void initTerrestrial(QColor const& color = QColor(255, 255, 255),
+	void initTerrestrial(float seed,
+	                     QColor const& color = QColor(255, 255, 255),
 	                     float polarLatitude = 90.f, float atmosphere = 0.f);
-	void initGazGiant(QColor const& color  = QColor(255, 255, 255),
+	void initGazGiant(float seed, QColor const& color = QColor(255, 255, 255),
 	                  float bandsIntensity = 1.f, float stormsIntensity = 1.f);
 	void initFromTex(QString const& diffusePath, float atmosphere);
 	void initFromTex(QString const& diffusePath, QString const& normalPath,
@@ -47,7 +48,7 @@ class DetailedPlanetRenderer
 	void updateTextureLoading(bool cancelLoading = false);
 	float updateModelLoading();
 
-	void initRings(float innerRing, float outerRing,
+	void initRings(float seed, float innerRing, float outerRing,
 	               QString const& texturePath = "");
 	void render(QVector3D const& pos, QVector3D const& lightpos,
 	            float lightradius, QColor const& lightcolor,

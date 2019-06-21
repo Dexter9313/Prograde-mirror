@@ -24,10 +24,10 @@
 class Rings
 {
   public:
-	Rings(float innerRing, float outerRing, float planetradius,
+	Rings(float seed, float innerRing, float outerRing, float planetradius,
 	      QVector3D const& planetoblateness, QString const& texturePath = "");
 	GLHandler::Texture getTexture();
-	void update();
+	void update(float seed);
 	void render(QMatrix4x4 const& model, QVector3D const& lightpos,
 	            float lightradius, QColor const& lightcolor,
 	            std::array<QVector4D, 5> const& neighborsPosRadius,

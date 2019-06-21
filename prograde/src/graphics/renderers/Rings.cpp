@@ -18,7 +18,7 @@
 
 #include "graphics/renderers/Rings.hpp"
 
-Rings::Rings(float innerRing, float outerRing, float planetradius,
+Rings::Rings(float seed, float innerRing, float outerRing, float planetradius,
              QVector3D const& planetoblateness, QString const& texturePath)
 {
 	shader = GLHandler::newShader("planet/ring");
@@ -68,7 +68,7 @@ Rings::Rings(float innerRing, float outerRing, float planetradius,
 	if(texturePath == "")
 	{
 		texTarget = GLHandler::newRenderTarget(16000, 1);
-		update();
+		update(seed);
 	}
 	else
 	{
@@ -82,7 +82,7 @@ GLHandler::Texture Rings::getTexture()
 	return textured ? tex : GLHandler::getColorAttachmentTexture(texTarget);
 }
 
-void Rings::update()
+void Rings::update(float seed)
 {
 	if(textured)
 	{
@@ -99,7 +99,7 @@ void Rings::update()
 	GLHandler::setShaderParam(
 	    s, "seed",
 	    // NOLINTNEXTLINE(cert-msc30-c, cert-msc50-c, cert-msc50-cpp)
-	    10000.f * static_cast<float>(rand()) / INT_MAX);
+	    /*10000.f * static_cast<float>(rand()) / INT_MAX*/ seed);
 
 	GLHandler::beginRendering(texTarget);
 	GLHandler::useShader(s);
