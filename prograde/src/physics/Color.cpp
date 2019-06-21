@@ -35,3 +35,19 @@ Color::Color(unsigned int alpha, unsigned int r, unsigned int g, unsigned int b)
     , b(b)
 {
 }
+
+Color::Color(QJsonObject const& json, Color const& defaultValue)
+
+    : Color(json["alpha"].toInt(defaultValue.alpha),
+            json["r"].toInt(defaultValue.r), json["g"].toInt(defaultValue.g),
+            json["b"].toInt(defaultValue.b))
+{
+}
+
+QJsonObject Color::getJSONRepresentation() const
+{
+	return QJsonObject({{"r", static_cast<int>(r)},
+	                    {"g", static_cast<int>(g)},
+	                    {"b", static_cast<int>(b)},
+	                    {"alpha", static_cast<int>(alpha)}});
+}

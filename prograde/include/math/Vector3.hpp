@@ -19,6 +19,7 @@
 #ifndef VECTOR3D_HPP
 #define VECTOR3D_HPP
 
+#include <QJsonObject>
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -76,6 +77,8 @@ class Vector3
 	 * \param z third component's value
 	 */
 	Vector3(double x, double y, double z);
+
+	Vector3(QJsonObject const& json, Vector3 const& defaultValue = Vector3());
 
 	/*! Sets all first three components of the vector to new values
 	 *
@@ -194,6 +197,8 @@ class Vector3
 	 * \param base vector which this vector is projected on
 	 */
 	double getProjectionLengthOn(Vector3 const& base) const;
+
+	QJsonObject getJSONRepresentation() const;
 
 	/*! Prints this vector in a std::ostream as a nice string
 	 *

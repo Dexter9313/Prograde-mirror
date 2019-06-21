@@ -65,10 +65,10 @@ QJsonObject CelestialBody::getJSONRepresentation() const
 {
 	QJsonObject result = Orbitable::getJSONRepresentation();
 
-	result["mass"]                   = parameters.mass;
-	result["radius"]                 = parameters.radius;
-	result["oblateness"]             = vector3ToJSON(parameters.oblateness);
-	result["color"]                  = colorToJSON(parameters.color);
+	result["mass"]       = parameters.mass;
+	result["radius"]     = parameters.radius;
+	result["oblateness"] = parameters.oblateness.getJSONRepresentation();
+	result["color"]      = parameters.color.getJSONRepresentation();
 	result["siderealTimeAtEpoch"]    = parameters.siderealTimeAtEpoch;
 	result["siderealRotationPeriod"] = parameters.siderealRotationPeriod;
 	result["northPoleRightAsc"]      = parameters.northPoleRightAsc;
@@ -77,43 +77,14 @@ QJsonObject CelestialBody::getJSONRepresentation() const
 	return result;
 }
 
-QJsonObject CelestialBody::vector3ToJSON(Vector3 const& v)
-{
-	return QJsonObject({{"x", v[0]}, {"y", v[1]}, {"z", v[2]}});
-}
-
-Vector3 CelestialBody::jsonToVector3(QJsonObject const& obj,
-                                     Vector3 const& defaultValue)
-{
-	return Vector3(obj["x"].toDouble(defaultValue[0]),
-	               obj["y"].toDouble(defaultValue[1]),
-	               obj["z"].toDouble(defaultValue[2]));
-}
-
-QJsonObject CelestialBody::colorToJSON(Color const& c)
-{
-	return QJsonObject({{"r", static_cast<int>(c.r)},
-	                    {"g", static_cast<int>(c.g)},
-	                    {"b", static_cast<int>(c.b)},
-	                    {"alpha", static_cast<int>(c.alpha)}});
-}
-
-Color CelestialBody::jsonToColor(QJsonObject const& obj,
-                                 Color const& defaultValue)
-{
-	return Color(obj["alpha"].toInt(defaultValue.alpha),
-	             obj["r"].toInt(defaultValue.r), obj["g"].toInt(defaultValue.g),
-	             obj["b"].toInt(defaultValue.b));
-}
-
 void CelestialBody::parseJSON(QJsonObject const& json)
 {
 	parameters.mass   = json["mass"].toDouble();
 	parameters.radius = json["radius"].toDouble(70000000.0);
 	parameters.oblateness
-	    = jsonToVector3(json["oblateness"].toObject(), Vector3(1.0, 1.0, 1.0));
+	    = Vector3(json["oblateness"].toObject(), Vector3(1.0, 1.0, 1.0));
 	parameters.color
-	    = jsonToColor(json["color"].toObject(), Color(255, 255, 255, 255));
+	    = Color(json["color"].toObject(), Color(255, 255, 255, 255));
 	parameters.siderealTimeAtEpoch = json["siderealTimeAtEpoch"].toDouble();
 	parameters.siderealRotationPeriod
 	    = json["siderealRotationPeriod"].toDouble(DBL_MAX);

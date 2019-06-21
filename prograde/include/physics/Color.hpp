@@ -19,6 +19,8 @@
 #ifndef COLOR_HPP
 #define COLOR_HPP
 
+#include <QJsonObject>
+
 /*! \ingroup phys
  * An
  * [ARGB-represented](https://en.wikipedia.org/wiki/RGBA_color_space#ARGB_(word-order))
@@ -62,6 +64,11 @@ class Color
 	 * contribution).
 	 */
 	Color(unsigned int alpha, unsigned int r, unsigned int g, unsigned int b);
+
+	Color(QJsonObject const& json,
+	      Color const& defaultValue = Color(255, 0, 0, 0));
+
+	QJsonObject getJSONRepresentation() const;
 
 	/*!
 	 * Alpha channel with value from 0 (no contribution) to 255

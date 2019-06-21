@@ -37,6 +37,13 @@ Vector3::Vector3(double x, double y, double z)
 	data[2] = z;
 }
 
+Vector3::Vector3(QJsonObject const& json, Vector3 const& defaultValue)
+    : Vector3(json["x"].toDouble(defaultValue[0]),
+              json["y"].toDouble(defaultValue[1]),
+              json["z"].toDouble(defaultValue[2]))
+{
+}
+
 void Vector3::setXYZ(double x, double y, double z)
 {
 	data[0] = x;
@@ -136,6 +143,11 @@ Vector3& Vector3::rotateAlongZ(double angle)
 double Vector3::getProjectionLengthOn(Vector3 const& base) const
 {
 	return dotProduct(*this, base) / (length() * base.length());
+}
+
+QJsonObject Vector3::getJSONRepresentation() const
+{
+	return QJsonObject({{"x", data[0]}, {"y", data[1]}, {"z", data[2]}});
 }
 
 std::ostream& Vector3::printInStream(std::ostream& stream) const
