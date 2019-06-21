@@ -61,6 +61,12 @@ class Planet : public CelestialBody
 	static Type strToType(std::string const& str);
 
 	void parseJSON(QJsonObject const& json);
+
+	QString proceduralTypeStr() const;
+	Color proceduralColor() const;
+	double proceduralAtmosphere() const;
+	double proceduralOuterRings() const;
+	double proceduralInnerRings() const;
 };
 
 #endif // PLANET_HPP

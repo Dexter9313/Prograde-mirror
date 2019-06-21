@@ -104,8 +104,100 @@ Planet::Type Planet::strToType(std::string const& str)
 
 void Planet::parseJSON(QJsonObject const& json)
 {
-	parameters.type       = strToType(json["type"].toString().toStdString());
-	parameters.atmosphere = json["atmosphere"].toDouble();
-	parameters.innerRing  = json["innerRing"].toDouble();
-	parameters.outerRing  = json["outerRing"].toDouble();
+	parameters.type
+	    = strToType(json["type"].toString(proceduralTypeStr()).toStdString());
+	parameters.atmosphere = json["atmosphere"].toDouble(proceduralAtmosphere());
+	parameters.innerRing  = json["innerRing"].toDouble(proceduralInnerRings());
+	parameters.outerRing  = json["outerRing"].toDouble(proceduralOuterRings());
+
+	if(!json.contains("color"))
+	{
+		CelestialBody::parameters.color = proceduralColor();
+	}
+}
+
+QString Planet::proceduralTypeStr() const
+{
+	srand(getPseudoRandomSeed());
+	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+	return r < 0.333f ? "terrestrial" : "gazgiant";
+}
+
+Color Planet::proceduralColor() const
+{
+	srand(getPseudoRandomSeed());
+	rand();
+	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+
+	Color c1(97, 142, 232), c2(255, 255, 255), c3(216, 202, 157);
+	if(parameters.type != Type::GAZGIANT)
+	{
+		c1 = Color(255, 255, 255);
+		c2 = Color(54, 57, 48);
+		c3 = Color(231, 125, 17);
+	}
+	Color result(c1);
+	if(r <= 0.6f)
+	{
+		r /= 0.6f;
+		result.r = c1.r * (1.f - r) + c2.r * r;
+		result.g = c1.g * (1.f - r) + c2.g * r;
+		result.b = c1.b * (1.f - r) + c2.b * r;
+	}
+	else
+	{
+		r -= 0.6f;
+		r /= 0.4f;
+		result.r = c2.r * (1.f - r) + c3.r * r;
+		result.g = c2.g * (1.f - r) + c3.g * r;
+		result.b = c2.b * (1.f - r) + c3.b * r;
+	}
+	return result;
+}
+
+double Planet::proceduralAtmosphere() const
+{
+	srand(getPseudoRandomSeed());
+	rand();
+	rand();
+	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+	return 0.3 * pow(r, 6);
+}
+
+double Planet::proceduralOuterRings() const
+{
+	float probability(0.7f);
+	if(parameters.type != Type::GAZGIANT)
+	{
+		probability = 0.05f;
+	}
+	srand(getPseudoRandomSeed());
+	rand();
+	rand();
+	rand();
+	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+	if(r > probability)
+	{
+		return 0.0;
+	}
+	r /= probability;
+	r *= r;
+	return getCelestialBodyParameters().radius * (2.0 + (10.0 * r));
+}
+
+double Planet::proceduralInnerRings() const
+{
+	srand(getPseudoRandomSeed());
+	rand();
+	rand();
+	rand();
+	rand();
+	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+	double outerHeight(proceduralOuterRings()
+	                   - getCelestialBodyParameters().radius);
+	if(outerHeight < 0.0)
+	{
+		return 0.0;
+	}
+	return getCelestialBodyParameters().radius + (1.0 - r * r) * outerHeight;
 }
