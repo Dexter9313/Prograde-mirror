@@ -21,18 +21,36 @@
 Orbit::Orbit(MassiveBodyMass const& massiveBodyMass, QJsonObject const& json)
     : massiveBodyMass(massiveBodyMass.value)
 {
-	if(massiveBodyMass.value == 0)
+	if(json.contains("semiMajorAxis"))
+	{
+		parameters.semiMajorAxis = json["semiMajorAxis"].toDouble();
+	}
+	else if(json.contains("period") && this->massiveBodyMass != 0)
+	{
+		parameters.semiMajorAxis = SMAfromPeriodMass(json["period"].toDouble(),
+		                                             this->massiveBodyMass);
+	}
+	else if(json.contains("separationMeters"))
+	{
+		parameters.semiMajorAxis = json["separationMeters"].toDouble();
+	}
+	else
+	{
+		std::cerr << "ERR" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	if(this->massiveBodyMass == 0)
 	{
 		this->massiveBodyMass = massiveBodyMassFromElements(
-		    json["semiMajorAxis"].toDouble(), json["period"].toDouble());
+		    parameters.semiMajorAxis, json["period"].toDouble(24 * 3600));
 	}
+
 	parameters.inclination = json["inclination"].toDouble();
 	parameters.ascendingNodeLongitude
 	    = json["ascendingNodeLongitude"].toDouble();
-	parameters.periapsisArgument = json["periapsisArgument"].toDouble();
-	parameters.eccentricity      = json["eccentricity"].toDouble();
-	parameters.semiMajorAxis     = json["semiMajorAxis"].toDouble(
-        SMAfromPeriodMass(json["period"].toDouble(), massiveBodyMass.value));
+	parameters.periapsisArgument  = json["periapsisArgument"].toDouble();
+	parameters.eccentricity       = json["eccentricity"].toDouble();
 	parameters.meanAnomalyAtEpoch = json["meanAnomalyAtEpoch"].toDouble();
 
 	updatePeriod();
