@@ -97,6 +97,14 @@ double Orbit::getPeriod() const
 	return period;
 }
 
+Vector3 Orbit::getNorth() const
+{
+	Vector3 north(0.0, 0.0, 1.0);
+	north.rotateAlongX(parameters.inclination);
+	north.rotateAlongZ(parameters.ascendingNodeLongitude);
+	return north;
+}
+
 double Orbit::getMeanAnomalyAtUT(UniversalTime uT)
 {
 	// TODO(florian) : test assertion

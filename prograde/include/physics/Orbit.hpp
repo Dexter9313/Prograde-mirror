@@ -67,6 +67,8 @@ class Orbit
 	double getMassiveBodyMass() const;
 	Parameters getParameters() const;
 	double getPeriod() const;
+	// defined as unit vector pointing along the angular momentum of the orbit
+	Vector3 getNorth() const;
 	virtual double getMeanAnomalyAtUT(UniversalTime uT);
 	double getEccentricAnomalyAtUT(UniversalTime uT);
 	double getTrueAnomalyAtUT(UniversalTime uT);
