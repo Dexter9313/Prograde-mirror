@@ -20,6 +20,7 @@
 #define PLANET_HPP
 
 #include "CelestialBody.hpp"
+#include "math/DeterministicRandomFloat.hpp"
 
 class Star;
 
@@ -61,6 +62,8 @@ class Planet : public CelestialBody
 	static Type strToType(std::string const& str);
 
 	void parseJSON(QJsonObject const& json);
+
+	DeterministicRandomFloat randomGen;
 
 	QString proceduralTypeStr() const;
 	Color proceduralColor() const;

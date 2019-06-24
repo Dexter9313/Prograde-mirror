@@ -22,12 +22,14 @@
 
 Planet::Planet(QJsonObject const& json, OrbitalSystem const& system)
     : CelestialBody(CelestialBody::Type::PLANET, json, system)
+    , randomGen(getPseudoRandomSeed())
 {
 	parseJSON(json);
 }
 
 Planet::Planet(QJsonObject const& json, Orbitable const& parent)
     : CelestialBody(CelestialBody::Type::PLANET, json, parent)
+    , randomGen(getPseudoRandomSeed())
 {
 	parseJSON(json);
 }
@@ -38,6 +40,7 @@ Planet::Planet(std::string const name,
                Orbit* orbit)
     : CelestialBody(CelestialBody::Type::PLANET, name, cbParams, parent, orbit)
     , parameters(planetParams)
+    , randomGen(getPseudoRandomSeed())
 {
 }
 
@@ -47,6 +50,7 @@ Planet::Planet(std::string const name,
                Orbit* orbit)
     : CelestialBody(CelestialBody::Type::PLANET, name, cbParams, system, orbit)
     , parameters(planetParams)
+    , randomGen(getPseudoRandomSeed())
 {
 }
 
@@ -118,16 +122,12 @@ void Planet::parseJSON(QJsonObject const& json)
 
 QString Planet::proceduralTypeStr() const
 {
-	srand(getPseudoRandomSeed());
-	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-	return r < 0.333f ? "terrestrial" : "gazgiant";
+	return randomGen.getRandomNumber(0) < 0.333f ? "terrestrial" : "gazgiant";
 }
 
 Color Planet::proceduralColor() const
 {
-	srand(getPseudoRandomSeed());
-	rand();
-	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+	float r(randomGen.getRandomNumber(1));
 
 	Color c1(97, 142, 232), c2(255, 255, 255), c3(216, 202, 157);
 	if(parameters.type != Type::GAZGIANT)
@@ -157,11 +157,7 @@ Color Planet::proceduralColor() const
 
 double Planet::proceduralAtmosphere() const
 {
-	srand(getPseudoRandomSeed());
-	rand();
-	rand();
-	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-	return 0.3 * pow(r, 6);
+	return 0.3 * pow(randomGen.getRandomNumber(2), 6);
 }
 
 double Planet::proceduralOuterRings() const
@@ -171,11 +167,7 @@ double Planet::proceduralOuterRings() const
 	{
 		probability = 0.05f;
 	}
-	srand(getPseudoRandomSeed());
-	rand();
-	rand();
-	rand();
-	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+	float r(randomGen.getRandomNumber(3));
 	if(r > probability)
 	{
 		return 0.0;
@@ -187,12 +179,7 @@ double Planet::proceduralOuterRings() const
 
 double Planet::proceduralInnerRings() const
 {
-	srand(getPseudoRandomSeed());
-	rand();
-	rand();
-	rand();
-	rand();
-	float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+	float r(randomGen.getRandomNumber(4));
 	double outerHeight(proceduralOuterRings()
 	                   - getCelestialBodyParameters().radius);
 	if(outerHeight < 0.0)
