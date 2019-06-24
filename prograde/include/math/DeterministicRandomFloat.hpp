@@ -21,6 +21,7 @@
 
 #include <random>
 
+// from a given seed and index, always gives out the same pseudo-random number
 class DeterministicRandomFloat
 {
   public:
