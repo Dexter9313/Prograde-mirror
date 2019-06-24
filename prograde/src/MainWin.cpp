@@ -16,9 +16,11 @@ MainWin::MainWin()
 		QDirIterator it(planetsystemdir, QStringList() << "*.json", QDir::Files,
 		                QDirIterator::Subdirectories);
 		while(it.hasNext())
+		{
 			files << it.next();
+		}
 
-		srand(time(NULL));
+		srand(time(nullptr));
 		jsonFile.setFileName(files[rand() % files.size()]);
 	}
 	else

@@ -26,13 +26,6 @@ OrbitalSystem::OrbitalSystem(std::string name)
 OrbitalSystem::OrbitalSystem(std::string name, QJsonObject const& json)
     : name(std::move(name))
 {
-	/*if(json["stars"].toArray().size() != 1)
-	{
-	    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
-	    qWarning() << "Only single-star systems are supported right now.";
-	    exit(EXIT_FAILURE);
-	}*/
-
 	if(json.contains("binaries"))
 	{
 		if(json.contains("stars") || json.contains("planets"))
