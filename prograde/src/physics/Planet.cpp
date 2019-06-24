@@ -118,16 +118,55 @@ void Planet::parseJSON(QJsonObject const& json)
 	{
 		CelestialBody::parameters.color = proceduralColor();
 	}
+	if(!json.contains("siderealTimeAtEpoch"))
+	{
+		CelestialBody::parameters.siderealTimeAtEpoch
+		    = proceduralSiderealTimeAtEpoch();
+	}
+	if(!json.contains("siderealRotationPeriod"))
+	{
+		CelestialBody::parameters.siderealRotationPeriod
+		    = proceduralSiderealRotationPeriod();
+	}
+	if(!json.contains("northPoleRightAsc"))
+	{
+		CelestialBody::parameters.northPoleRightAsc
+		    = proceduralNorthPoleRightAsc();
+	}
+	if(!json.contains("northPoleDeclination"))
+	{
+		CelestialBody::parameters.northPoleDeclination
+		    = proceduralNorthPoleDeclination();
+	}
 }
 
-QString Planet::proceduralTypeStr() const
+double Planet::assumedTidalLockingStrengh() const
 {
-	return randomGen.getRandomNumber(0) < 0.333f ? "terrestrial" : "gazgiant";
+	auto orbit(getOrbit());
+	if(orbit == nullptr)
+	{
+		return 0.0;
+	}
+	double localAcceleration(constant::G * orbit->getMassiveBodyMass()
+	                         / pow(orbit->getParameters().semiMajorAxis, 2));
+	// assume tidally locked
+	if(localAcceleration > 0.1)
+	{
+		return 1.0;
+	}
+	// assume close to tidally locked
+	else if(localAcceleration > 0.01)
+	{
+		// (0 to 1)
+		double tidalLockingStrenght((localAcceleration - 0.01) / (0.1 - 0.01));
+		return tidalLockingStrenght;
+	}
+	return 0.0;
 }
 
 Color Planet::proceduralColor() const
 {
-	float r(randomGen.getRandomNumber(1));
+	float r(randomGen.getRandomNumber(0));
 
 	Color c1(97, 142, 232), c2(255, 255, 255), c3(216, 202, 157);
 	if(parameters.type != Type::GAZGIANT)
@@ -155,9 +194,82 @@ Color Planet::proceduralColor() const
 	return result;
 }
 
+double Planet::proceduralSiderealTimeAtEpoch() const
+{
+	return randomGen.getRandomNumber(1) * 2.0 * constant::pi;
+}
+
+double Planet::proceduralSiderealRotationPeriod() const
+{
+	auto orbit(getOrbit());
+	float r = randomGen.getRandomNumber(2);
+
+	double randomRotPeriod;
+	if(proceduralTypeStr() == "gazgiant")
+	{
+		randomRotPeriod = (r * 20 + 1) * 3600;
+	}
+	else
+	{
+		randomRotPeriod = (r * 20 + 8) * 3600;
+	}
+
+	if(orbit != nullptr)
+	{
+		double tidalLockingStrengh(assumedTidalLockingStrengh());
+		return orbit->getPeriod() * tidalLockingStrengh
+		       + randomRotPeriod * (1.0 - tidalLockingStrengh);
+	}
+	// not tidally locked
+	return randomRotPeriod;
+}
+
+double Planet::proceduralNorthPoleRightAsc() const
+{
+	auto orbit(getOrbit());
+	double randomRA(randomGen.getRandomNumber(3) * 2.0 * constant::pi);
+
+	if(orbit != nullptr)
+	{
+		Vector3 north(orbit->getNorth());
+		auto RAdec = getSystem().getRADecFromCarthesian(north);
+		double tidalLockingStrengh(assumedTidalLockingStrengh());
+		tidalLockingStrengh += 0.1;
+		tidalLockingStrengh = fmin(1.0, tidalLockingStrengh);
+		tidalLockingStrengh = 1.0 - pow((1.0 - tidalLockingStrengh), 8);
+		return RAdec.first * tidalLockingStrengh
+		       + randomRA * (1.0 - tidalLockingStrengh);
+	}
+	return randomRA;
+}
+
+double Planet::proceduralNorthPoleDeclination() const
+{
+	auto orbit(getOrbit());
+	double randomDec((randomGen.getRandomNumber(4) - 0.5f) * constant::pi);
+
+	if(orbit != nullptr)
+	{
+		Vector3 north(orbit->getNorth());
+		auto RAdec = getSystem().getRADecFromCarthesian(north);
+		double tidalLockingStrengh(assumedTidalLockingStrengh());
+		tidalLockingStrengh += 0.1;
+		tidalLockingStrengh = fmin(1.0, tidalLockingStrengh);
+		tidalLockingStrengh = 1.0 - pow((1.0 - tidalLockingStrengh), 8);
+		return RAdec.second * tidalLockingStrengh
+		       + randomDec * (1.0 - tidalLockingStrengh);
+	}
+	return randomDec;
+}
+
+QString Planet::proceduralTypeStr() const
+{
+	return randomGen.getRandomNumber(5) < 0.333f ? "terrestrial" : "gazgiant";
+}
+
 double Planet::proceduralAtmosphere() const
 {
-	return 0.3 * pow(randomGen.getRandomNumber(2), 6);
+	return 0.3 * pow(randomGen.getRandomNumber(6), 6);
 }
 
 double Planet::proceduralOuterRings() const
@@ -167,7 +279,7 @@ double Planet::proceduralOuterRings() const
 	{
 		probability = 0.05f;
 	}
-	float r(randomGen.getRandomNumber(3));
+	float r(randomGen.getRandomNumber(7));
 	if(r > probability)
 	{
 		return 0.0;
@@ -179,7 +291,7 @@ double Planet::proceduralOuterRings() const
 
 double Planet::proceduralInnerRings() const
 {
-	float r(randomGen.getRandomNumber(4));
+	float r(randomGen.getRandomNumber(8));
 	double outerHeight(proceduralOuterRings()
 	                   - getCelestialBodyParameters().radius);
 	if(outerHeight < 0.0)

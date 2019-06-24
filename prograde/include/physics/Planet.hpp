@@ -65,8 +65,15 @@ class Planet : public CelestialBody
 
 	DeterministicRandomFloat randomGen;
 
-	QString proceduralTypeStr() const;
+	double assumedTidalLockingStrengh() const;
+
 	Color proceduralColor() const;
+	double proceduralSiderealTimeAtEpoch() const;
+	double proceduralSiderealRotationPeriod() const;
+	double proceduralNorthPoleRightAsc() const;
+	double proceduralNorthPoleDeclination() const;
+
+	QString proceduralTypeStr() const;
 	double proceduralAtmosphere() const;
 	double proceduralOuterRings() const;
 	double proceduralInnerRings() const;
