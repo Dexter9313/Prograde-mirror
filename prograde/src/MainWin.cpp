@@ -5,7 +5,27 @@ MainWin::MainWin()
 {
 	QString planetsystemdir(
 	    QSettings().value("simulation/planetsystemdir").toString());
-	QFile jsonFile(planetsystemdir + "/definition.json");
+	QFile jsonFile;
+
+	if(QSettings().value("simulation/randomsystem").toBool())
+	{
+		QStringList nameFilter;
+		nameFilter << "*.json";
+
+		QStringList files;
+		QDirIterator it(planetsystemdir, QStringList() << "*.json", QDir::Files,
+		                QDirIterator::Subdirectories);
+		while(it.hasNext())
+			files << it.next();
+
+		srand(time(NULL));
+		jsonFile.setFileName(files[rand() % files.size()]);
+	}
+	else
+	{
+		jsonFile.setFileName(planetsystemdir + "/definition.json");
+	}
+
 	if(jsonFile.exists())
 	{
 		jsonFile.open(QIODevice::ReadOnly);
