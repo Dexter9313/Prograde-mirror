@@ -159,7 +159,7 @@ double Planet::assumedTidalLockingStrengh() const
 		return 1.0;
 	}
 	// assume close to tidally locked
-	else if(localAcceleration > 0.01)
+	if(localAcceleration > 0.01)
 	{
 		// (0 to 1)
 		double tidalLockingStrenght((localAcceleration - 0.01) / (0.1 - 0.01));
