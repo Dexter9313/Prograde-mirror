@@ -111,8 +111,8 @@ void Planet::parseJSON(QJsonObject const& json)
 	parameters.type
 	    = strToType(json["type"].toString(proceduralTypeStr()).toStdString());
 	parameters.atmosphere = json["atmosphere"].toDouble(proceduralAtmosphere());
-	parameters.innerRing  = json["innerRing"].toDouble(proceduralInnerRings());
 	parameters.outerRing  = json["outerRing"].toDouble(proceduralOuterRings());
+	parameters.innerRing  = json["innerRing"].toDouble(proceduralInnerRings());
 
 	if(!json.contains("color"))
 	{
@@ -138,6 +138,10 @@ void Planet::parseJSON(QJsonObject const& json)
 		CelestialBody::parameters.northPoleDeclination
 		    = proceduralNorthPoleDeclination();
 	}
+	if(!json.contains("oblateness"))
+	{
+		CelestialBody::parameters.oblateness = proceduralOblateness();
+	}
 }
 
 double Planet::assumedTidalLockingStrengh() const
@@ -162,6 +166,16 @@ double Planet::assumedTidalLockingStrengh() const
 		return tidalLockingStrenght;
 	}
 	return 0.0;
+}
+
+Vector3 Planet::proceduralOblateness() const
+{
+	// empirical (works well with solar system
+	return Vector3(
+	    1.0, 1.0,
+	    1.0
+	        - exp(-getCelestialBodyParameters().siderealRotationPeriod
+	              / 16400.0));
 }
 
 Color Planet::proceduralColor() const
@@ -205,7 +219,7 @@ double Planet::proceduralSiderealRotationPeriod() const
 	float r = randomGen.getRandomNumber(2);
 
 	double randomRotPeriod;
-	if(proceduralTypeStr() == "gazgiant")
+	if(parameters.type == Type::GAZGIANT)
 	{
 		randomRotPeriod = (r * 20 + 1) * 3600;
 	}
@@ -292,7 +306,7 @@ double Planet::proceduralOuterRings() const
 double Planet::proceduralInnerRings() const
 {
 	float r(randomGen.getRandomNumber(8));
-	double outerHeight(proceduralOuterRings()
+	double outerHeight(parameters.outerRing
 	                   - getCelestialBodyParameters().radius);
 	if(outerHeight < 0.0)
 	{

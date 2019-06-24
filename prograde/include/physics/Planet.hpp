@@ -19,6 +19,8 @@
 #ifndef PLANET_HPP
 #define PLANET_HPP
 
+#include <cmath>
+
 #include "CelestialBody.hpp"
 #include "math/DeterministicRandomFloat.hpp"
 
@@ -67,6 +69,7 @@ class Planet : public CelestialBody
 
 	double assumedTidalLockingStrengh() const;
 
+	Vector3 proceduralOblateness() const;
 	Color proceduralColor() const;
 	double proceduralSiderealTimeAtEpoch() const;
 	double proceduralSiderealRotationPeriod() const;
