@@ -170,6 +170,19 @@ void OrbitalSystem::generateStarsNames()
 	}
 }
 
+std::pair<double, double>
+    OrbitalSystem::getRADecFromCarthesian(Vector3 dir) const
+{
+	std::pair<double, double> result;
+
+	dir.rotateAlongX(declinationTilt);
+
+	result.first  = atan2(dir[1], dir[0]);
+	result.second = asin(dir[2]);
+
+	return result;
+}
+
 void OrbitalSystem::addChild(Orbitable* child, std::string const& parent)
 {
 	if(parent.empty())

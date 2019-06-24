@@ -47,6 +47,8 @@ class OrbitalSystem
 	double getDeclinationTilt() const { return declinationTilt; };
 	Orbitable const& getRootOrbitable() const { return *rootOrbitable; };
 
+	std::pair<double, double> getRADecFromCarthesian(Vector3 dir) const;
+
 	// will take ownership of child
 	void addChild(Orbitable* child,
 	              std::string const& parent = std::string(""));
