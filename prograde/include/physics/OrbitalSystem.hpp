@@ -100,10 +100,6 @@ class OrbitalSystem
 	std::map<std::string, Planet*> planets;
 	std::map<std::string, Planet*> firstClassPlanets;
 	std::map<std::string, Planet*> satellitePlanets;
-
-	// JSON loading TEMP?
-	/*unsigned int current;
-	QProgressDialog* progress;*/
 };
 
 #endif // ORBITALSYSTEM_HPP

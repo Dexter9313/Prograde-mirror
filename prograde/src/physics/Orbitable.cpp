@@ -22,6 +22,10 @@
 #include "physics/Planet.hpp"
 #include "physics/Star.hpp"
 
+QProgressDialog* Orbitable::progress = nullptr;
+float Orbitable::value               = 100.f;
+float Orbitable::current             = 0.f;
+
 Orbitable::Orbitable(Type type, QJsonObject const& json,
                      OrbitalSystem const& system)
     : system(system)
@@ -184,11 +188,38 @@ void Orbitable::generatePlanetsNames()
 
 void Orbitable::parseChildren(QJsonObject const& json)
 {
-	for(auto val : json["planets"].toArray())
+	bool createdProgress(false);
+	if(progress == nullptr)
 	{
-		auto p = new Planet(val.toObject(), *this);
-		p->parseChildren(val.toObject());
-		children.push_back(p);
+		createdProgress = true;
+		progress        = new QProgressDialog(
+            QObject::tr("Loading ") + getSystem().getName().c_str() + "...",
+            QString(), 0, 100);
+		value   = 100.f;
+		current = 0.f;
+	}
+
+	if(json["planets"].toArray().size() > 0)
+	{
+		value /= json["planets"].toArray().size();
+		for(auto val : json["planets"].toArray())
+		{
+			auto p = new Planet(val.toObject(), *this);
+			p->parseChildren(val.toObject());
+			children.push_back(p);
+		}
+		value *= json["planets"].toArray().size();
+	}
+	else
+	{
+		current += value;
+		QCoreApplication::processEvents();
+		progress->setValue(current);
+	}
+
+	if(createdProgress)
+	{
+		delete progress;
 	}
 
 	// binaries are the only orbitables to have non-planet children

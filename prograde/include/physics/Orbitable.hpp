@@ -22,6 +22,7 @@
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QProgressDialog>
 
 #include "CSVOrbit.hpp"
 
@@ -106,6 +107,12 @@ class Orbitable
 	Orbitable const* parent = nullptr;
 	Orbit* orbit            = nullptr;
 	std::vector<Orbitable*> children;
+
+	/** LOADING BAR **/
+
+	static QProgressDialog* progress;
+	static float value;
+	static float current;
 };
 
 #endif // ORBITABLE_HPP
