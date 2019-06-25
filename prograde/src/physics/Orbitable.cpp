@@ -199,7 +199,7 @@ void Orbitable::parseChildren(QJsonObject const& json)
 		current = 0.f;
 	}
 
-	if(json["planets"].toArray().size() > 0)
+	if(!json["planets"].toArray().empty())
 	{
 		value /= json["planets"].toArray().size();
 		for(auto val : json["planets"].toArray())
