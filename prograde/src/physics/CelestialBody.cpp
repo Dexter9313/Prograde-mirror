@@ -76,15 +76,12 @@ double CelestialBody::getSphereOfInfluenceRadius() const
 	{
 		return DBL_MAX;
 	}
-	else
-	{
-		return getOrbit()->getParameters().semiMajorAxis
-		       * pow(parameters.mass
-		                 / dynamic_cast<CelestialBody const*>(parent)
-		                       ->getCelestialBodyParameters()
-		                       .mass,
-		             2.0 / 5.0);
-	}
+	return getOrbit()->getParameters().semiMajorAxis
+	       * pow(parameters.mass
+	                 / dynamic_cast<CelestialBody const*>(parent)
+	                       ->getCelestialBodyParameters()
+	                       .mass,
+	             2.0 / 5.0);
 }
 
 double CelestialBody::getMaximumRocheLimit() const
