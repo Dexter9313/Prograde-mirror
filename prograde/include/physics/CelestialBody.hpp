@@ -68,6 +68,12 @@ class CelestialBody : public Orbitable
 	Type getCelestialBodyType() const { return type; };
 	Parameters const& getCelestialBodyParameters() const { return parameters; };
 	double getPrimeMeridianSiderealTimeAtUT(UniversalTime uT) const;
+	double getEscapeVelocity(double altitude = 0.0) const;
+	double getSphereOfInfluenceRadius() const;
+	// Roche limit for a fluid of 500kg/m^3
+	// see https://en.wikipedia.org/wiki/Roche_limit
+	// rings can be more or less within this limit (above it would form moons)
+	double getMaximumRocheLimit() const;
 	virtual ~CelestialBody(){};
 
 	virtual QJsonObject getJSONRepresentation() const override;

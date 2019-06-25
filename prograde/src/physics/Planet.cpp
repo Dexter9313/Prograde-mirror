@@ -110,10 +110,10 @@ void Planet::parseJSON(QJsonObject const& json)
 {
 	parameters.type
 	    = strToType(json["type"].toString(proceduralTypeStr()).toStdString());
-	parameters.atmosphere = json["atmosphere"].toDouble(proceduralAtmosphere());
-	parameters.outerRing  = json["outerRing"].toDouble(proceduralOuterRings());
-	parameters.innerRing  = json["innerRing"].toDouble(proceduralInnerRings());
-
+	if(!json.contains("mass"))
+	{
+		CelestialBody::parameters.mass = proceduralMass();
+	}
 	if(!json.contains("color"))
 	{
 		CelestialBody::parameters.color = proceduralColor();
@@ -142,6 +142,9 @@ void Planet::parseJSON(QJsonObject const& json)
 	{
 		CelestialBody::parameters.oblateness = proceduralOblateness();
 	}
+	parameters.atmosphere = json["atmosphere"].toDouble(proceduralAtmosphere());
+	parameters.outerRing  = json["outerRing"].toDouble(proceduralOuterRings());
+	parameters.innerRing  = json["innerRing"].toDouble(proceduralInnerRings());
 }
 
 double Planet::assumedTidalLockingStrengh() const
@@ -168,6 +171,33 @@ double Planet::assumedTidalLockingStrengh() const
 	return 0.0;
 }
 
+double Planet::proceduralMass() const
+{
+	// g / cm^3
+	double density(1.f);
+	float r(randomGen.getRandomNumber(0));
+	if(parameters.type == Type::GAZGIANT)
+	{
+		density = 0.5 + r * 1.5;
+	}
+	else
+	{
+		density = 3.0 + r * r * 7.0;
+	}
+	// convert to kg / m^3
+	density *= 1000.0;
+
+	// in m
+	double rad(getCelestialBodyParameters().radius);
+	Vector3 o(getCelestialBodyParameters().oblateness);
+	// in m^3
+	double volume
+	    = 4.0 * constant::pi * (rad * o[0] * rad * o[1] * rad * o[2]) / 3.0;
+
+	// in kg
+	return density * volume;
+}
+
 Vector3 Planet::proceduralOblateness() const
 {
 	// empirical (works well with solar system
@@ -180,7 +210,7 @@ Vector3 Planet::proceduralOblateness() const
 
 Color Planet::proceduralColor() const
 {
-	float r(randomGen.getRandomNumber(0));
+	float r(randomGen.getRandomNumber(1));
 
 	Color c1(97, 142, 232), c2(255, 255, 255), c3(216, 202, 157);
 	if(parameters.type != Type::GAZGIANT)
@@ -210,13 +240,13 @@ Color Planet::proceduralColor() const
 
 double Planet::proceduralSiderealTimeAtEpoch() const
 {
-	return randomGen.getRandomNumber(1) * 2.0 * constant::pi;
+	return randomGen.getRandomNumber(2) * 2.0 * constant::pi;
 }
 
 double Planet::proceduralSiderealRotationPeriod() const
 {
 	auto orbit(getOrbit());
-	float r = randomGen.getRandomNumber(2);
+	float r = randomGen.getRandomNumber(3);
 
 	double randomRotPeriod;
 	if(parameters.type == Type::GAZGIANT)
@@ -226,6 +256,16 @@ double Planet::proceduralSiderealRotationPeriod() const
 	else
 	{
 		randomRotPeriod = (r * 20 + 8) * 3600;
+	}
+
+	// m/s
+	double randomEquatorSurfaceVel = 2.0 * constant::pi
+	                                 * CelestialBody::parameters.radius
+	                                 / randomRotPeriod;
+	if(randomEquatorSurfaceVel > getEscapeVelocity() / 2.0)
+	{
+		randomRotPeriod = 4.0 * constant::pi * CelestialBody::parameters.radius
+		                  / getEscapeVelocity();
 	}
 
 	if(orbit != nullptr)
@@ -241,7 +281,7 @@ double Planet::proceduralSiderealRotationPeriod() const
 double Planet::proceduralNorthPoleRightAsc() const
 {
 	auto orbit(getOrbit());
-	double randomRA(randomGen.getRandomNumber(3) * 2.0 * constant::pi);
+	double randomRA(randomGen.getRandomNumber(4) * 2.0 * constant::pi);
 
 	if(orbit != nullptr)
 	{
@@ -260,7 +300,7 @@ double Planet::proceduralNorthPoleRightAsc() const
 double Planet::proceduralNorthPoleDeclination() const
 {
 	auto orbit(getOrbit());
-	double randomDec((randomGen.getRandomNumber(4) - 0.5f) * constant::pi);
+	double randomDec((randomGen.getRandomNumber(5) - 0.5f) * constant::pi);
 
 	if(orbit != nullptr)
 	{
@@ -278,12 +318,29 @@ double Planet::proceduralNorthPoleDeclination() const
 
 QString Planet::proceduralTypeStr() const
 {
-	return randomGen.getRandomNumber(5) < 0.333f ? "terrestrial" : "gazgiant";
+	if(CelestialBody::parameters.mass != 0.0
+	   && CelestialBody::parameters.radius != 0.0)
+	{
+		// in m
+		double rad(getCelestialBodyParameters().radius);
+		Vector3 o(getCelestialBodyParameters().oblateness);
+		// in m^3
+		double volume
+		    = 4.0 * constant::pi * (rad * o[0] * rad * o[1] * rad * o[2]) / 3.0;
+
+		double density(CelestialBody::parameters.mass / volume);
+		if(density < 2250)
+		{
+			return "gazgiant";
+		}
+		return "terrestrial";
+	}
+	return randomGen.getRandomNumber(6) < 0.333f ? "terrestrial" : "gazgiant";
 }
 
 double Planet::proceduralAtmosphere() const
 {
-	return 0.3 * pow(randomGen.getRandomNumber(6), 6);
+	return 0.3 * pow(randomGen.getRandomNumber(7), 6);
 }
 
 double Planet::proceduralOuterRings() const
@@ -293,19 +350,32 @@ double Planet::proceduralOuterRings() const
 	{
 		probability = 0.05f;
 	}
-	float r(randomGen.getRandomNumber(7));
+	float r(randomGen.getRandomNumber(8));
 	if(r > probability)
 	{
 		return 0.0;
 	}
 	r /= probability;
 	r *= r;
-	return getCelestialBodyParameters().radius * (2.0 + (10.0 * r));
+	double result(CelestialBody::parameters.radius * (2.0 + (10.0 * r)));
+	// don't get unreallistically large rings (depends on tides inward and
+	// outward)
+	double maxLimit(
+	    fmin(getMaximumRocheLimit() * 0.9, getSphereOfInfluenceRadius() * 0.5));
+	if(result > maxLimit)
+	{
+		result = maxLimit;
+	}
+	if(result < CelestialBody::parameters.radius)
+	{
+		return 0.0;
+	}
+	return result;
 }
 
 double Planet::proceduralInnerRings() const
 {
-	float r(randomGen.getRandomNumber(8));
+	float r(randomGen.getRandomNumber(9));
 	double outerHeight(parameters.outerRing
 	                   - getCelestialBodyParameters().radius);
 	if(outerHeight < 0.0)

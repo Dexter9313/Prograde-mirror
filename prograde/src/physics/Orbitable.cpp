@@ -220,6 +220,7 @@ void Orbitable::parseChildren(QJsonObject const& json)
 	if(createdProgress)
 	{
 		delete progress;
+		progress = nullptr;
 	}
 
 	// binaries are the only orbitables to have non-planet children

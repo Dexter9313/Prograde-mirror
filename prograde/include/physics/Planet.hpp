@@ -69,6 +69,7 @@ class Planet : public CelestialBody
 
 	double assumedTidalLockingStrengh() const;
 
+	double proceduralMass() const;
 	Vector3 proceduralOblateness() const;
 	Color proceduralColor() const;
 	double proceduralSiderealTimeAtEpoch() const;
