@@ -41,7 +41,7 @@ StarRenderer::StarRenderer(Star const* drawnStar)
 
 	blackbodyTex = GLHandler::newTexture(
 	    (blackbody::max_temp - blackbody::min_temp) / blackbody::temp_step + 1,
-	    // NOLINTNEXTLINE(hicpp-no-array-decay)
+	    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
 	    blackbody::red, blackbody::green, blackbody::blue);
 }
 
