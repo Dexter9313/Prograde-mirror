@@ -36,8 +36,8 @@ Orbit::Orbit(MassiveBodyMass const& massiveBodyMass, QJsonObject const& json)
 	}
 	else
 	{
-		std::cerr << "ERR" << std::endl;
-		exit(EXIT_FAILURE);
+		std::cerr << "Cannot determine orbital elements." << std::endl;
+		return;
 	}
 
 	if(this->massiveBodyMass == 0)
@@ -54,6 +54,7 @@ Orbit::Orbit(MassiveBodyMass const& massiveBodyMass, QJsonObject const& json)
 	parameters.meanAnomalyAtEpoch = json["meanAnomalyAtEpoch"].toDouble();
 
 	updatePeriod();
+	valid = true;
 }
 
 Orbit::Orbit(MassiveBodyMass const& massiveBodyMass,
@@ -62,6 +63,7 @@ Orbit::Orbit(MassiveBodyMass const& massiveBodyMass,
     , massiveBodyMass(massiveBodyMass.value)
 {
 	updatePeriod();
+	valid = true;
 }
 
 // TODO(florian) compute correctly
@@ -80,6 +82,7 @@ Orbit::Orbit(Period const& period, Orbit::Parameters parameters)
 	{
 		this->period = constant::NaN;
 	}
+	valid = true;
 }
 
 double Orbit::getMassiveBodyMass() const

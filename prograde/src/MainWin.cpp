@@ -5,78 +5,105 @@ MainWin::MainWin()
 {
 	QString planetsystemdir(
 	    QSettings().value("simulation/planetsystemdir").toString());
-	QFile jsonFile;
 
-	if(QSettings().value("simulation/randomsystem").toBool())
+	srand(time(nullptr));
+	unsigned int tries(
+	    QSettings().value("simulation/randomsystem").toBool() ? 3 : 1);
+
+	while(tries > 0)
 	{
-		QStringList nameFilter;
-		nameFilter << "*.json";
-
-		QStringList files;
-		QDirIterator it(planetsystemdir, QStringList() << "*.json", QDir::Files,
-		                QDirIterator::Subdirectories);
-		while(it.hasNext())
+		tries--;
+		QFile jsonFile;
+		if(QSettings().value("simulation/randomsystem").toBool())
 		{
-			files << it.next();
+			QStringList nameFilter;
+			nameFilter << "*.json";
+
+			QStringList files;
+			QDirIterator it(planetsystemdir, QStringList() << "*.json",
+			                QDir::Files, QDirIterator::Subdirectories);
+			while(it.hasNext())
+			{
+				files << it.next();
+			}
+
+			jsonFile.setFileName(files[rand() % files.size()]);
+		}
+		else
+		{
+			jsonFile.setFileName(planetsystemdir + "/definition.json");
 		}
 
-		srand(time(nullptr));
-		jsonFile.setFileName(files[rand() % files.size()]);
+		if(jsonFile.exists())
+		{
+			jsonFile.open(QIODevice::ReadOnly);
+			QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonFile.readAll());
+			QString name(QFileInfo(jsonFile).dir().dirName());
+			orbitalSystem
+			    = new OrbitalSystem(name.toStdString(), jsonDoc.object());
+			if(!orbitalSystem->isValid())
+			{
+				std::cerr << orbitalSystem->getName() << " is invalid... ";
+				delete orbitalSystem;
+				if(tries > 0)
+				{
+					std::cerr << "Trying another one..." << std::endl;
+				}
+				else
+				{
+					std::cerr << "All tries done. Shuting down..." << std::endl;
+					exit(EXIT_FAILURE);
+				}
+			}
+			else
+			{
+				tries = 0;
+			}
+		}
+		else
+		{
+			QMessageBox::critical(
+			    nullptr, tr("Invalid data directory"),
+			    tr("The planetary system root directory doesn't "
+			       "contain any definition.json file."));
+			exit(EXIT_FAILURE);
+		}
 	}
-	else
+
+	auto barycenters = orbitalSystem->getAllBinariesNames();
+	auto stars       = orbitalSystem->getAllStarsNames();
+	auto fcPlanets   = orbitalSystem->getAllFirstClassPlanetsNames();
+	auto satellites  = orbitalSystem->getAllSatellitePlanetsNames();
+
+	std::cout << "Barycenters : " << barycenters.size() << std::endl;
+	for(auto name : barycenters)
 	{
-		jsonFile.setFileName(planetsystemdir + "/definition.json");
+		std::cout << name << std::endl;
 	}
+	std::cout << std::endl;
 
-	if(jsonFile.exists())
+	std::cout << "Stars : " << stars.size() << std::endl;
+	for(auto name : stars)
 	{
-		jsonFile.open(QIODevice::ReadOnly);
-		QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonFile.readAll());
-		QString name(QFileInfo(jsonFile).dir().dirName());
-		orbitalSystem = new OrbitalSystem(name.toStdString(), jsonDoc.object());
-
-		auto barycenters = orbitalSystem->getAllBinariesNames();
-		auto stars       = orbitalSystem->getAllStarsNames();
-		auto fcPlanets   = orbitalSystem->getAllFirstClassPlanetsNames();
-		auto satellites  = orbitalSystem->getAllSatellitePlanetsNames();
-
-		std::cout << "Barycenters : " << barycenters.size() << std::endl;
-		for(auto name : barycenters)
-		{
-			std::cout << name << std::endl;
-		}
-		std::cout << std::endl;
-
-		std::cout << "Stars : " << stars.size() << std::endl;
-		for(auto name : stars)
-		{
-			std::cout << name << std::endl;
-		}
-		std::cout << std::endl;
-
-		std::cout << "Main Planets : " << fcPlanets.size() << std::endl;
-		for(auto name : fcPlanets)
-		{
-			std::cout << name << std::endl;
-		}
-		std::cout << std::endl;
-
-		std::cout << "Satellites : " << satellites.size() << std::endl;
-		for(auto name : satellites)
-		{
-			std::cout << name << "("
-			          << (*orbitalSystem)[name]->getParent()->getName() << ")"
-			          << std::endl;
-		}
-		std::cout << std::endl;
+		std::cout << name << std::endl;
 	}
-	else
+	std::cout << std::endl;
+
+	std::cout << "Main Planets : " << fcPlanets.size() << std::endl;
+	for(auto name : fcPlanets)
 	{
-		QMessageBox::critical(nullptr, tr("Invalid data directory"),
-		                      tr("The planetary system root directory doesn't "
-		                         "contain any definition.json file."));
-		exit(EXIT_FAILURE);
+		std::cout << name << std::endl;
 	}
+	std::cout << std::endl;
+
+	std::cout << "Satellites : " << satellites.size() << std::endl;
+	for(auto name : satellites)
+	{
+		std::cout << name << "("
+		          << (*orbitalSystem)[name]->getParent()->getName() << ")"
+		          << std::endl;
+	}
+	std::cout << std::endl;
 }
 
 void MainWin::keyPressEvent(QKeyEvent* e)

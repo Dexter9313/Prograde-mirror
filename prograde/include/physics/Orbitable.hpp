@@ -55,6 +55,14 @@ class Orbitable
 	// later !
 	Orbitable(Type type, std::string name, Orbitable const& parent,
 	          Orbit* orbit = nullptr);
+	bool isValid() const
+	{
+		if(orbit != nullptr && !orbit->isValid())
+		{
+			return false;
+		}
+		return true;
+	}
 
 	void generateBinariesNames();
 	void generatePlanetsNames();

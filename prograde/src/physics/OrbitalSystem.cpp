@@ -135,6 +135,18 @@ OrbitalSystem::OrbitalSystem(std::string name, Orbitable* rootOrbitable,
 	}
 }
 
+bool OrbitalSystem::isValid() const
+{
+	for(auto orbitable : getAllOrbitablesPointers())
+	{
+		if(!orbitable->isValid())
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
 void OrbitalSystem::generateStarsNames()
 {
 	if(rootOrbitable->getOrbitableType() == Orbitable::Type::STAR)

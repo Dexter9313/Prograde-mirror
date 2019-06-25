@@ -62,6 +62,7 @@ class Orbit
 	Orbit(MassiveBodyMass const& massiveBodyMass, Parameters parameters);
 	Orbit(Period const& period, Parameters parameters);
 	Orbit(Orbit const& copiedOrbit) = default;
+	bool isValid() const { return valid; };
 	virtual bool isLoadedFromFile() const { return false; };
 	virtual void updateParameters(UniversalTime uT) { (void) uT; };
 	double getMassiveBodyMass() const;
@@ -90,6 +91,7 @@ class Orbit
 	Parameters parameters;
 
   private:
+	bool valid = false;
 	double massiveBodyMass;
 
 	// period is precomputed as it is often used and doesn't change

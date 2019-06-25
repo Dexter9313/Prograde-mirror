@@ -41,6 +41,7 @@ class OrbitalSystem
 	              double declinationTilt);
 	OrbitalSystem(OrbitalSystem const&) = delete;
 	OrbitalSystem& operator=(OrbitalSystem const&) = delete;
+	bool isValid() const;
 
 	void generateStarsNames();
 
