@@ -75,6 +75,8 @@ MainWin::MainWin()
 	auto fcPlanets   = orbitalSystem->getAllFirstClassPlanetsNames();
 	auto satellites  = orbitalSystem->getAllSatellitePlanetsNames();
 
+	std::cout << "-=-=- SYSTEM " << orbitalSystem->getName() << " -=-=-"
+	          << std::endl;
 	std::cout << "Barycenters : " << barycenters.size() << std::endl;
 	for(auto name : barycenters)
 	{

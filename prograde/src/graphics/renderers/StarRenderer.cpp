@@ -26,13 +26,34 @@ StarRenderer::StarRenderer(Star const* drawnStar)
 {
 	billboardOriginalEdgeSize
 	    = drawnStar->getCelestialBodyParameters().radius * 39.253; // eyeballed
+
+	// detailed
+	detailedShader = GLHandler::newShader("detailedstar");
+	GLHandler::setShaderParam(
+	    detailedShader, "blackbodyBoundaries",
+	    QVector2D(blackbody::min_temp, blackbody::max_temp));
+	GLHandler::setShaderParam(detailedShader, "temperature",
+	                          static_cast<float>(drawnStar->getTemperature()));
+	GLHandler::setShaderParam(detailedShader, "seed",
+	                          drawnStar->getPseudoRandomSeed() / 2100.f);
+
+	detailedMesh = Primitives::newUnitSphere(detailedShader, 50, 50);
+
+	blackbodyTex = GLHandler::newTexture(
+	    (blackbody::max_temp - blackbody::min_temp) / blackbody::temp_step + 1,
+	    // NOLINTNEXTLINE(hicpp-no-array-decay)
+	    blackbody::red, blackbody::green, blackbody::blue);
 }
 
 void StarRenderer::updateMesh(UniversalTime uT, Camera const& camera)
 {
 	CelestialBodyRenderer::updateMesh(uT, camera);
+
 	billboard.position = position;
 	billboard.width    = billboardOriginalEdgeSize * scale;
+
+	GLHandler::setShaderParam(detailedShader, "time",
+	                          static_cast<float>(uT % 1.0e9));
 }
 
 void StarRenderer::render(BasicCamera const& camera)
@@ -44,6 +65,9 @@ void StarRenderer::render(BasicCamera const& camera)
 	}
 	else
 	{
+		GLHandler::setUpRender(detailedShader, model);
+		GLHandler::useTextures({blackbodyTex});
+		GLHandler::render(detailedMesh);
 		billboard.render(camera);
 	}
 }

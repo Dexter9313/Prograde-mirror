@@ -22,6 +22,7 @@
 #include "Camera.hpp"
 #include "graphics/Utils.hpp"
 #include "graphics/renderers/CelestialBodyRenderer.hpp"
+#include "math/MathUtils.hpp"
 #include "physics/Star.hpp"
 #include "physics/UniversalTime.hpp"
 
@@ -35,6 +36,10 @@ class StarRenderer : public CelestialBodyRenderer
   private:
 	double billboardOriginalEdgeSize;
 	Billboard billboard;
+
+	GLHandler::Mesh detailedMesh;
+	GLHandler::ShaderProgram detailedShader;
+	GLHandler::Texture blackbodyTex;
 
 	static QImage getBillboardImage(Star const* star);
 };
