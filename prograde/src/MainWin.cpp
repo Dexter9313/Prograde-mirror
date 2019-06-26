@@ -280,6 +280,118 @@ void MainWin::wheelEvent(QWheelEvent* e)
 	AbstractMainWin::wheelEvent(e);
 }
 
+void MainWin::vrEvent(VRHandler::Event const& e)
+{
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
+	switch(e.type)
+	{
+		case VRHandler::EventType::BUTTON_PRESSED:
+			switch(e.button)
+			{
+				case VRHandler::Button::GRIP:
+				{
+					Controller const* left(vrHandler.getController(Side::LEFT));
+					Controller const* right(
+					    vrHandler.getController(Side::RIGHT));
+					if(e.side == Side::LEFT && left != nullptr)
+					{
+						leftGripPressed = true;
+						initControllerPosInCube
+						    = Utils::fromQt(
+						          getCamera().trackedSpaceToWorldTransform()
+						          * left->getPosition())
+						          / CelestialBodyRenderer::overridenScale
+						      - cam->relativePosition;
+					}
+					else if(e.side == Side::RIGHT && right != nullptr)
+					{
+						rightGripPressed = true;
+						initControllerPosInCube
+						    = Utils::fromQt(
+						          getCamera().trackedSpaceToWorldTransform()
+						          * right->getPosition())
+						          / CelestialBodyRenderer::overridenScale
+						      - cam->relativePosition;
+					}
+					else
+					{
+						break;
+					}
+					if(leftGripPressed && rightGripPressed && left != nullptr
+					   && right != nullptr)
+					{
+						initControllersDistance
+						    = left->getPosition().distanceToPoint(
+						        right->getPosition());
+						initScale = CelestialBodyRenderer::overridenScale;
+
+						QVector3D controllersMidPoint;
+						controllersMidPoint
+						    = left->getPosition() + right->getPosition();
+						controllersMidPoint /= 2.f;
+
+						controllersMidPoint
+						    = getCamera().trackedSpaceToWorldTransform()
+						      * controllersMidPoint;
+						scaleCenter = Utils::fromQt(controllersMidPoint);
+
+						QVector3D controllersMidPointInCube;
+						controllersMidPointInCube
+						    = (controllersMidPoint
+						       - Utils::toQt(cam->relativePosition))
+						      / CelestialBodyRenderer::overridenScale;
+					}
+					break;
+				}
+				default:
+					break;
+			}
+			break;
+		case VRHandler::EventType::BUTTON_UNPRESSED:
+			switch(e.button)
+			{
+				case VRHandler::Button::GRIP:
+				{
+					Controller const* left(vrHandler.getController(Side::LEFT));
+					Controller const* right(
+					    vrHandler.getController(Side::RIGHT));
+					if(e.side == Side::LEFT)
+					{
+						leftGripPressed = false;
+						if(right != nullptr && rightGripPressed)
+						{
+							initControllerPosInCube
+							    = Utils::fromQt(
+							          getCamera().trackedSpaceToWorldTransform()
+							          * right->getPosition())
+							      - cam->relativePosition;
+						}
+					}
+					else if(e.side == Side::RIGHT)
+					{
+						rightGripPressed = false;
+						if(left != nullptr && leftGripPressed)
+						{
+							initControllerPosInCube
+							    = Utils::fromQt(
+							          getCamera().trackedSpaceToWorldTransform()
+							          * left->getPosition())
+							      - cam->relativePosition;
+						}
+					}
+					break;
+				}
+				default:
+					break;
+			}
+			break;
+		default:
+			break;
+	}
+
+	AbstractMainWin::vrEvent(e);
+}
+
 void MainWin::initScene()
 {
 	QCursor c(cursor());
@@ -313,6 +425,43 @@ void MainWin::updateScene(BasicCamera& camera)
 	}*/
 
 	cam.updateUT(clock.getCurrentUt());
+
+	Controller const* left(vrHandler.getController(Side::LEFT));
+	Controller const* right(vrHandler.getController(Side::RIGHT));
+
+	// single grip = translation
+	if(leftGripPressed != rightGripPressed)
+	{
+		Vector3 controllerPosInCube;
+		if(leftGripPressed && left != nullptr)
+		{
+			controllerPosInCube
+			    = Utils::fromQt(getCamera().trackedSpaceToWorldTransform()
+			                    * left->getPosition())
+			          / CelestialBodyRenderer::overridenScale
+			      - cam.relativePosition;
+		}
+		else if(rightGripPressed && right != nullptr)
+		{
+			controllerPosInCube
+			    = Utils::fromQt(getCamera().trackedSpaceToWorldTransform()
+			                    * right->getPosition())
+			          / CelestialBodyRenderer::overridenScale
+			      - cam.relativePosition;
+		}
+		cam.relativePosition -= controllerPosInCube - initControllerPosInCube;
+	}
+	// double grip = scale
+	if(leftGripPressed && rightGripPressed && left != nullptr
+	   && right != nullptr)
+	{
+		rescaleCube(
+		    initScale
+		        * left->getPosition().distanceToPoint(right->getPosition())
+		        / initControllersDistance,
+		    scaleCenter);
+	}
+
 	// apply keyboard controls
 	if(!vrHandler)
 	{
@@ -372,9 +521,21 @@ void MainWin::updateScene(BasicCamera& camera)
 
 void MainWin::renderScene(BasicCamera const& camera)
 {
+	GLHandler::setPointSize(1);
 	stars.render();
 	systemRenderer->render(camera);
 	debugText->render();
+}
+
+void MainWin::rescaleCube(double newScale, Vector3 const& scaleCenter)
+{
+	auto& cam(dynamic_cast<OrbitalSystemCamera&>(getCamera()));
+	Vector3 scaleCenterPosInCube;
+	scaleCenterPosInCube = scaleCenter - cam.relativePosition;
+	scaleCenterPosInCube *= newScale / CelestialBodyRenderer::overridenScale;
+	// cam.relativePosition                  = scaleCenter -
+	// scaleCenterPosInCube;
+	CelestialBodyRenderer::overridenScale = newScale;
 }
 
 MainWin::~MainWin()
