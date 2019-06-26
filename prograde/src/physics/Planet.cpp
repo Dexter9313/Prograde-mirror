@@ -108,8 +108,8 @@ Planet::Type Planet::strToType(std::string const& str)
 
 void Planet::parseJSON(QJsonObject const& json)
 {
-	parameters.type
-	    = strToType(json["type"].toString(proceduralTypeStr()).toStdString());
+	parameters.type = strToType(
+	    json["type"].toString(proceduralTypeStr().c_str()).toStdString());
 	if(!json.contains("mass"))
 	{
 		CelestialBody::parameters.mass = proceduralMass();
@@ -316,7 +316,7 @@ double Planet::proceduralNorthPoleDeclination() const
 	return randomDec;
 }
 
-QString Planet::proceduralTypeStr() const
+std::string Planet::proceduralTypeStr() const
 {
 	if(CelestialBody::parameters.mass != 0.0
 	   && CelestialBody::parameters.radius != 0.0)

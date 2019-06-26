@@ -77,7 +77,7 @@ class Planet : public CelestialBody
 	double proceduralNorthPoleRightAsc() const;
 	double proceduralNorthPoleDeclination() const;
 
-	QString proceduralTypeStr() const;
+	std::string proceduralTypeStr() const;
 	double proceduralAtmosphere() const;
 	double proceduralOuterRings() const;
 	double proceduralInnerRings() const;
