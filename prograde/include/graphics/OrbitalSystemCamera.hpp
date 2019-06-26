@@ -33,41 +33,23 @@ class OrbitalSystemCamera : public BasicCamera
 	bool shouldBeCulled(QVector3D const& spherePosition, float radius) const;
 	Vector3 getRelativePositionTo(CelestialBody const* body,
 	                              UniversalTime uT) const;
-	Vector3 getAbsolutePosition() const { return absolutePosition; };
 
-	float angleAroundZ = 0.f;
-	float angleAboveXY = 0.f;
-	float distance     = 100000.f;
+	Vector3 relativePosition = Vector3(10000000.0, 0.0, 0.0);
 
-	CelestialBody* target;
+	float pitch = 0.f;
+	float yaw   = 0.f;
+
+	CelestialBody const* target;
 
   public slots:
-	QVector3D getPosition() const { return position; };
 	QVector3D getLookDirection() const { return lookDirection; };
 	QVector3D getUp() const { return up; };
 
-	float getAngleAroundZ() const { return angleAroundZ; };
-	void setAngleAroundZ(float angleAroundZ)
-	{
-		this->angleAroundZ = angleAroundZ;
-	};
-	float getAngleAboveXY() const { return angleAboveXY; };
-	void setAngleAboveXY(float angleAboveXY)
-	{
-		this->angleAboveXY = angleAboveXY;
-	};
-	float getDistance() const { return distance; };
-	void setDistance(float distance) { this->distance = distance; };
-
   private:
-	QVector3D position      = {1.f, 0.f, 0.f};
 	QVector3D lookDirection = {-1.f, 0.f, 0.f};
 	QVector3D up            = {0.f, 0.f, 1.f};
 
 	void updateView();
-
-	Vector3 relativePosition;
-	Vector3 absolutePosition;
 };
 
 #endif // ORBITALSYSTEMCAMERA_H

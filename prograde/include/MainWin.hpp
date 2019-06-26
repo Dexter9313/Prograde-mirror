@@ -26,6 +26,7 @@ class MainWin : public AbstractMainWin
 
   protected:
 	virtual void keyPressEvent(QKeyEvent* e) override;
+	virtual void keyReleaseEvent(QKeyEvent* e) override;
 	virtual void mousePressEvent(QMouseEvent* e) override;
 	virtual void mouseReleaseEvent(QMouseEvent* e) override;
 	virtual void mouseMoveEvent(QMouseEvent* e) override;
@@ -76,6 +77,10 @@ class MainWin : public AbstractMainWin
 
 	SimulationTime clock = SimulationTime(
 	    QSettings().value("simulation/starttime").value<QDateTime>());
+
+	// keyboard controls variables
+	QVector3D positiveVelocity;
+	QVector3D negativeVelocity;
 
 	// TEMP
 	const int textWidth  = 225;

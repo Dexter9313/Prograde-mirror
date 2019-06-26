@@ -17,21 +17,34 @@ Vector3 OrbitalSystemCamera::getRelativePositionTo(CelestialBody const* body,
 	return targetRelPosToBody - relativePosition;
 }
 
-void OrbitalSystemCamera::updateUT(UniversalTime uT)
+void OrbitalSystemCamera::updateUT(UniversalTime /*uT*/)
 {
-	angleAboveXY = angleAboveXY > 3.1415f / 2.f ? 3.1415f / 2.f : angleAboveXY;
-	angleAboveXY
-	    = angleAboveXY < -3.1415f / 2.f ? -3.1415f / 2.f : angleAboveXY;
-	relativePosition.setXYZ(
-	    distance + target->getCelestialBodyParameters().radius, 0, 0);
+	while(yaw < 0.f)
+	{
+		yaw += 2.f * M_PI;
+	}
+	while(yaw >= 2.f * M_PI)
+	{
+		yaw -= 2.f * M_PI;
+	}
+	if(pitch > M_PI_2 - 0.01)
+	{
+		pitch = M_PI_2 - 0.01;
+	}
+	if(pitch < -1.f * M_PI_2 + 0.01)
+	{
+		pitch = -1.f * M_PI_2 + 0.01;
+	}
+	/*angleAboveXY = angleAboveXY > 3.1415f / 2.f ? 3.1415f / 2.f :
+	angleAboveXY; angleAboveXY = angleAboveXY < -3.1415f / 2.f ? -3.1415f / 2.f
+	: angleAboveXY; relativePosition.setXYZ( distance +
+	target->getCelestialBodyParameters().radius, 0, 0);
 	relativePosition.rotateAlongY(angleAboveXY);
-	relativePosition.rotateAlongZ(angleAroundZ);
+	relativePosition.rotateAlongZ(angleAroundZ);*/
 
-	absolutePosition = target->getAbsolutePositionAtUT(uT) + relativePosition;
-	Vector3 targetVector = (-1 * relativePosition);
-	position             = Utils::toQt(absolutePosition);
-	lookDirection        = Utils::toQt(targetVector);
-	lookAt(QVector3D(0.f, 0.f, 0.f), lookDirection, QVector3D(0.f, 0.f, 1.f));
+	lookDirection
+	    = {-cosf(yaw) * cosf(pitch), -sinf(yaw) * cosf(pitch), sinf(pitch)};
+	lookAt(QVector3D(0.f, 0.f, 0.f), lookDirection, up);
 }
 
 // http://www.lighthouse3d.com/tutorials/view-frustum-culling/geometric-approach-testing-points-and-spheres/

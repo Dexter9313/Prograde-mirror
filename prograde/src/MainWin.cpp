@@ -154,15 +154,63 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 		}
 		clock.setTimeCoeff(timeCoeff);
 	}
+	else if(e->key() == Qt::Key_Up)
+	{
+		CelestialBodyRenderer::overridenScale *= 1.2;
+	}
+	else if(e->key() == Qt::Key_Down)
+	{
+		CelestialBodyRenderer::overridenScale /= 1.2;
+	}
+	// CONTROLS
+	else if(e->key() == Qt::Key_W || e->key() == Qt::Key_Up)
+	{
+		negativeVelocity.setZ(-1);
+	}
+	else if(e->key() == Qt::Key_A || e->key() == Qt::Key_Left)
+	{
+		negativeVelocity.setX(-1);
+	}
+	else if(e->key() == Qt::Key_S || e->key() == Qt::Key_Down)
+	{
+		positiveVelocity.setZ(1);
+	}
+	else if(e->key() == Qt::Key_D || e->key() == Qt::Key_Right)
+	{
+		positiveVelocity.setX(1);
+	}
 
 	AbstractMainWin::keyPressEvent(e);
 }
 
+void MainWin::keyReleaseEvent(QKeyEvent* e)
+{
+	// CONTROLS
+	if(e->key() == Qt::Key_W || e->key() == Qt::Key_Up)
+	{
+		negativeVelocity.setZ(0);
+	}
+	else if(e->key() == Qt::Key_A || e->key() == Qt::Key_Left)
+	{
+		negativeVelocity.setX(0);
+	}
+	else if(e->key() == Qt::Key_S || e->key() == Qt::Key_Down)
+	{
+		positiveVelocity.setZ(0);
+	}
+	else if(e->key() == Qt::Key_D || e->key() == Qt::Key_Right)
+	{
+		positiveVelocity.setX(0);
+	}
+
+	AbstractMainWin::keyReleaseEvent(e);
+}
+
 void MainWin::mousePressEvent(QMouseEvent* e)
 {
-	if(e->button() != Qt::MouseButton::RightButton)
+	/*if(e->button() != Qt::MouseButton::RightButton)
 	{
-		return;
+	    return;
 	}
 
 	lastCursorPos = QCursor::pos();
@@ -170,53 +218,74 @@ void MainWin::mousePressEvent(QMouseEvent* e)
 	QCursor c(cursor());
 	c.setShape(Qt::CursorShape::BlankCursor);
 	setCursor(c);
-	trackballEnabled = true;
+	trackballEnabled = true;*/
 }
 
 void MainWin::mouseReleaseEvent(QMouseEvent* e)
 {
-	if(e->button() != Qt::MouseButton::RightButton)
+	/*if(e->button() != Qt::MouseButton::RightButton)
 	{
-		return;
+	    return;
 	}
 
 	trackballEnabled = false;
 	QCursor c(cursor());
 	c.setShape(Qt::CursorShape::ArrowCursor);
 	setCursor(c);
-	QCursor::setPos(lastCursorPos);
+	QCursor::setPos(lastCursorPos);*/
 }
 
+/*
 void MainWin::mouseMoveEvent(QMouseEvent* e)
 {
-	if(!trackballEnabled)
+    if(!trackballEnabled)
+    {
+        return;
+    }
+    auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
+    float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
+    float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
+    cam->angleAroundZ += dx * 3.14f / 3.f;
+    cam->angleAboveXY += dy * 3.14f / 3.f;
+    QCursor::setPos(width() / 2, height() / 2);
+}
+*/
+void MainWin::mouseMoveEvent(QMouseEvent* e)
+{
+	if(!isActive() || vrHandler)
 	{
 		return;
 	}
 	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
 	float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
 	float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
-	cam->angleAroundZ += dx * 3.14f / 3.f;
-	cam->angleAboveXY += dy * 3.14f / 3.f;
+	cam->yaw += dx * 3.14f / 3.f;
+	cam->pitch += dy * 3.14f / 3.f;
 	QCursor::setPos(width() / 2, height() / 2);
 }
 
 void MainWin::wheelEvent(QWheelEvent* e)
 {
-	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
+	/*auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
 	if(e->angleDelta().y() > 0.f)
 	{
-		cam->distance /= 1.2f; // + (0.2f * e->angleDelta().y() / 1000.f);
+	    cam->distance /= 1.2f; // + (0.2f * e->angleDelta().y() / 1000.f);
 	}
 	else
 	{
-		cam->distance *= 1.2f; // - (0.2f * e->angleDelta().y() / 1000.f);
-	}
+	    cam->distance *= 1.2f; // - (0.2f * e->angleDelta().y() / 1000.f);
+	}*/
+	CelestialBodyRenderer::overridenScale *= 1.f + e->angleDelta().y() / 1000.f;
+
 	AbstractMainWin::wheelEvent(e);
 }
 
 void MainWin::initScene()
 {
+	QCursor c(cursor());
+	c.setShape(Qt::CursorShape::BlankCursor);
+	setCursor(c);
+
 	clock.setTargetFPS(0.f);
 	stars.initFromFile(23.4392811 * constant::pi / 180.f);
 
@@ -229,6 +298,8 @@ void MainWin::initScene()
 	cam->target    = orbitalSystem->getAllCelestialBodiesPointers()[0];
 	systemRenderer = new OrbitalSystemRenderer(orbitalSystem);
 	setCamera(cam);
+
+	CelestialBodyRenderer::overridenScale = 1.0;
 }
 
 void MainWin::updateScene(BasicCamera& camera)
@@ -242,17 +313,28 @@ void MainWin::updateScene(BasicCamera& camera)
 	}*/
 
 	cam.updateUT(clock.getCurrentUt());
+	// apply keyboard controls
+	if(!vrHandler)
+	{
+		for(unsigned int i(0); i < 3; ++i)
+		{
+			cam.relativePosition[i]
+			    += frameTiming
+			       * (cam.getView().inverted()
+			          * (negativeVelocity + positiveVelocity))[i]
+			       / CelestialBodyRenderer::overridenScale;
+		}
+	}
+
 	systemRenderer->updateMesh(clock.getCurrentUt(), cam);
 
 	std::stringstream stream;
 	stream.precision(3);
 	// stream << clock.getCurrentFPS() << " FPS" << std::endl;
 	stream << round(1.f / frameTiming) << " FPS" << std::endl;
-	stream << "Targeting : "
-	       << orbitalSystem->getAllCelestialBodiesNames()[bodyTracked]
-	       << std::endl;
+	stream << "Targeting : " << cam.target->getName() << std::endl;
 	stream.precision(10);
-	stream << "Distance : " << cam.distance << std::endl;
+	stream << "Distance : " << cam.relativePosition.length() << std::endl;
 	stream.precision(4);
 	stream << "UT = " << SimulationTime::UTToStr(clock.getCurrentUt())
 	       << std::endl;
@@ -271,7 +353,8 @@ void MainWin::updateScene(BasicCamera& camera)
 	std::endl; stream << "Shaders count : " << GLHandler::shaderCount() <<
 	std::endl; stream << "Meshs count : " << GLHandler::meshCount() <<
 	std::endl; stream << "Textures count : " << GLHandler::texCount() <<
-	std::endl; stream << "PBOs count : " << GLHandler::PBOCount() << std::endl;
+	std::endl; stream << "PBOs count : " << GLHandler::PBOCount() <<
+	std::endl;
 	*/
 
 	debugText->getModel() = cam.screenToWorldTransform();

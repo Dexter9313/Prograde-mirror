@@ -31,7 +31,7 @@ class OrbitalSystemRenderer //: public Renderer
 {
   public:
 	OrbitalSystemRenderer(OrbitalSystem* drawnSystem);
-	void updateMesh(UniversalTime uT, OrbitalSystemCamera const& camera);
+	void updateMesh(UniversalTime uT, OrbitalSystemCamera& camera);
 	void render(BasicCamera const& camera);
 	~OrbitalSystemRenderer();
 

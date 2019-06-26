@@ -31,7 +31,7 @@ OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
 }
 
 void OrbitalSystemRenderer::updateMesh(UniversalTime uT,
-                                       OrbitalSystemCamera const& camera)
+                                       OrbitalSystemCamera& camera)
 {
 	sortedRenderers.clear();
 	for(auto bodyRenderer : bodyRenderers)
@@ -41,12 +41,28 @@ void OrbitalSystemRenderer::updateMesh(UniversalTime uT,
 		                                           uT)
 		                    .length()]
 		    = bodyRenderer;
-		bodyRenderer->updateMesh(uT, camera);
 	}
 
-	for(auto rendererPair : sortedRenderers)
+	auto closest(sortedRenderers.begin()->second->getDrawnBody());
+	while(camera.getRelativePositionTo(closest, uT).length()
+	          > closest->getSphereOfInfluenceRadius()
+	      && closest->getParent() != nullptr
+	      && closest->getParent()->getOrbitableType()
+	             != Orbitable::Type::BINARY)
 	{
-		rendererPair.second->updateMesh(uT, camera);
+		closest = dynamic_cast<CelestialBody const*>(closest->getParent());
+	}
+
+	if(closest != camera.target)
+	{
+		camera.relativePosition
+		    = -1.0 * camera.getRelativePositionTo(closest, uT);
+		camera.target = closest;
+	}
+
+	for(auto& pair : sortedRenderers)
+	{
+		pair.second->updateMesh(uT, camera);
 	}
 }
 

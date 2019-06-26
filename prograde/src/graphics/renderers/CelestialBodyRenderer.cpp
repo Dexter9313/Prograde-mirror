@@ -18,6 +18,7 @@
 
 #include "graphics/renderers/CelestialBodyRenderer.hpp"
 
+double CelestialBodyRenderer::overridenScale = 0.0;
 CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody const* drawnBody,
                                              QColor const& pointColor)
     : drawnBody(drawnBody)
@@ -66,10 +67,15 @@ void CelestialBodyRenderer::updateMesh(UniversalTime uT,
 {
 	camRelPos = camera.getRelativePositionTo(drawnBody, uT);
 
-	double centerPosition = 300.f;
+	double centerPosition = 9900.f;
 
 	double camDist(camRelPos.length());
 	scale = centerPosition / camDist;
+
+	if(overridenScale != 0.0 && overridenScale < scale)
+	{
+		scale = overridenScale;
+	}
 
 	double radiusScale(drawnBody->getCelestialBodyParameters().radius * scale);
 	position = Utils::toQt(scale * camRelPos);

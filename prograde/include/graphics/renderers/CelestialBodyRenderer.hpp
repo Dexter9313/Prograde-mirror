@@ -38,6 +38,8 @@ class CelestialBodyRenderer
 	CelestialBody const* getDrawnBody() const { return drawnBody; };
 	virtual ~CelestialBodyRenderer();
 
+	static double overridenScale;
+
   protected:
 	CelestialBody const* drawnBody;
 
