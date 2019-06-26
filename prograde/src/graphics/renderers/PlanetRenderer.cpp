@@ -44,7 +44,8 @@ PlanetRenderer::PlanetRenderer(Planet const* drawnBody)
 	}
 }
 
-void PlanetRenderer::updateMesh(UniversalTime uT, Camera const& camera)
+void PlanetRenderer::updateMesh(UniversalTime uT,
+                                OrbitalSystemCamera const& camera)
 {
 	CelestialBodyRenderer::updateMesh(uT, camera);
 	auto drawnPlanet(dynamic_cast<Planet const*>(drawnBody));

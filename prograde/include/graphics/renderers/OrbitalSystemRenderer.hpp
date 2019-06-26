@@ -21,9 +21,9 @@
 
 #include "Billboard.hpp"
 
-#include "Camera.hpp"
 #include "PlanetRenderer.hpp"
 #include "StarRenderer.hpp"
+#include "graphics/OrbitalSystemCamera.hpp"
 #include "physics/OrbitalSystem.hpp"
 
 // TODO rethink Renderer (mesh attribute)
@@ -31,7 +31,7 @@ class OrbitalSystemRenderer //: public Renderer
 {
   public:
 	OrbitalSystemRenderer(OrbitalSystem* drawnSystem);
-	void updateMesh(UniversalTime uT, Camera const& camera);
+	void updateMesh(UniversalTime uT, OrbitalSystemCamera const& camera);
 	void render(BasicCamera const& camera);
 	~OrbitalSystemRenderer();
 

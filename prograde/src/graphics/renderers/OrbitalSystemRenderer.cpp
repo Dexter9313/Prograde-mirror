@@ -30,7 +30,8 @@ OrbitalSystemRenderer::OrbitalSystemRenderer(OrbitalSystem* drawnSystem)
 	}
 }
 
-void OrbitalSystemRenderer::updateMesh(UniversalTime uT, Camera const& camera)
+void OrbitalSystemRenderer::updateMesh(UniversalTime uT,
+                                       OrbitalSystemCamera const& camera)
 {
 	sortedRenderers.clear();
 	for(auto bodyRenderer : bodyRenderers)

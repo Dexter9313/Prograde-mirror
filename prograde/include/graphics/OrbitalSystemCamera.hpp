@@ -16,19 +16,19 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef ORBITALSYSTEMCAMERA_H
+#define ORBITALSYSTEMCAMERA_H
 
 #include <cmath>
 
 #include "BasicCamera.hpp"
 #include "physics/CelestialBody.hpp"
 
-class Camera : public BasicCamera
+class OrbitalSystemCamera : public BasicCamera
 {
 	Q_OBJECT
   public:
-	Camera(VRHandler const* vrHandler);
+	OrbitalSystemCamera(VRHandler const* vrHandler);
 	void updateUT(UniversalTime uT);
 	bool shouldBeCulled(QVector3D const& spherePosition, float radius) const;
 	Vector3 getRelativePositionTo(CelestialBody const* body,
@@ -70,4 +70,4 @@ class Camera : public BasicCamera
 	Vector3 absolutePosition;
 };
 
-#endif // CAMERA_H
+#endif // ORBITALSYSTEMCAMERA_H

@@ -21,8 +21,8 @@
 
 #include <QMatrix4x4>
 
-#include "Camera.hpp"
 #include "GLHandler.hpp"
+#include "graphics/OrbitalSystemCamera.hpp"
 #include "graphics/Utils.hpp"
 #include "physics/CelestialBody.hpp"
 #include "physics/OrbitalSystem.hpp"
@@ -32,7 +32,8 @@ class CelestialBodyRenderer
   public:
 	CelestialBodyRenderer(CelestialBody const* drawnBody,
 	                      QColor const& pointColor);
-	virtual void updateMesh(UniversalTime uT, Camera const& camera);
+	virtual void updateMesh(UniversalTime uT,
+	                        OrbitalSystemCamera const& camera);
 	virtual void render(BasicCamera const& /*camera*/) { renderPoint(); };
 	CelestialBody const* getDrawnBody() const { return drawnBody; };
 	virtual ~CelestialBodyRenderer();

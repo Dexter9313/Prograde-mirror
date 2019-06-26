@@ -6,8 +6,8 @@
 
 #include "AbstractMainWin.hpp"
 
-#include "Camera.hpp"
 #include "Text3D.hpp"
+#include "graphics/OrbitalSystemCamera.hpp"
 #include "graphics/renderers/OrbitalSystemRenderer.hpp"
 #include "graphics/renderers/StarryBackground.hpp"
 #include "physics/OrbitalSystem.hpp"

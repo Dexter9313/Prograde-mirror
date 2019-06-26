@@ -110,7 +110,7 @@ MainWin::MainWin()
 
 void MainWin::keyPressEvent(QKeyEvent* e)
 {
-	auto cam(dynamic_cast<Camera*>(&getCamera()));
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
 	if(e->key() == Qt::Key_Tab)
 	{
 		std::vector<CelestialBody*> bodies(
@@ -193,7 +193,7 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 	{
 		return;
 	}
-	auto cam(dynamic_cast<Camera*>(&getCamera()));
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
 	float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
 	float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
 	cam->angleAroundZ += dx * 3.14f / 3.f;
@@ -203,7 +203,7 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 
 void MainWin::wheelEvent(QWheelEvent* e)
 {
-	auto cam(dynamic_cast<Camera*>(&getCamera()));
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
 	if(e->angleDelta().y() > 0.f)
 	{
 		cam->distance /= 1.2f; // + (0.2f * e->angleDelta().y() / 1000.f);
@@ -223,7 +223,7 @@ void MainWin::initScene()
 	debugText = new Text3D(textWidth, textHeight);
 	debugText->setColor(QColor(255, 0, 0));
 
-	auto cam = new Camera(&vrHandler);
+	auto cam = new OrbitalSystemCamera(&vrHandler);
 	cam->setPerspectiveProj(70.0f, static_cast<float>(width())
 	                                   / static_cast<float>(height()));
 	cam->target    = orbitalSystem->getAllCelestialBodiesPointers()[0];
@@ -233,7 +233,7 @@ void MainWin::initScene()
 
 void MainWin::updateScene(BasicCamera& camera)
 {
-	auto& cam = dynamic_cast<Camera&>(camera);
+	auto& cam = dynamic_cast<OrbitalSystemCamera&>(camera);
 
 	clock.update();
 	/*if(!clock.drawableFrame())

@@ -21,10 +21,10 @@
 
 #include <QFileInfo>
 
-#include "Camera.hpp"
 #include "DetailedPlanetRenderer.hpp"
 #include "GLHandler.hpp"
 #include "Primitives.hpp"
+#include "graphics/OrbitalSystemCamera.hpp"
 #include "physics/Planet.hpp"
 #include "physics/Star.hpp"
 
@@ -36,7 +36,8 @@ class PlanetRenderer : public CelestialBodyRenderer
 {
   public:
 	PlanetRenderer(Planet const* drawnBody);
-	virtual void updateMesh(UniversalTime uT, Camera const& camera) override;
+	virtual void updateMesh(UniversalTime uT,
+	                        OrbitalSystemCamera const& camera) override;
 	virtual void render(BasicCamera const& camera) override;
 	~PlanetRenderer();
 

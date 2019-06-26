@@ -45,7 +45,8 @@ StarRenderer::StarRenderer(Star const* drawnStar)
 	    blackbody::red, blackbody::green, blackbody::blue);
 }
 
-void StarRenderer::updateMesh(UniversalTime uT, Camera const& camera)
+void StarRenderer::updateMesh(UniversalTime uT,
+                              OrbitalSystemCamera const& camera)
 {
 	CelestialBodyRenderer::updateMesh(uT, camera);
 

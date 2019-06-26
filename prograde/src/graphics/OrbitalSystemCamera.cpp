@@ -1,15 +1,15 @@
-#include "Camera.hpp"
+#include "graphics/OrbitalSystemCamera.hpp"
 #include "graphics/Utils.hpp"
 
-Camera::Camera(VRHandler const* vrHandler)
+OrbitalSystemCamera::OrbitalSystemCamera(VRHandler const* vrHandler)
     : BasicCamera(vrHandler)
 {
 	lookAt(QVector3D(0.f, 0.f, 0.f), QVector3D(1.f, 0.f, 0.f),
 	       QVector3D(0.f, 0.f, 1.f));
 }
 
-Vector3 Camera::getRelativePositionTo(CelestialBody const* body,
-                                      UniversalTime uT) const
+Vector3 OrbitalSystemCamera::getRelativePositionTo(CelestialBody const* body,
+                                                   UniversalTime uT) const
 {
 	Vector3 targetRelPosToBody(
 	    CelestialBody::getRelativePositionAtUt(target, body, uT));
@@ -17,7 +17,7 @@ Vector3 Camera::getRelativePositionTo(CelestialBody const* body,
 	return targetRelPosToBody - relativePosition;
 }
 
-void Camera::updateUT(UniversalTime uT)
+void OrbitalSystemCamera::updateUT(UniversalTime uT)
 {
 	angleAboveXY = angleAboveXY > 3.1415f / 2.f ? 3.1415f / 2.f : angleAboveXY;
 	angleAboveXY
@@ -35,7 +35,8 @@ void Camera::updateUT(UniversalTime uT)
 }
 
 // http://www.lighthouse3d.com/tutorials/view-frustum-culling/geometric-approach-testing-points-and-spheres/
-bool Camera::shouldBeCulled(QVector3D const& spherePosition, float radius) const
+bool OrbitalSystemCamera::shouldBeCulled(QVector3D const& spherePosition,
+                                         float radius) const
 {
 	for(unsigned int i(0); i < 6; ++i)
 	{

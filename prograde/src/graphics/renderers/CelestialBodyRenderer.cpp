@@ -61,7 +61,8 @@ CelestialBodyRenderer::CelestialBodyRenderer(CelestialBody const* drawnBody,
 	                       pointShader, {{"position", 3}, {"color", 4}});
 }
 
-void CelestialBodyRenderer::updateMesh(UniversalTime uT, Camera const& camera)
+void CelestialBodyRenderer::updateMesh(UniversalTime uT,
+                                       OrbitalSystemCamera const& camera)
 {
 	camRelPos = camera.getRelativePositionTo(drawnBody, uT);
 

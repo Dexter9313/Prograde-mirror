@@ -19,7 +19,7 @@
 #define STARRENDERER_HPP
 
 #include "Billboard.hpp"
-#include "Camera.hpp"
+#include "graphics/OrbitalSystemCamera.hpp"
 #include "graphics/Utils.hpp"
 #include "graphics/renderers/CelestialBodyRenderer.hpp"
 #include "math/MathUtils.hpp"
@@ -30,7 +30,8 @@ class StarRenderer : public CelestialBodyRenderer
 {
   public:
 	StarRenderer(Star const* drawnStar);
-	virtual void updateMesh(UniversalTime uT, Camera const& camera) override;
+	virtual void updateMesh(UniversalTime uT,
+	                        OrbitalSystemCamera const& camera) override;
 	virtual void render(BasicCamera const& camera) override;
 
   private:
