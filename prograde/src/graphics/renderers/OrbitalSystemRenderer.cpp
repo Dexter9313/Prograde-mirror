@@ -77,7 +77,6 @@ void OrbitalSystemRenderer::render(BasicCamera const& camera)
 	while(it != sortedRenderers.begin())
 	{
 		--it;
-		GLHandler::clearDepthBuffer();
 		it->second->render(camera);
 	}
 }

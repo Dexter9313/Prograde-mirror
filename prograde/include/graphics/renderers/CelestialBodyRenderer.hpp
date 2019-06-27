@@ -34,13 +34,15 @@ class CelestialBodyRenderer
 	                      QColor const& pointColor);
 	virtual void updateMesh(UniversalTime uT,
 	                        OrbitalSystemCamera const& camera);
-	virtual void render(BasicCamera const& /*camera*/) { renderPoint(); };
+	virtual void render(BasicCamera const& camera);
 	CelestialBody const* getDrawnBody() const { return drawnBody; };
 	virtual ~CelestialBodyRenderer();
 
 	static double overridenScale;
 
   protected:
+	void handleDepth() const;
+
 	CelestialBody const* drawnBody;
 
 	QMatrix4x4 model;
@@ -56,6 +58,8 @@ class CelestialBodyRenderer
 	// POINT
 	GLHandler::ShaderProgram pointShader;
 	GLHandler::Mesh pointMesh;
+
+	bool clearDepthBuffer = false;
 
 	void renderPoint();
 };

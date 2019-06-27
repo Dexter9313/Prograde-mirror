@@ -74,7 +74,12 @@ void CelestialBodyRenderer::updateMesh(UniversalTime uT,
 
 	if(overridenScale != 0.0 && overridenScale < scale)
 	{
-		scale = overridenScale;
+		scale            = overridenScale;
+		clearDepthBuffer = false;
+	}
+	else
+	{
+		clearDepthBuffer = true;
 	}
 
 	double radiusScale(drawnBody->getCelestialBodyParameters().radius * scale);
@@ -95,6 +100,20 @@ void CelestialBodyRenderer::updateMesh(UniversalTime uT,
 	                       QVector3D(0.f, 0.f, 1.f));
 
 	properRotation = baseRotation * sideralRotation;
+}
+
+void CelestialBodyRenderer::render(BasicCamera const& /*camera*/)
+{
+	renderPoint();
+	handleDepth();
+}
+
+void CelestialBodyRenderer::handleDepth() const
+{
+	if(clearDepthBuffer)
+	{
+		GLHandler::clearDepthBuffer();
+	}
 }
 
 void CelestialBodyRenderer::renderPoint()

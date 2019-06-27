@@ -71,6 +71,7 @@ void StarRenderer::render(BasicCamera const& camera)
 		GLHandler::render(detailedMesh);
 		billboard.render(camera);
 	}
+	handleDepth();
 }
 
 QImage StarRenderer::getBillboardImage(Star const* star)

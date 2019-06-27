@@ -215,10 +215,9 @@ void PlanetRenderer::render(BasicCamera const& camera)
 	if(apparentAngle < 0.0026)
 	{
 		CelestialBodyRenderer::render(camera);
-		return;
 	}
 
-	if(apparentAngle < 0.005 || planet == nullptr || !planet->isValid())
+	else if(apparentAngle < 0.005 || planet == nullptr || !planet->isValid())
 	{
 		GLHandler::setShaderParam(unloadedShader, "lightpos", lightpos);
 		GLHandler::setShaderParam(unloadedShader, "lightradius", lightradius);
@@ -231,11 +230,14 @@ void PlanetRenderer::render(BasicCamera const& camera)
 		                          properRotation);
 		GLHandler::setUpRender(unloadedShader, model);
 		GLHandler::render(unloadedMesh);
-		return;
 	}
-
-	planet->render(model, lightpos, lightradius, lightcolor, neighborsPosRadius,
-	               neighborsOblateness, properRotation, customModel);
+	else
+	{
+		planet->render(model, lightpos, lightradius, lightcolor,
+		               neighborsPosRadius, neighborsOblateness, properRotation,
+		               customModel);
+	}
+	handleDepth();
 }
 
 PlanetRenderer::~PlanetRenderer()
