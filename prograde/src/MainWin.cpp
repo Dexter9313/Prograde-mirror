@@ -163,6 +163,12 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 		CelestialBodyRenderer::overridenScale /= 1.2;
 	}
 	// CONTROLS
+	else if(e->key() == Qt::Key_C)
+	{
+		Vector3 unitRelPos(cam->relativePosition.getUnitForm());
+		cam->yaw   = atan2(unitRelPos[1], unitRelPos[0]);
+		cam->pitch = -1.0 * asin(unitRelPos[2]);
+	}
 	else if(e->key() == Qt::Key_W || e->key() == Qt::Key_Up)
 	{
 		negativeVelocity.setZ(-1);
@@ -208,48 +214,28 @@ void MainWin::keyReleaseEvent(QKeyEvent* e)
 
 void MainWin::mousePressEvent(QMouseEvent* e)
 {
-	/*if(e->button() != Qt::MouseButton::RightButton)
+	if(e->button() == Qt::MouseButton::LeftButton)
 	{
-	    return;
+		rotateViewEnabled = true;
 	}
-
-	lastCursorPos = QCursor::pos();
-	QCursor::setPos(width() / 2, height() / 2);
-	QCursor c(cursor());
-	c.setShape(Qt::CursorShape::BlankCursor);
-	setCursor(c);
-	trackballEnabled = true;*/
+	else if(e->button() == Qt::MouseButton::RightButton)
+	{
+		trackballEnabled = true;
+	}
 }
 
 void MainWin::mouseReleaseEvent(QMouseEvent* e)
 {
-	/*if(e->button() != Qt::MouseButton::RightButton)
+	if(e->button() == Qt::MouseButton::LeftButton)
 	{
-	    return;
+		rotateViewEnabled = false;
 	}
-
-	trackballEnabled = false;
-	QCursor c(cursor());
-	c.setShape(Qt::CursorShape::ArrowCursor);
-	setCursor(c);
-	QCursor::setPos(lastCursorPos);*/
+	else if(e->button() == Qt::MouseButton::RightButton)
+	{
+		trackballEnabled = false;
+	}
 }
 
-/*
-void MainWin::mouseMoveEvent(QMouseEvent* e)
-{
-    if(!trackballEnabled)
-    {
-        return;
-    }
-    auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
-    float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
-    float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
-    cam->angleAroundZ += dx * 3.14f / 3.f;
-    cam->angleAboveXY += dy * 3.14f / 3.f;
-    QCursor::setPos(width() / 2, height() / 2);
-}
-*/
 void MainWin::mouseMoveEvent(QMouseEvent* e)
 {
 	if(!isActive() || vrHandler)
@@ -259,8 +245,40 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
 	float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
 	float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
-	cam->yaw += dx * 3.14f / 3.f;
-	cam->pitch += dy * 3.14f / 3.f;
+
+	if(rotateViewEnabled || trackballEnabled)
+	{
+		double dYaw(dx * constant::pi / 3.0), dPitch(dy * constant::pi / 3.0);
+		if(cam->pitch + dPitch > M_PI_2 - 0.20)
+		{
+			dPitch = M_PI_2 - 0.20 - cam->pitch;
+		}
+		if(cam->pitch + dPitch < -1.f * M_PI_2 + 0.2)
+		{
+			dPitch = -1.f * M_PI_2 + 0.2 - cam->pitch;
+		}
+
+		cam->yaw += dYaw;
+		cam->pitch += dPitch;
+		if(trackballEnabled)
+		{
+			cam->relativePosition.rotateAlongZ(dYaw);
+			double posPitch(asin(cam->relativePosition.getUnitForm()[2]));
+			if(dPitch - posPitch < -1.0 * M_PI_2 + 0.01)
+			{
+				dPitch = -1.0 * M_PI_2 + 0.01 + posPitch;
+			}
+			else if(dPitch - posPitch > M_PI_2 - 0.01)
+			{
+				dPitch = M_PI_2 - 0.01 + posPitch;
+			}
+
+			Vector3 axis(
+			    crossProduct(Vector3(0.0, 0.0, 1.0), cam->relativePosition));
+			Matrix4x4 rot(dPitch, axis);
+			cam->relativePosition = rot * cam->relativePosition;
+		}
+	}
 	QCursor::setPos(width() / 2, height() / 2);
 }
 
@@ -372,6 +390,7 @@ void MainWin::updateScene(BasicCamera& camera)
 
 void MainWin::renderScene(BasicCamera const& camera)
 {
+	GLHandler::setPointSize(1);
 	stars.render();
 	systemRenderer->render(camera);
 	debugText->render();

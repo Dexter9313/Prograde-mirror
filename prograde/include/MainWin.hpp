@@ -47,14 +47,12 @@ class MainWin : public AbstractMainWin
 	StarryBackground stars;
 
 	QPoint lastCursorPos;
-	bool trackballEnabled = false;
 
 	unsigned int bodyTracked = 0;
 
 	Text3D* debugText;
 	float timeSinceTextUpdate = FLT_MAX;
 
-	static std::string timeToStr(UniversalTime uT);
 
 	OrbitalSystem* orbitalSystem;
 	OrbitalSystemRenderer* systemRenderer;
@@ -78,9 +76,11 @@ class MainWin : public AbstractMainWin
 	SimulationTime clock = SimulationTime(
 	    QSettings().value("simulation/starttime").value<QDateTime>());
 
-	// keyboard controls variables
+	// keyboard+mouse controls variables
 	QVector3D positiveVelocity;
 	QVector3D negativeVelocity;
+	bool rotateViewEnabled = false;
+	bool trackballEnabled  = false;
 
 	// TEMP
 	const int textWidth  = 225;
