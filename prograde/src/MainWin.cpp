@@ -565,10 +565,6 @@ void MainWin::updateScene(BasicCamera& camera)
 	    << " "
 	    << lengthPrettyPrint(1.0 / CelestialBodyRenderer::overridenScale).second
 	    << "/s" << std::endl;
-	if(clock.getLockedRealTime())
-	{
-		stream << " (locked)";
-	}
 	/*
 	// GPU memory usage
 	stream << std::endl << std::endl;
