@@ -121,6 +121,22 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 			bodyTracked = 0;
 		}
 		cam->target = bodies[bodyTracked];
+
+		if(cam->relativePosition.length()
+		   >= cam->target->getSphereOfInfluenceRadius())
+		{
+			cam->relativePosition = cam->relativePosition.getUnitForm()
+			                        * cam->target->getSphereOfInfluenceRadius()
+			                        / 2.0;
+		}
+
+		if(cam->relativePosition.length()
+		   <= cam->target->getCelestialBodyParameters().radius)
+		{
+			cam->relativePosition
+			    = cam->relativePosition.getUnitForm()
+			      * cam->target->getCelestialBodyParameters().radius * 2.0;
+		}
 	}
 	else if(e->key() == Qt::Key_Backtab)
 	{
@@ -135,6 +151,21 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 			bodyTracked = bodies.size() - 1;
 		}
 		cam->target = bodies[bodyTracked];
+
+		if(cam->relativePosition.length()
+		   >= cam->target->getSphereOfInfluenceRadius())
+		{
+			cam->relativePosition = Vector3(
+			    cam->target->getSphereOfInfluenceRadius() / 2.0, 0.0, 0.0);
+		}
+
+		if(cam->relativePosition.length()
+		   <= cam->target->getCelestialBodyParameters().radius)
+		{
+			cam->relativePosition
+			    = cam->relativePosition.getUnitForm()
+			      * cam->target->getCelestialBodyParameters().radius * 2.0;
+		}
 	}
 	else if(e->key() == Qt::Key_R)
 	{
@@ -222,6 +253,10 @@ void MainWin::mousePressEvent(QMouseEvent* e)
 	{
 		trackballEnabled = true;
 	}
+	if(rotateViewEnabled && trackballEnabled)
+	{
+		OrbitalSystemRenderer::autoCameraTarget = false;
+	}
 }
 
 void MainWin::mouseReleaseEvent(QMouseEvent* e)
@@ -234,6 +269,7 @@ void MainWin::mouseReleaseEvent(QMouseEvent* e)
 	{
 		trackballEnabled = false;
 	}
+	OrbitalSystemRenderer::autoCameraTarget = true;
 }
 
 void MainWin::mouseMoveEvent(QMouseEvent* e)
@@ -246,7 +282,16 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 	float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
 	float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
 
-	if(rotateViewEnabled || trackballEnabled)
+	// means both mouse buttons are clicked
+	if(rotateViewEnabled && trackballEnabled)
+	{
+		double radius(cam->target->getCelestialBodyParameters().radius);
+		double alt(cam->relativePosition.length() - radius);
+		alt *= 1.f - dy;
+		cam->relativePosition
+		    = cam->relativePosition.getUnitForm() * (radius + alt);
+	}
+	else if(rotateViewEnabled || trackballEnabled)
 	{
 		double dYaw(dx * constant::pi / 3.0), dPitch(dy * constant::pi / 3.0);
 		if(cam->pitch + dPitch > M_PI_2 - 0.20)
@@ -313,7 +358,9 @@ void MainWin::initScene()
 	auto cam = new OrbitalSystemCamera(&vrHandler);
 	cam->setPerspectiveProj(70.0f, static_cast<float>(width())
 	                                   / static_cast<float>(height()));
-	cam->target    = orbitalSystem->getAllCelestialBodiesPointers()[0];
+	cam->target           = orbitalSystem->getAllCelestialBodiesPointers()[0];
+	cam->relativePosition = Vector3(
+	    cam->target->getCelestialBodyParameters().radius * 2.0, 0.0, 0.0);
 	systemRenderer = new OrbitalSystemRenderer(orbitalSystem);
 	setCamera(cam);
 
@@ -352,17 +399,24 @@ void MainWin::updateScene(BasicCamera& camera)
 	stream << round(1.f / frameTiming) << " FPS" << std::endl;
 	stream << "Targeting : " << cam.target->getName() << std::endl;
 	stream.precision(10);
-	stream << "Distance : "
-	       << lengthPrettyPrint(cam.relativePosition.length()).first << " "
-	       << lengthPrettyPrint(cam.relativePosition.length()).second
-	       << std::endl;
+	stream
+	    << "Altitude : "
+	    << lengthPrettyPrint(cam.relativePosition.length()
+	                         - cam.target->getCelestialBodyParameters().radius)
+	           .first
+	    << " "
+	    << lengthPrettyPrint(cam.relativePosition.length()
+	                         - cam.target->getCelestialBodyParameters().radius)
+	           .second
+	    << std::endl;
 	stream.precision(4);
 	stream << "UT = " << SimulationTime::UTToStr(clock.getCurrentUt())
 	       << std::endl;
 	stream.precision(12);
 	stream << "Raw UT = " << floor(clock.getCurrentUt() * 10) / 10 << std::endl;
 	stream.precision(8);
-	stream << "x" << clock.getTimeCoeff() << std::endl;
+	stream << "x" << clock.getTimeCoeff()
+	       << (clock.getLockedRealTime() ? " (locked)" : "") << std::endl;
 	stream
 	    << "Velocity : "
 	    << lengthPrettyPrint(1.0 / CelestialBodyRenderer::overridenScale).first

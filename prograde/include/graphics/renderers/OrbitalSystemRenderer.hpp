@@ -35,6 +35,8 @@ class OrbitalSystemRenderer //: public Renderer
 	void render(BasicCamera const& camera);
 	~OrbitalSystemRenderer();
 
+	static bool autoCameraTarget;
+
   private:
 	OrbitalSystem* drawnSystem;
 	std::vector<CelestialBodyRenderer*> bodyRenderers;
