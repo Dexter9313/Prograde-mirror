@@ -417,17 +417,6 @@ void MainWin::renderScene(BasicCamera const& camera)
 	debugText->render();
 }
 
-void MainWin::rescaleCube(double newScale, Vector3 const& scaleCenter)
-{
-	auto& cam(dynamic_cast<OrbitalSystemCamera&>(getCamera()));
-	Vector3 scaleCenterPosInCube;
-	scaleCenterPosInCube = scaleCenter - cam.relativePosition;
-	scaleCenterPosInCube *= newScale / CelestialBodyRenderer::overridenScale;
-	// cam.relativePosition                  = scaleCenter -
-	// scaleCenterPosInCube;
-	CelestialBodyRenderer::overridenScale = newScale;
-}
-
 MainWin::~MainWin()
 {
 	delete systemRenderer;
