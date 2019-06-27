@@ -31,6 +31,7 @@ class MainWin : public AbstractMainWin
 	virtual void mouseReleaseEvent(QMouseEvent* e) override;
 	virtual void mouseMoveEvent(QMouseEvent* e) override;
 	virtual void wheelEvent(QWheelEvent* e) override;
+	virtual void vrEvent(VRHandler::Event const& e) override;
 
 	// declare drawn resources
 	virtual void initScene() override;
@@ -53,6 +54,7 @@ class MainWin : public AbstractMainWin
 	Text3D* debugText;
 	float timeSinceTextUpdate = FLT_MAX;
 
+	void rescale(double newScale, Vector3 const& scaleCenter);
 
 	OrbitalSystem* orbitalSystem;
 	OrbitalSystemRenderer* systemRenderer;
@@ -75,6 +77,14 @@ class MainWin : public AbstractMainWin
 
 	SimulationTime clock = SimulationTime(
 	    QSettings().value("simulation/starttime").value<QDateTime>());
+
+	// scaling/translation controls variables
+	bool leftGripPressed  = false;
+	bool rightGripPressed = false;
+	Vector3 initControllerRelPos;
+	float initControllersDistance;
+	Vector3 scaleCenter;
+	double initScale;
 
 	// keyboard+mouse controls variables
 	QVector3D positiveVelocity;

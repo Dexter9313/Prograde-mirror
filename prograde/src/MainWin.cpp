@@ -274,10 +274,11 @@ void MainWin::mouseReleaseEvent(QMouseEvent* e)
 
 void MainWin::mouseMoveEvent(QMouseEvent* e)
 {
-	if(!isActive() || vrHandler)
+	if(!rotateViewEnabled && !trackballEnabled)
 	{
 		return;
 	}
+
 	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
 	float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
 	float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
@@ -302,7 +303,6 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 		{
 			dPitch = -1.f * M_PI_2 + 0.2 - cam->pitch;
 		}
-
 		cam->yaw += dYaw;
 		cam->pitch += dPitch;
 		if(trackballEnabled)
@@ -329,18 +329,129 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 
 void MainWin::wheelEvent(QWheelEvent* e)
 {
-	/*auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
-	if(e->angleDelta().y() > 0.f)
-	{
-	    cam->distance /= 1.2f; // + (0.2f * e->angleDelta().y() / 1000.f);
-	}
-	else
-	{
-	    cam->distance *= 1.2f; // - (0.2f * e->angleDelta().y() / 1000.f);
-	}*/
 	CelestialBodyRenderer::overridenScale *= 1.f + e->angleDelta().y() / 1000.f;
 
 	AbstractMainWin::wheelEvent(e);
+}
+
+void MainWin::vrEvent(VRHandler::Event const& e)
+{
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
+	switch(e.type)
+	{
+		case VRHandler::EventType::BUTTON_PRESSED:
+			switch(e.button)
+			{
+				case VRHandler::Button::GRIP:
+				{
+					OrbitalSystemRenderer::autoCameraTarget = false;
+					Controller const* left(vrHandler.getController(Side::LEFT));
+					Controller const* right(
+					    vrHandler.getController(Side::RIGHT));
+					if(e.side == Side::LEFT && left != nullptr)
+					{
+						leftGripPressed = true;
+						initControllerRelPos
+						    = Utils::fromQt(
+						          getCamera().trackedSpaceToWorldTransform()
+						          * left->getPosition())
+						          / CelestialBodyRenderer::overridenScale
+						      + cam->relativePosition;
+					}
+					else if(e.side == Side::RIGHT && right != nullptr)
+					{
+						rightGripPressed = true;
+						initControllerRelPos
+						    = Utils::fromQt(
+						          getCamera().trackedSpaceToWorldTransform()
+						          * right->getPosition())
+						          / CelestialBodyRenderer::overridenScale
+						      + cam->relativePosition;
+					}
+					else
+					{
+						break;
+					}
+					if(leftGripPressed && rightGripPressed && left != nullptr
+					   && right != nullptr)
+					{
+						initControllersDistance
+						    = left->getPosition().distanceToPoint(
+						        right->getPosition());
+						initScale = CelestialBodyRenderer::overridenScale;
+
+						QVector3D controllersMidPoint;
+						controllersMidPoint
+						    = left->getPosition() + right->getPosition();
+						controllersMidPoint /= 2.f;
+
+						controllersMidPoint
+						    = getCamera().trackedSpaceToWorldTransform()
+						      * controllersMidPoint;
+						scaleCenter
+						    = Utils::fromQt(controllersMidPoint)
+						          / CelestialBodyRenderer::overridenScale
+						      + cam->relativePosition;
+					}
+					break;
+				}
+				default:
+					break;
+			}
+			break;
+		case VRHandler::EventType::BUTTON_UNPRESSED:
+			switch(e.button)
+			{
+				case VRHandler::Button::GRIP:
+				{
+					Controller const* left(vrHandler.getController(Side::LEFT));
+					Controller const* right(
+					    vrHandler.getController(Side::RIGHT));
+					if(e.side == Side::LEFT)
+					{
+						leftGripPressed = false;
+						if(right != nullptr && rightGripPressed)
+						{
+							initControllerRelPos
+							    = Utils::fromQt(
+							          getCamera().trackedSpaceToWorldTransform()
+							          * right->getPosition())
+							          / CelestialBodyRenderer::overridenScale
+							      + cam->relativePosition;
+						}
+						else
+						{
+							OrbitalSystemRenderer::autoCameraTarget = true;
+						}
+					}
+					else if(e.side == Side::RIGHT)
+					{
+						rightGripPressed = false;
+						if(left != nullptr && leftGripPressed)
+						{
+							initControllerRelPos
+							    = Utils::fromQt(
+							          getCamera().trackedSpaceToWorldTransform()
+							          * left->getPosition())
+							          / CelestialBodyRenderer::overridenScale
+							      + cam->relativePosition;
+						}
+						else
+						{
+							OrbitalSystemRenderer::autoCameraTarget = true;
+						}
+					}
+					break;
+				}
+				default:
+					break;
+			}
+			break;
+		default:
+			break;
+	}
+
+	AbstractMainWin::vrEvent(e);
 }
 
 void MainWin::initScene()
@@ -378,17 +489,48 @@ void MainWin::updateScene(BasicCamera& camera)
 	}*/
 
 	cam.updateUT(clock.getCurrentUt());
-	// apply keyboard controls
-	if(!vrHandler)
+
+	Controller const* left(vrHandler.getController(Side::LEFT));
+	Controller const* right(vrHandler.getController(Side::RIGHT));
+
+	// single grip = translation
+	if(leftGripPressed != rightGripPressed)
 	{
-		for(unsigned int i(0); i < 3; ++i)
+		Vector3 controllerRelPos;
+		if(leftGripPressed && left != nullptr)
 		{
-			cam.relativePosition[i]
-			    += frameTiming
-			       * (cam.getView().inverted()
-			          * (negativeVelocity + positiveVelocity))[i]
-			       / CelestialBodyRenderer::overridenScale;
+			controllerRelPos = Utils::fromQt(cam.trackedSpaceToWorldTransform()
+			                                 * left->getPosition())
+			                       / CelestialBodyRenderer::overridenScale
+			                   + cam.relativePosition;
 		}
+		else if(rightGripPressed && right != nullptr)
+		{
+			controllerRelPos = Utils::fromQt(cam.trackedSpaceToWorldTransform()
+			                                 * right->getPosition())
+			                       / CelestialBodyRenderer::overridenScale
+			                   + cam.relativePosition;
+		}
+		cam.relativePosition -= controllerRelPos - initControllerRelPos;
+	}
+	// double grip = scale
+	if(leftGripPressed && rightGripPressed && left != nullptr
+	   && right != nullptr)
+	{
+		rescale(initScale
+		            * left->getPosition().distanceToPoint(right->getPosition())
+		            / initControllersDistance,
+		        scaleCenter);
+	}
+
+	// apply keyboard controls
+	for(unsigned int i(0); i < 3; ++i)
+	{
+		cam.relativePosition[i]
+		    += frameTiming
+		       * (cam.getView().inverted()
+		          * (negativeVelocity + positiveVelocity))[i]
+		       / CelestialBodyRenderer::overridenScale;
 	}
 
 	systemRenderer->updateMesh(clock.getCurrentUt(), cam);
@@ -469,6 +611,15 @@ void MainWin::renderScene(BasicCamera const& camera)
 	stars.render();
 	systemRenderer->render(camera);
 	debugText->render();
+}
+
+void MainWin::rescale(double newScale, Vector3 const& scaleCenter)
+{
+	auto& cam(dynamic_cast<OrbitalSystemCamera&>(getCamera()));
+	Vector3 diff(cam.relativePosition - scaleCenter);
+	diff /= newScale / CelestialBodyRenderer::overridenScale;
+	cam.relativePosition                  = scaleCenter + diff;
+	CelestialBodyRenderer::overridenScale = newScale;
 }
 
 MainWin::~MainWin()
