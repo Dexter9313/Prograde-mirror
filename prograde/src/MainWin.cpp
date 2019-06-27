@@ -185,14 +185,6 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 		}
 		clock.setTimeCoeff(timeCoeff);
 	}
-	else if(e->key() == Qt::Key_Up)
-	{
-		CelestialBodyRenderer::overridenScale *= 1.2;
-	}
-	else if(e->key() == Qt::Key_Down)
-	{
-		CelestialBodyRenderer::overridenScale /= 1.2;
-	}
 	// CONTROLS
 	else if(e->key() == Qt::Key_C)
 	{
@@ -329,7 +321,7 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 
 void MainWin::wheelEvent(QWheelEvent* e)
 {
-	CelestialBodyRenderer::overridenScale *= 1.f + e->angleDelta().y() / 1000.f;
+	velMag *= 1.f + e->angleDelta().y() / 1000.f;
 
 	AbstractMainWin::wheelEvent(e);
 }
@@ -530,7 +522,7 @@ void MainWin::updateScene(BasicCamera& camera)
 		    += frameTiming
 		       * (cam.getView().inverted()
 		          * (negativeVelocity + positiveVelocity))[i]
-		       / CelestialBodyRenderer::overridenScale;
+		       * velMag;
 	}
 
 	systemRenderer->updateMesh(clock.getCurrentUt(), cam);
@@ -559,12 +551,8 @@ void MainWin::updateScene(BasicCamera& camera)
 	stream.precision(8);
 	stream << "x" << clock.getTimeCoeff()
 	       << (clock.getLockedRealTime() ? " (locked)" : "") << std::endl;
-	stream
-	    << "Velocity : "
-	    << lengthPrettyPrint(1.0 / CelestialBodyRenderer::overridenScale).first
-	    << " "
-	    << lengthPrettyPrint(1.0 / CelestialBodyRenderer::overridenScale).second
-	    << "/s" << std::endl;
+	stream << "Velocity : " << lengthPrettyPrint(velMag).first << " "
+	       << lengthPrettyPrint(velMag).second << "/s" << std::endl;
 	/*
 	// GPU memory usage
 	stream << std::endl << std::endl;

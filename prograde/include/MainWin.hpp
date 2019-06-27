@@ -89,6 +89,7 @@ class MainWin : public AbstractMainWin
 	// keyboard+mouse controls variables
 	QVector3D positiveVelocity;
 	QVector3D negativeVelocity;
+	double velMag          = 1.0;
 	bool rotateViewEnabled = false;
 	bool trackballEnabled  = false;
 
