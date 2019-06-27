@@ -352,14 +352,23 @@ void MainWin::updateScene(BasicCamera& camera)
 	stream << round(1.f / frameTiming) << " FPS" << std::endl;
 	stream << "Targeting : " << cam.target->getName() << std::endl;
 	stream.precision(10);
-	stream << "Distance : " << cam.relativePosition.length() << std::endl;
+	stream << "Distance : "
+	       << lengthPrettyPrint(cam.relativePosition.length()).first << " "
+	       << lengthPrettyPrint(cam.relativePosition.length()).second
+	       << std::endl;
 	stream.precision(4);
 	stream << "UT = " << SimulationTime::UTToStr(clock.getCurrentUt())
 	       << std::endl;
 	stream.precision(12);
 	stream << "Raw UT = " << floor(clock.getCurrentUt() * 10) / 10 << std::endl;
 	stream.precision(8);
-	stream << "x" << clock.getTimeCoeff();
+	stream << "x" << clock.getTimeCoeff() << std::endl;
+	stream
+	    << "Velocity : "
+	    << lengthPrettyPrint(1.0 / CelestialBodyRenderer::overridenScale).first
+	    << " "
+	    << lengthPrettyPrint(1.0 / CelestialBodyRenderer::overridenScale).second
+	    << "/s" << std::endl;
 	if(clock.getLockedRealTime())
 	{
 		stream << " (locked)";
@@ -375,10 +384,22 @@ void MainWin::updateScene(BasicCamera& camera)
 	std::endl;
 	*/
 
-	debugText->getModel() = cam.screenToWorldTransform();
-	debugText->getModel().translate(QVector3D(-0.88f, 0.9f, 0.f));
-	debugText->getModel().scale(2 * static_cast<float>(textWidth) / width(),
-	                            2 * static_cast<float>(textWidth) / height());
+	if(vrHandler)
+	{
+		debugText->getModel() = cam.hmdSpaceToWorldTransform();
+		debugText->getModel().translate(QVector3D(0.0f, -0.15f, -0.4f));
+		debugText->getModel().scale(
+		    1.5 * static_cast<float>(textWidth) / width(),
+		    1.5 * static_cast<float>(textHeight) / height());
+	}
+	else
+	{
+		debugText->getModel() = cam.screenToWorldTransform();
+		debugText->getModel().translate(QVector3D(-0.88f, 0.88f, 0.f));
+		debugText->getModel().scale(2 * static_cast<float>(textWidth) / width(),
+		                            2 * static_cast<float>(textWidth)
+		                                / height());
+	}
 
 	timeSinceTextUpdate += frameTiming;
 	if(timeSinceTextUpdate > 0.2)
@@ -396,8 +417,43 @@ void MainWin::renderScene(BasicCamera const& camera)
 	debugText->render();
 }
 
+void MainWin::rescaleCube(double newScale, Vector3 const& scaleCenter)
+{
+	auto& cam(dynamic_cast<OrbitalSystemCamera&>(getCamera()));
+	Vector3 scaleCenterPosInCube;
+	scaleCenterPosInCube = scaleCenter - cam.relativePosition;
+	scaleCenterPosInCube *= newScale / CelestialBodyRenderer::overridenScale;
+	// cam.relativePosition                  = scaleCenter -
+	// scaleCenterPosInCube;
+	CelestialBodyRenderer::overridenScale = newScale;
+}
+
 MainWin::~MainWin()
 {
 	delete systemRenderer;
 	delete orbitalSystem;
+}
+
+std::pair<double, std::string> MainWin::lengthPrettyPrint(double length)
+{
+	// m
+	if(fabs(length) < 500.0)
+	{
+		return {length, "m"};
+	}
+	// km
+	length /= 1000.0;
+	if(fabs(length) < 1495979.0) // 0.01AU
+	{
+		return {length, "km"};
+	}
+	// AU
+	length /= 149597871.0;
+	if(length < 50000.0)
+	{
+		return {length, "AU"};
+	}
+	// ly
+	length /= 63241.1;
+	return {length, "ly"};
 }
