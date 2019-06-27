@@ -482,6 +482,11 @@ void MainWin::updateScene(BasicCamera& camera)
 
 	cam.updateUT(clock.getCurrentUt());
 
+	if(!vrHandler)
+	{
+		CelestialBodyRenderer::overridenScale = 1.0;
+	}
+
 	Controller const* left(vrHandler.getController(Side::LEFT));
 	Controller const* right(vrHandler.getController(Side::RIGHT));
 
