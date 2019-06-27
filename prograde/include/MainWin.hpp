@@ -95,7 +95,7 @@ class MainWin : public AbstractMainWin
 
 	// TEMP
 	const int textWidth  = 225;
-	const int textHeight = 125;
+	const int textHeight = 145;
 
 	// returns value and unit
 	static std::pair<double, std::string>

@@ -553,6 +553,17 @@ void MainWin::updateScene(BasicCamera& camera)
 	       << (clock.getLockedRealTime() ? " (locked)" : "") << std::endl;
 	stream << "Velocity : " << lengthPrettyPrint(velMag).first << " "
 	       << lengthPrettyPrint(velMag).second << "/s" << std::endl;
+	if(vrHandler)
+	{
+		stream.precision(4);
+		stream << "Scale : 1 real meter = "
+		       << lengthPrettyPrint(1.0 / CelestialBodyRenderer::overridenScale)
+		              .first
+		       << " "
+		       << lengthPrettyPrint(1.0 / CelestialBodyRenderer::overridenScale)
+		              .second
+		       << std::endl;
+	}
 	/*
 	// GPU memory usage
 	stream << std::endl << std::endl;
