@@ -240,10 +240,12 @@ void MainWin::mousePressEvent(QMouseEvent* e)
 	if(e->button() == Qt::MouseButton::LeftButton)
 	{
 		rotateViewEnabled = true;
+		QCursor::setPos(width() / 2, height() / 2);
 	}
 	else if(e->button() == Qt::MouseButton::RightButton)
 	{
 		trackballEnabled = true;
+		QCursor::setPos(width() / 2, height() / 2);
 	}
 	if(rotateViewEnabled && trackballEnabled)
 	{
