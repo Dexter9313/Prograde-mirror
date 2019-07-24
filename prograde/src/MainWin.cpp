@@ -36,6 +36,9 @@ MainWin::MainWin()
 
 		if(jsonFile.exists())
 		{
+			PlanetRenderer::currentSystemDir = planetsystemdir;
+			CSVOrbit::currentSystemDir       = planetsystemdir;
+
 			jsonFile.open(QIODevice::ReadOnly);
 			QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonFile.readAll());
 			QString name(QFileInfo(jsonFile).dir().dirName());
