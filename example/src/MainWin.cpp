@@ -92,14 +92,20 @@ void MainWin::initScene()
 
 	text->getModel().rotate(135.f, 0.f, 0.f, 1.f);
 	text->getModel().rotate(45.f, 1.f, 0.f);
-	text->getModel().translate(0.f, 0.f, 0.5f);
+	text->getModel().translate(-0.6f, 0.f, 0.5f);
 
-	getCamera().setEyeDistanceFactor(5.0f);
+	widget3d = new Widget3D(new QCalendarWidget);
+
+	widget3d->getModel().rotate(135.f, 0.f, 0.f, 1.f);
+	widget3d->getModel().rotate(45.f, 1.f, 0.f);
+	widget3d->getModel().translate(0.6f, 0.f, 0.5f);
+
+	getCamera("default").setEyeDistanceFactor(5.0f);
 
 	appendPostProcessingShader("distort", "distort");
 }
 
-void MainWin::updateScene(BasicCamera& camera)
+void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 {
 	Controller const* cont(vrHandler.getController(Side::LEFT));
 	if(cont == nullptr)
@@ -138,7 +144,7 @@ void MainWin::updateScene(BasicCamera& camera)
 	movingCube->update();
 }
 
-void MainWin::renderScene(BasicCamera const& camera)
+void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 {
 	GLHandler::useTextures({sbTexture});
 	GLHandler::setBackfaceCulling(false);
@@ -164,6 +170,7 @@ void MainWin::renderScene(BasicCamera const& camera)
 	GLHandler::render(pointsMesh);
 	GLHandler::setPointSize(1);
 
+	widget3d->render();
 	bill->render(camera);
 	text->render();
 }
@@ -193,4 +200,5 @@ MainWin::~MainWin()
 
 	delete bill;
 	delete text;
+	delete widget3d;
 }
