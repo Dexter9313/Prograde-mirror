@@ -1,0 +1,3 @@
+[submodule "prograde/thirdparty/libplanet"]
+	path = prograde/thirdparty/libplanet
+	url = https://gitlab.com/Dexter9313/libplanet
