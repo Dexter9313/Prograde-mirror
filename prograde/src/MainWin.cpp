@@ -349,9 +349,9 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 					{
 						leftGripPressed = true;
 						initControllerRelPos
-						    = Utils::fromQt(
-						          getCamera("planet").trackedSpaceToWorldTransform()
-						          * left->getPosition())
+						    = Utils::fromQt(getCamera("planet")
+						                        .trackedSpaceToWorldTransform()
+						                    * left->getPosition())
 						          / CelestialBodyRenderer::overridenScale
 						      + cam->relativePosition;
 					}
@@ -359,9 +359,9 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 					{
 						rightGripPressed = true;
 						initControllerRelPos
-						    = Utils::fromQt(
-						          getCamera("planet").trackedSpaceToWorldTransform()
-						          * right->getPosition())
+						    = Utils::fromQt(getCamera("planet")
+						                        .trackedSpaceToWorldTransform()
+						                    * right->getPosition())
 						          / CelestialBodyRenderer::overridenScale
 						      + cam->relativePosition;
 					}
@@ -411,7 +411,8 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						{
 							initControllerRelPos
 							    = Utils::fromQt(
-							          getCamera("planet").trackedSpaceToWorldTransform()
+							          getCamera("planet")
+							              .trackedSpaceToWorldTransform()
 							          * right->getPosition())
 							          / CelestialBodyRenderer::overridenScale
 							      + cam->relativePosition;
@@ -428,7 +429,8 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						{
 							initControllerRelPos
 							    = Utils::fromQt(
-							          getCamera("planet").trackedSpaceToWorldTransform()
+							          getCamera("planet")
+							              .trackedSpaceToWorldTransform()
 							          * left->getPosition())
 							          / CelestialBodyRenderer::overridenScale
 							      + cam->relativePosition;
