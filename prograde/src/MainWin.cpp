@@ -113,7 +113,7 @@ MainWin::MainWin()
 
 void MainWin::keyPressEvent(QKeyEvent* e)
 {
-	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
 	if(e->key() == Qt::Key_Tab)
 	{
 		std::vector<CelestialBody*> bodies(
@@ -276,7 +276,7 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 		return;
 	}
 
-	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
 	float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
 	float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
 
@@ -333,7 +333,7 @@ void MainWin::wheelEvent(QWheelEvent* e)
 
 void MainWin::vrEvent(VRHandler::Event const& e)
 {
-	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera()));
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
 	switch(e.type)
 	{
 		case VRHandler::EventType::BUTTON_PRESSED:
@@ -350,7 +350,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						leftGripPressed = true;
 						initControllerRelPos
 						    = Utils::fromQt(
-						          getCamera().trackedSpaceToWorldTransform()
+						          getCamera("planet").trackedSpaceToWorldTransform()
 						          * left->getPosition())
 						          / CelestialBodyRenderer::overridenScale
 						      + cam->relativePosition;
@@ -360,7 +360,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						rightGripPressed = true;
 						initControllerRelPos
 						    = Utils::fromQt(
-						          getCamera().trackedSpaceToWorldTransform()
+						          getCamera("planet").trackedSpaceToWorldTransform()
 						          * right->getPosition())
 						          / CelestialBodyRenderer::overridenScale
 						      + cam->relativePosition;
@@ -383,7 +383,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						controllersMidPoint /= 2.f;
 
 						controllersMidPoint
-						    = getCamera().trackedSpaceToWorldTransform()
+						    = getCamera("planet").trackedSpaceToWorldTransform()
 						      * controllersMidPoint;
 						scaleCenter
 						    = Utils::fromQt(controllersMidPoint)
@@ -411,7 +411,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						{
 							initControllerRelPos
 							    = Utils::fromQt(
-							          getCamera().trackedSpaceToWorldTransform()
+							          getCamera("planet").trackedSpaceToWorldTransform()
 							          * right->getPosition())
 							          / CelestialBodyRenderer::overridenScale
 							      + cam->relativePosition;
@@ -428,7 +428,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						{
 							initControllerRelPos
 							    = Utils::fromQt(
-							          getCamera().trackedSpaceToWorldTransform()
+							          getCamera("planet").trackedSpaceToWorldTransform()
 							          * left->getPosition())
 							          / CelestialBodyRenderer::overridenScale
 							      + cam->relativePosition;
@@ -470,12 +470,14 @@ void MainWin::initScene()
 	cam->relativePosition = Vector3(
 	    cam->target->getCelestialBodyParameters().radius * 2.0, 0.0, 0.0);
 	systemRenderer = new OrbitalSystemRenderer(orbitalSystem);
-	setCamera(cam);
+
+	removeSceneRenderPath("default");
+	appendSceneRenderPath("planet", RenderPath(cam));
 
 	CelestialBodyRenderer::overridenScale = 1.0;
 }
 
-void MainWin::updateScene(BasicCamera& camera)
+void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 {
 	auto& cam = dynamic_cast<OrbitalSystemCamera&>(camera);
 
@@ -610,7 +612,7 @@ void MainWin::updateScene(BasicCamera& camera)
 	}
 }
 
-void MainWin::renderScene(BasicCamera const& camera)
+void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 {
 	GLHandler::setPointSize(1);
 	stars.render();
@@ -620,7 +622,7 @@ void MainWin::renderScene(BasicCamera const& camera)
 
 void MainWin::rescale(double newScale, Vector3 const& scaleCenter)
 {
-	auto& cam(dynamic_cast<OrbitalSystemCamera&>(getCamera()));
+	auto& cam(dynamic_cast<OrbitalSystemCamera&>(getCamera("planet")));
 	Vector3 diff(cam.relativePosition - scaleCenter);
 	diff /= newScale / CelestialBodyRenderer::overridenScale;
 	cam.relativePosition                  = scaleCenter + diff;
