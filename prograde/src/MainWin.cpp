@@ -217,8 +217,13 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 
 void MainWin::keyReleaseEvent(QKeyEvent* e)
 {
+	if(e->key() == Qt::Key_L)
+	{
+		CelestialBodyRenderer::renderLabels
+		    = !CelestialBodyRenderer::renderLabels;
+	}
 	// CONTROLS
-	if(e->key() == Qt::Key_W || e->key() == Qt::Key_Up)
+	else if(e->key() == Qt::Key_W || e->key() == Qt::Key_Up)
 	{
 		negativeVelocity.setZ(0);
 	}
@@ -390,6 +395,12 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						          / CelestialBodyRenderer::overridenScale
 						      + cam->relativePosition;
 					}
+					break;
+				}
+				case VRHandler::Button::TRIGGER:
+				{
+					CelestialBodyRenderer::renderLabels
+					    = !CelestialBodyRenderer::renderLabels;
 					break;
 				}
 				default:
