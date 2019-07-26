@@ -477,6 +477,9 @@ void MainWin::initScene()
 	appendSceneRenderPath("planet", RenderPath(cam));
 
 	CelestialBodyRenderer::overridenScale = 1.0;
+
+	// we will draw them ourselves
+	pathIdRenderingControllers = "";
 }
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
@@ -619,6 +622,8 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	GLHandler::setPointSize(1);
 	stars.render();
 	systemRenderer->render(camera);
+	renderVRControls();
+	systemRenderer->renderTransparent(camera);
 	debugText->render();
 }
 
