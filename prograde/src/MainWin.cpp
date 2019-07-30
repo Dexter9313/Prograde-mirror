@@ -401,6 +401,8 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 				{
 					CelestialBodyRenderer::renderLabels
 					    = !CelestialBodyRenderer::renderLabels;
+					CelestialBodyRenderer::renderOrbits
+					    = !CelestialBodyRenderer::renderOrbits;
 					break;
 				}
 				default:
