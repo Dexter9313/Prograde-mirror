@@ -22,7 +22,7 @@ set(BUILD_CONF "${CMAKE_CURRENT_SOURCE_DIR}/build.conf")
 if(NOT EXISTS "${BUILD_CONF}")
 	set(BUILD_CONF "${CMAKE_CURRENT_SOURCE_DIR}/build.conf.example")
 endif()
-message(STATUS "${BUILD_CONF}")
+message(STATUS "Build configuration file: ${BUILD_CONF}")
 file(STRINGS "${BUILD_CONF}" ConfigContents)
 foreach(NameAndValue ${ConfigContents})
 #Strip leading spaces
@@ -72,6 +72,11 @@ endif()
 #Define project name in source for preprocessor
 add_definitions(-DPROJECT_NAME="${PROJECT_NAME}")
 add_definitions(-DPROJECT_DIRECTORY="${PROJECT_DIRECTORY}")
+add_definitions(-DINSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
+
+message(STATUS "Project name: ${PROJECT_NAME}")
+message(STATUS "Project dir: ${PROJECT_DIRECTORY}")
+message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
 #FILES / DIRECTORIES
 
@@ -110,6 +115,16 @@ file(GLOB_RECURSE TEST_HPP_FILES ${ENGINE_TEST_HPP_FILES} ${PROJECT_SOURCE_DIR}/
 file(GLOB_RECURSE ENGINE_TEST_CPP_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 file(GLOB_RECURSE TEST_SRC_FILES ${ENGINE_TEST_CPP_FILES} ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/test/*.cpp)
 
+FOREACH(PATH ${THIRDPARTY_DATA_FILES})
+	get_filename_component(FOO "${PATH}" DIRECTORY)
+	get_filename_component(LIB_NAME "${FOO}" NAME)
+	set(LIBRARIES_DIRS "${LIBRARIES_DIRS} ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/thirdparty/${LIB_NAME}/include ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/thirdparty/${LIB_NAME}/src")
+ENDFOREACH(PATH)
+
+if(DOC_ONLY)
+	include(cmake/Doc.cmake)
+	return()
+endif()
 
 #DEPENDENCIES
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/modules)
@@ -250,8 +265,6 @@ FOREACH(PATH ${THIRDPARTY_DATA_FILES})
 	execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/thirdparty/${LIB_NAME}/data ${PROJECT_BINARY_DIR}/data/${LIB_NAME}
 						WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 ENDFOREACH(PATH)
-
-
 
 #INSTALL RULES / NOT FOR WINDOWS
 if(NOT WIN32)

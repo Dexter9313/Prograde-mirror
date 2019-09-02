@@ -20,9 +20,12 @@
 #include "PythonQtHandler.hpp"
 #include "utils.hpp"
 
-/**
+/** @ingroup pycall
+ *
  * @brief A convenient wrapper for the OpenGL API. Contains everything related
  * to rendering.
+ *
+ * Callable in Python as the "GLHandler" object.
  *
  * GLHandler is designed to be used as a static class and you shouldn't
  * instanciate it.
@@ -42,7 +45,7 @@ class GLHandler : public QObject
 	static unsigned int& meshCount();
 	static unsigned int& texCount();
 	static unsigned int& PBOCount();
-	/**
+	/** @ingroup pywrap
 	 * @brief Opaque class that represents a mesh. Use the mesh related methods
 	 * to handle it.
 	 *
@@ -64,7 +67,7 @@ class GLHandler : public QObject
 		unsigned int vboSize;
 		unsigned int eboSize;
 	};
-	/**
+	/** @ingroup pywrap
 	 * @brief Opaque class that represents a Texture. Use the texture related
 	 * methods to handle it.
 	 *
@@ -94,7 +97,7 @@ class GLHandler : public QObject
 		PixelBufferObject& operator=(PixelBufferObject const&) = default;
 	};
 
-	/**
+	/** @ingroup pywrap
 	 * @brief Mostly opaque class that represents a render target. Use the
 	 * render target related methods to handle it.
 	 *
@@ -152,7 +155,7 @@ class GLHandler : public QObject
 		RenderTarget& operator=(RenderTarget const&) = default;
 	};
 
-	/**
+	/** @ingroup pywrap
 	 * @brief Opaque type that represents a Shader Program. Use the shaders
 	 * related methods to handle it.
 	 *
@@ -192,7 +195,8 @@ class GLHandler : public QObject
 	{
 		WORLD,
 		CAMERA,
-		TRACKED,
+		SEATEDTRACKED,
+		STANDINGTRACKED,
 		HMD,
 		SKYBOX
 	};
@@ -330,12 +334,21 @@ class GLHandler : public QObject
 	 * * Its fragment shader must have a uniform sampler2D to get the @p from
 	 * color attachment texture into. First sampler2D found in the fragment
 	 * shader will be used.
+	 * Additional textures can be sent to following sampler2Ds via the @p
+	 * uniformTextures parameter.
 	 */
 	static void postProcess(ShaderProgram shader,
 	                        GLHandler::RenderTarget const& from,
 	                        RenderTarget const& to
 	                        = {QSettings().value("window/width").toUInt(),
-	                           QSettings().value("window/height").toUInt()});
+	                           QSettings().value("window/height").toUInt()},
+	                        std::vector<Texture> const& uniformTextures = {});
+
+	static RenderTarget getScreenRenderTarget()
+	{
+		return {QSettings().value("window/width").toUInt(),
+		        QSettings().value("window/height").toUInt()};
+	};
 
 	static void
 	    generateEnvironmentMap(GLHandler::RenderTarget const& renderTarget,
@@ -354,6 +367,14 @@ class GLHandler : public QObject
 	static void showOnScreen(GLHandler::RenderTarget const& renderTarget,
 	                         int screenx0, int screeny0, int screenx1,
 	                         int screeny1);
+	/**
+	 * @brief Begins wireframe rendering.
+	 */
+	static void beginWireframe();
+	/**
+	 * @brief Ends wireframe rendering.
+	 */
+	static void endWireframe();
 	/**
 	 * @brief Begins transparent meshes rendering.
 	 *
@@ -393,11 +414,13 @@ class GLHandler : public QObject
 	 *
 	 * See the TRANSFORMS file for more details about the parameters.
 	 */
-	static void setUpTransforms(QMatrix4x4 const& fullTransform,
-	                            QMatrix4x4 const& fullCameraSpaceTransform,
-	                            QMatrix4x4 const& fullTrackedSpaceTransform,
-	                            QMatrix4x4 const& fullHmdSpaceTransform,
-	                            QMatrix4x4 const& fullSkyboxSpaceTransform);
+	static void
+	    setUpTransforms(QMatrix4x4 const& fullTransform,
+	                    QMatrix4x4 const& fullCameraSpaceTransform,
+	                    QMatrix4x4 const& fullSeatedTrackedSpaceTransform,
+	                    QMatrix4x4 const& fullStandingTrackedSpaceTransform,
+	                    QMatrix4x4 const& fullHmdSpaceTransform,
+	                    QMatrix4x4 const& fullSkyboxSpaceTransform);
 
 	// SHADERS
 	/**
@@ -663,7 +686,10 @@ class GLHandler : public QObject
 	 * The transformation matrix used will depend on the @p space parameter :
 	 * * WORLD : fullTransform : from world space to clip space
 	 * * CAMERA : fullCameraSpaceTransform : from camera space to clip space
-	 * * TRACKED : fullTrackedSpaceTransform : from tracked space to clip space
+	 * * SEATEDTRACKED : fullSeatedTrackedSpaceTransform : from seated tracked
+	 * space to clip space
+	 * * STANDINGTEDTRACKED : fullStandingTrackedSpaceTransform : from standing
+	 * tracked space to clip space
 	 * * HMD : fullHmdSpaceTransform : from hmd space (not world-scaled) to clip
 	 * * SKYBOX : fullSkyboxSpaceTransform : from skybox space to clip
 	 * space
@@ -769,8 +795,10 @@ class GLHandler : public QObject
 	static QMatrix4x4& fullTransform();
 	// transform for any Camera space object (follows Camera)
 	static QMatrix4x4& fullCameraSpaceTransform();
-	// transform for any Tracked space object
-	static QMatrix4x4& fullTrackedSpaceTransform();
+	// transform for any Seated Tracked space object
+	static QMatrix4x4& fullSeatedTrackedSpaceTransform();
+	// transform for any Standing Tracked space object
+	static QMatrix4x4& fullStandingTrackedSpaceTransform();
 	// transform for any HMD space object (follows HMD)
 	static QMatrix4x4& fullHmdSpaceTransform();
 	// transform for any Skybox space object (follows HMD translations + no

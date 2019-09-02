@@ -21,11 +21,32 @@
 SettingsWidget::SettingsWidget(QWidget* parent)
     : QTabWidget(parent)
 {
+	// NOLINTNEXTLINE(hicpp-no-array-decay)
+	qDebug() << QString("Config file :") + QSettings().fileName();
 	addGroup("window", tr("Window"));
 	addUIntSetting("width", 1500, tr("Window Width"), 0, 10000);
 	addUIntSetting("height", 800, tr("Window Height"), 0, 10000);
 	addBoolSetting("fullscreen", false, tr("Window Fullscreen"));
 	addBoolSetting("hdr", true, tr("High Dynamic Range"));
+
+	InputManager inputManager;
+	addGroup("controls", tr("Controls"));
+	currentForm->addRow(tr("ENGINE"), new QWidget());
+	for(auto const& key : inputManager.getOrderedEngineKeys())
+	{
+		addKeySequenceSetting(inputManager[key].id, key,
+		                      inputManager[key].name);
+	}
+	if(!inputManager.getOrderedProgramKeys().empty())
+	{
+		currentForm->addRow(" ", new QWidget());
+		currentForm->addRow(PROJECT_NAME, new QWidget());
+		for(auto const& key : inputManager.getOrderedProgramKeys())
+		{
+			addKeySequenceSetting(inputManager[key].id, key,
+			                      inputManager[key].name);
+		}
+	}
 
 	addGroup("vr", tr("Virtual Reality"));
 	addBoolSetting("enabled", true, tr("Enable VR"));
@@ -50,9 +71,14 @@ void SettingsWidget::addGroup(QString const& name, QString const& label)
 {
 	currentGroup = name;
 
-	auto newTab = new QWidget(this);
-	QTabWidget::addTab(newTab, label);
-	currentForm = new QFormLayout(newTab);
+	auto newScrollArea = new QScrollArea(this);
+	auto newTab        = new QWidget(this);
+	currentForm        = new QFormLayout(newTab);
+	currentForm->setSizeConstraint(QLayout::SetMinimumSize);
+
+	newScrollArea->setWidget(newTab);
+
+	QTabWidget::addTab(newScrollArea, label);
 }
 
 void SettingsWidget::insertGroup(QString const& name, QString const& label,
@@ -60,9 +86,14 @@ void SettingsWidget::insertGroup(QString const& name, QString const& label,
 {
 	currentGroup = name;
 
-	QWidget* newTab = new QWidget(this);
-	QTabWidget::insertTab(index, newTab, label);
-	currentForm = new QFormLayout(newTab);
+	auto newScrollArea = new QScrollArea(this);
+	auto newTab        = new QWidget(this);
+	currentForm        = new QFormLayout(newTab);
+	currentForm->setSizeConstraint(QLayout::SetMinimumSize);
+
+	newScrollArea->setWidget(newTab);
+
+	QTabWidget::insertTab(index, newScrollArea, label);
 }
 
 void SettingsWidget::addBoolSetting(QString const& name, bool defaultVal,
@@ -120,6 +151,7 @@ void SettingsWidget::addStringSetting(QString const& name,
 
 	auto lineEdit = new QLineEdit(this);
 	lineEdit->setText(settings.value(fullName).toString());
+	lineEdit->setMinimumWidth(400);
 
 	connect(lineEdit, &QLineEdit::textChanged, this,
 	        [this, fullName](QString const& t) { updateValue(fullName, t); });
@@ -140,6 +172,7 @@ void SettingsWidget::addFilePathSetting(QString const& name,
 
 	auto lineEdit = new QLineEdit(this);
 	lineEdit->setText(settings.value(fullName).toString());
+	lineEdit->setMinimumWidth(400);
 
 	auto dirModel = new QFileSystemModel(this);
 	dirModel->setRootPath(QDir::currentPath());
@@ -184,6 +217,7 @@ void SettingsWidget::addDirPathSetting(QString const& name,
 
 	auto lineEdit = new QLineEdit(this);
 	lineEdit->setText(settings.value(fullName).toString());
+	lineEdit->setMinimumWidth(400);
 
 	auto dirModel = new QFileSystemModel(this);
 	dirModel->setRootPath(QDir::currentPath());
@@ -332,4 +366,29 @@ void SettingsWidget::addDateTimeSetting(QString const& name,
 	layout->addWidget(dtEdit);
 	layout->addWidget(now);
 	currentForm->addRow(label + " :", w);
+}
+
+void SettingsWidget::addKeySequenceSetting(QString const& name,
+                                           QKeySequence const& defaultVal,
+                                           QString const& label)
+{
+	QString fullName(currentGroup + '/' + name);
+
+	if(!settings.contains(fullName))
+	{
+		settings.setValue(fullName,
+		                  defaultVal.toString(QKeySequence::PortableText));
+	}
+
+	auto keyseqEdit
+	    = new QKeySequenceEdit(QKeySequence(settings.value(fullName).toString(),
+	                                        QKeySequence::PortableText),
+	                           this);
+	keyseqEdit->setMinimumWidth(100);
+
+	connect(
+	    keyseqEdit, &QKeySequenceEdit::keySequenceChanged, this,
+	    [this, fullName](QKeySequence const& t) { updateValue(fullName, t); });
+
+	currentForm->addRow(label + " :", keyseqEdit);
 }

@@ -27,9 +27,11 @@
 #include <QFileDialog>
 #include <QFileSystemModel>
 #include <QFormLayout>
+#include <QKeySequenceEdit>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSettings>
 #include <QSpinBox>
 #include <QStringListModel>
@@ -37,6 +39,8 @@
 #include <QVector3D>
 
 #include <array>
+
+#include "InputManager.hpp"
 
 class SettingsWidget : public QTabWidget
 {
@@ -67,6 +71,9 @@ class SettingsWidget : public QTabWidget
 	                     QString const& label);
 	void addDateTimeSetting(QString const& name, QDateTime const& defaultVal,
 	                        QString const& label);
+	void addKeySequenceSetting(QString const& name,
+	                           QKeySequence const& defaultVal,
+	                           QString const& label);
 
   private:
 	QFormLayout* currentForm = nullptr;

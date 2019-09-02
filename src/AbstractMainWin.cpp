@@ -99,27 +99,30 @@ bool AbstractMainWin::event(QEvent* e)
 
 void AbstractMainWin::keyPressEvent(QKeyEvent* e)
 {
-	if(e->key() == Qt::Key_F1)
+	QString modifier;
+	QString key;
+
+	if((e->modifiers() & Qt::ShiftModifier) != 0u)
 	{
-		dbgCamera->toggle();
+		modifier += "Shift+";
 	}
-	if(e->key() == Qt::Key_F8)
+	if((e->modifiers() & Qt::ControlModifier) != 0u)
 	{
-		PythonQtHandler::toggleConsole();
+		modifier += "Ctrl+";
 	}
-	if(e->key() == Qt::Key_F11)
+	if((e->modifiers() & Qt::AltModifier) != 0u)
 	{
-		toggleVR();
+		modifier += "Alt+";
 	}
-	else if(e->key() == Qt::Key_Return
-	        && (e->modifiers() & Qt::AltModifier) != 0)
+	if((e->modifiers() & Qt::MetaModifier) != 0u)
 	{
-		toggleFullscreen();
+		modifier += "Meta+";
 	}
-	else if(e->key() == Qt::Key_Escape)
-	{
-		close();
-	}
+
+	key = QKeySequence(e->key()).toString();
+
+	QKeySequence ks(modifier + key);
+	actionEvent(inputManager[ks], true);
 
 	if(!PythonQtHandler::isSupported())
 	{
@@ -150,6 +153,31 @@ void AbstractMainWin::keyPressEvent(QKeyEvent* e)
 
 void AbstractMainWin::keyReleaseEvent(QKeyEvent* e)
 {
+	QString modifier;
+	QString key;
+
+	if((e->modifiers() & Qt::ShiftModifier) != 0u)
+	{
+		modifier += "Shift+";
+	}
+	if((e->modifiers() & Qt::ControlModifier) != 0u)
+	{
+		modifier += "Ctrl+";
+	}
+	if((e->modifiers() & Qt::AltModifier) != 0u)
+	{
+		modifier += "Alt+";
+	}
+	if((e->modifiers() & Qt::MetaModifier) != 0u)
+	{
+		modifier += "Meta+";
+	}
+
+	key = QKeySequence(e->key()).toString();
+
+	QKeySequence ks(modifier + key);
+	actionEvent(inputManager[ks], false);
+
 	if(!PythonQtHandler::isSupported())
 	{
 		return;
@@ -176,6 +204,39 @@ void AbstractMainWin::keyReleaseEvent(QKeyEvent* e)
 	PythonQtHandler::evalScript(
 	    "if \"keyReleaseEvent\" in dir():\n\tkeyReleaseEvent(" + pyKeyEvent
 	    + ")");
+}
+
+void AbstractMainWin::actionEvent(BaseInputManager::Action a, bool pressed)
+{
+	if(!pressed)
+	{
+		return;
+	}
+
+	if(a.id == "toggledbgcam")
+	{
+		dbgCamera->toggle();
+	}
+	else if(a.id == "togglewireframe")
+	{
+		toggleWireframe();
+	}
+	else if(a.id == "togglepyconsole")
+	{
+		PythonQtHandler::toggleConsole();
+	}
+	else if(a.id == "togglevr")
+	{
+		toggleVR();
+	}
+	else if(a.id == "togglefullscreen")
+	{
+		toggleFullscreen();
+	}
+	else if(a.id == "quit")
+	{
+		close();
+	}
 }
 
 void AbstractMainWin::vrEvent(VRHandler::Event const& e)
@@ -296,6 +357,13 @@ void AbstractMainWin::applyPostProcShaderParams(
 	}
 }
 
+std::vector<GLHandler::Texture>
+    AbstractMainWin::getPostProcessingUniformTextures(
+        QString const& /*id*/, GLHandler::ShaderProgram /*shader*/) const
+{
+	return {};
+}
+
 void AbstractMainWin::reloadPostProcessingTargets()
 {
 	GLHandler::defaultRenderTargetFormat() = hdr ? GL_RGBA16F : GL_RGBA;
@@ -323,6 +391,11 @@ void AbstractMainWin::toggleHDR()
 	setHDR(!getHDR());
 }
 
+void AbstractMainWin::toggleWireframe()
+{
+	setWireframe(!getWireframe());
+}
+
 void AbstractMainWin::initializeGL()
 {
 	// Init GL
@@ -331,6 +404,8 @@ void AbstractMainWin::initializeGL()
 	setVR(QSettings().value("vr/enabled").toBool());
 	// Init Python API
 	setupPythonAPI();
+	// Init libraries
+	initLibraries();
 
 	// NOLINTNEXTLINE(hicpp-no-array-decay)
 	qDebug() << "Using OpenGL " << format().majorVersion() << "."
@@ -346,9 +421,6 @@ void AbstractMainWin::initializeGL()
 	defaultCam->setPerspectiveProj(70.0f, static_cast<float>(width())
 	                                          / static_cast<float>(height()));
 	appendSceneRenderPath("default", RenderPath(defaultCam));
-
-	PythonQtHandler::addObject("camera", defaultCam);
-	PythonQtHandler::addObject("dbgcamera", dbgCamera);
 
 	if(vrHandler)
 	{
@@ -397,6 +469,10 @@ void AbstractMainWin::vrRenderSinglePath(RenderPath& renderPath,
 		renderVRControls();
 	}
 	// render scene
+	if(wireframe)
+	{
+		GLHandler::beginWireframe();
+	}
 	renderScene(*renderPath.camera, pathId);
 	if(pathIdRenderingControllers == pathId && !renderControllersBeforeScene)
 	{
@@ -407,6 +483,10 @@ void AbstractMainWin::vrRenderSinglePath(RenderPath& renderPath,
 	if(debug && debugInHeadset)
 	{
 		dbgCamera->renderCamera(renderPath.camera);
+	}
+	if(wireframe)
+	{
+		GLHandler::endWireframe();
 	}
 }
 
@@ -424,9 +504,13 @@ void AbstractMainWin::vrRender(Side side, bool debug, bool debugInHeadset)
 	{
 		applyPostProcShaderParams(postProcessingPipeline_[i].first,
 		                          postProcessingPipeline_[i].second);
+		auto texs = getPostProcessingUniformTextures(
+		    postProcessingPipeline_[i].first,
+		    postProcessingPipeline_[i].second);
 		GLHandler::postProcess(postProcessingPipeline_[i].second,
 		                       vrHandler.getPostProcessingTarget(i % 2),
-		                       vrHandler.getPostProcessingTarget((i + 1) % 2));
+		                       vrHandler.getPostProcessingTarget((i + 1) % 2),
+		                       texs);
 	}
 	// render last one on true target
 	if(!postProcessingPipeline_.empty())
@@ -434,9 +518,12 @@ void AbstractMainWin::vrRender(Side side, bool debug, bool debugInHeadset)
 		int i = postProcessingPipeline_.size() - 1;
 		applyPostProcShaderParams(postProcessingPipeline_[i].first,
 		                          postProcessingPipeline_[i].second);
+		auto texs = getPostProcessingUniformTextures(
+		    postProcessingPipeline_[i].first,
+		    postProcessingPipeline_[i].second);
 		GLHandler::postProcess(postProcessingPipeline_[i].second,
 		                       vrHandler.getPostProcessingTarget(i % 2),
-		                       vrHandler.getEyeTarget(side));
+		                       vrHandler.getEyeTarget(side), texs);
 	}
 
 	vrHandler.submitRendering(side);
@@ -520,12 +607,20 @@ void AbstractMainWin::paintGL()
 				pair.second.camera->uploadMatrices();
 			}
 			// render scene
+			if(wireframe)
+			{
+				GLHandler::beginWireframe();
+			}
 			renderScene(*pair.second.camera, pair.first);
 			PythonQtHandler::evalScript(
 			    "if \"renderScene\" in dir():\n\trenderScene()");
 			if(debug)
 			{
 				dbgCamera->renderCamera(pair.second.camera);
+			}
+			if(wireframe)
+			{
+				GLHandler::endWireframe();
 			}
 		}
 
@@ -534,9 +629,12 @@ void AbstractMainWin::paintGL()
 		{
 			applyPostProcShaderParams(postProcessingPipeline_[i].first,
 			                          postProcessingPipeline_[i].second);
+			auto texs = getPostProcessingUniformTextures(
+			    postProcessingPipeline_[i].first,
+			    postProcessingPipeline_[i].second);
 			GLHandler::postProcess(postProcessingPipeline_[i].second,
 			                       postProcessingTargets.at(i % 2),
-			                       postProcessingTargets.at((i + 1) % 2));
+			                       postProcessingTargets.at((i + 1) % 2), texs);
 		}
 		// render last one on screen target
 		if(!postProcessingPipeline_.empty())
@@ -544,8 +642,12 @@ void AbstractMainWin::paintGL()
 			int i = postProcessingPipeline_.size() - 1;
 			applyPostProcShaderParams(postProcessingPipeline_[i].first,
 			                          postProcessingPipeline_[i].second);
+			auto texs = getPostProcessingUniformTextures(
+			    postProcessingPipeline_[i].first,
+			    postProcessingPipeline_[i].second);
 			GLHandler::postProcess(postProcessingPipeline_[i].second,
-			                       postProcessingTargets.at(i % 2));
+			                       postProcessingTargets.at(i % 2),
+			                       GLHandler::getScreenRenderTarget(), texs);
 		}
 	}
 

@@ -8,14 +8,20 @@
 #include <QProcess>
 #include <vector>
 
+#include "AbstractLibrary.hpp"
 #include "BasicCamera.hpp"
 #include "DebugCamera.hpp"
 #include "GLHandler.hpp"
+#include "InputManager.hpp"
 #include "PythonQtHandler.hpp"
 #include "vr/VRHandler.hpp"
 
-/**
+/** @ingroup pycall
+ *
  * @brief Main window to be displayed.
+ *
+ * Callable in Python as the "HydrogenVR" object unless replaced by
+ * application's MainWin object.
  *
  * Inherit from it to implement your application, calling your class "MainWin".
  *
@@ -30,14 +36,8 @@
  * won't be taken into account. You will have to set your own Python object by
  * overriding the @ref setupPythonAPI method.
  *
- * The following Python object are also declared by the engine :
- * * <code>%VRHandler</code> : Is equivalent to accessing @ref vrHandler. See
- * @ref VRHandler description for a Python API specification. This object is
- * only available (not None) if and only if VR is enabled.
- * * <code>camera</code> : Is equivalent to calling @ref getCamera(). See @ref
- * BasicCamera description for a Python API specification.
- * * <code>dbgcamera</code> : Is equivalent to calling @ref getDebugCamera().
- * See @ref DebugCamera description for a Python API specification.
+ * Some engine class are also instanciated in Python. For the complete list, see
+ * : @ref pycall .
  *
  * The following methods have a Python equivalent function and both will get
  * called by the engine. Implementation of any Python functions is optional.
@@ -94,6 +94,12 @@ class AbstractMainWin : public QOpenGLWindow
 	 */
 	Q_PROPERTY(bool hdr READ getHDR WRITE setHDR)
 	/**
+	 * @brief Wether the engine renders all meshes as wireframes or not.
+	 *
+	 * @accessors getWireframe(), setWireframe()
+	 */
+	Q_PROPERTY(bool wireframe READ getWireframe WRITE setWireframe)
+	/**
 	 * @brief Wether VR mode is enabled or not.
 	 *
 	 * @accessors vrIsEnabled(), setVR()
@@ -143,6 +149,14 @@ class AbstractMainWin : public QOpenGLWindow
 	 */
 	void setHDR(bool hdr);
 	/**
+	 * @getter{wireframe}
+	 */
+	bool getWireframe() const { return wireframe; };
+	/**
+	 * @setter{wireframe}
+	 */
+	void setWireframe(bool wireframe) { this->wireframe = wireframe; };
+	/**
 	 * @getter{vr}
 	 */
 	bool vrIsEnabled() const;
@@ -166,6 +180,10 @@ class AbstractMainWin : public QOpenGLWindow
 	 * @toggle{hdr}
 	 */
 	void toggleHDR();
+	/**
+	 * @toggle{wireframe}
+	 */
+	void toggleWireframe();
 	/**
 	 * @toggle{vr}
 	 */
@@ -241,6 +259,12 @@ class AbstractMainWin : public QOpenGLWindow
 	 */
 	virtual void keyReleaseEvent(QKeyEvent* e) override;
 	/**
+	 * @brief Captures a @e BaseInputManager Action triggered by a QKeySequence.
+	 *
+	 * For a key press, @p pressed is true, for a key release, it is false.
+	 */
+	virtual void actionEvent(BaseInputManager::Action a, bool pressed);
+	/**
 	 * @brief Captures an event polled from @ref VRHandler.
 	 *
 	 * Make sure you call @ref AbstractMainWin#vrEvent if you override
@@ -256,6 +280,17 @@ class AbstractMainWin : public QOpenGLWindow
 	 * @see PythonQtHandler#addObject.
 	 */
 	virtual void setupPythonAPI();
+	/**
+	 * @brief Override this to initialize HydrogenVR libraries you use by
+	 * calling @e initLibrary().
+	 */
+	virtual void initLibraries(){};
+	/**
+	 * @brief Initialize a library by class. The class must inherit from @e
+	 * AbstractLibrary.
+	 */
+	template <class T>
+	void initLibrary();
 	/**
 	 * @brief Gets called after the OpenGL context is ready and before the main
 	 * loop.
@@ -303,6 +338,22 @@ class AbstractMainWin : public QOpenGLWindow
 	 */
 	BasicCamera& getCamera(QString const& pathId);
 	/**
+	 * @brief Similar to @e getCamera() but dynamically casts the BasicCamera
+	 * into the specified class.
+	 *
+	 * T must derive from @e BasicCamera.
+	 */
+	template <class T>
+	T const& getCamera(QString const& pathId) const;
+	/**
+	 * @brief Similar to @e getCamera() but dynamically casts the BasicCamera
+	 * into the specified class.
+	 *
+	 * T must derive from @e BasicCamera.
+	 */
+	template <class T>
+	T& getCamera(QString const& pathId);
+	/**
 	 * @brief Returns a reference to the @ref DebugCamera of the engine.
 	 */
 	DebugCamera& getDebugCamera() { return *dbgCamera; };
@@ -314,6 +365,9 @@ class AbstractMainWin : public QOpenGLWindow
 	 * to a post-processing shader you added or inserted in the post-processing
 	 * pipeline before it is actually used.
 	 *
+	 * @warning Don't forget to call this class version of the method for core
+	 * post-processing (HDR for example) and python post-processing to work !
+	 *
 	 * @param id Identifier of the shader that is going to be used for post
 	 * processing.
 	 * @param shader The actual shader program.
@@ -322,6 +376,20 @@ class AbstractMainWin : public QOpenGLWindow
 	    applyPostProcShaderParams(QString const& id,
 	                              GLHandler::ShaderProgram shader) const;
 	/**
+	 * @brief Override to return textures to use in your post-processing
+	 * shaders.
+	 *
+	 * Don't forget that the first sampler2D will be used by GLHandler to store
+	 * the previous rendering result.
+	 *
+	 * @param id Identifier of the shader that is going to be used for post
+	 * processing.
+	 * @param shader The actual shader program.
+	 */
+	virtual std::vector<GLHandler::Texture>
+	    getPostProcessingUniformTextures(QString const& id,
+	                                     GLHandler::ShaderProgram shader) const;
+	/**
 	 * @brief Reloads the post-processing targets (2D and VR).
 	 *
 	 * Mainly used after toggling HDR rendering. The new render targets will use
@@ -329,6 +397,10 @@ class AbstractMainWin : public QOpenGLWindow
 	 * VRHandler#reloadPostProcessingTargets if necessary.
 	 */
 	void reloadPostProcessingTargets();
+	/**
+	 * @brief The engine's only @ref BaseInputManager.
+	 */
+	InputManager inputManager;
 	/**
 	 * @brief The engine's only @ref VRHandler.
 	 */
@@ -390,10 +462,32 @@ class AbstractMainWin : public QOpenGLWindow
 	QList<QPair<QString, RenderPath>> sceneRenderPipeline_;
 	DebugCamera* dbgCamera = nullptr;
 
-	bool hdr = QSettings().value("window/hdr").toBool();
+	bool hdr       = QSettings().value("window/hdr").toBool();
+	bool wireframe = false;
 
 	QList<QPair<QString, GLHandler::ShaderProgram>> postProcessingPipeline_;
 	std::array<GLHandler::RenderTarget, 2> postProcessingTargets = {{{}, {}}};
 };
 
+template <class T>
+T const& AbstractMainWin::getCamera(QString const& pathId) const
+{
+	return dynamic_cast<T const&>(getCamera(pathId));
+}
+
+template <class T>
+T& AbstractMainWin::getCamera(QString const& pathId)
+{
+	return dynamic_cast<T&>(getCamera(pathId));
+}
+
+template <class T>
+void AbstractMainWin::initLibrary()
+{
+	static_assert(
+	    std::is_base_of<AbstractLibrary, T>::value,
+	    "Initializing a library that doesn't inherit from AbstractLibrary.");
+	T lib;
+	lib.setupPythonAPI();
+}
 #endif // ABSTRACTMAINWIN_H

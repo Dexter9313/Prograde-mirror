@@ -4,11 +4,17 @@ if(DOXYGEN_FOUND)
 	message("doxygen executable: ${DOXYGEN_EXECUTABLE}")
 	message("doxygen version: ${DOXYGEN_VERSION}")
 
+	if(PROJECT_DOC)
+		set(DOC_INPUT "${DOC_INPUT} ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/include/ ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/src/")
+	endif()
+	if(PROJECT_DOC_ENGINE)
+		set(DOC_INPUT "${DOC_INPUT} ${PROJECT_SOURCE_DIR}/include/ ${PROJECT_SOURCE_DIR}/src/")
+	endif()
+	if(PROJECT_DOC_THIRDPARTY)
+		set(DOC_INPUT "${DOC_INPUT} ${LIBRARIES_DIRS}")
+	endif()
 
-	# Get all project files
-	file(GLOB_RECURSE ALL_SOURCE_FILES ${DOCUMENTED_FILES})
-
-	list(REMOVE_DUPLICATES ALL_SOURCE_FILES)
+	message("Generate documentation for: ${DOC_INPUT}")
 
 	set(doxyfile_in ${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in)
 	set(doxyfile ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
