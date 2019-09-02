@@ -111,136 +111,157 @@ MainWin::MainWin()
 	std::cout << std::endl;
 }
 
-void MainWin::keyPressEvent(QKeyEvent* e)
+void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 {
-	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
-	if(e->key() == Qt::Key_Tab)
+	if(pressed)
 	{
-		std::vector<CelestialBody*> bodies(
-		    orbitalSystem->getAllCelestialBodiesPointers());
-		bodyTracked++;
-		if(bodyTracked == bodies.size())
+		auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
+		if(a.id == "nextcelestialbody")
 		{
-			bodyTracked = 0;
-		}
-		cam->target = bodies[bodyTracked];
+			std::vector<CelestialBody*> bodies(
+			    orbitalSystem->getAllCelestialBodiesPointers());
+			bodyTracked++;
+			if(bodyTracked == bodies.size())
+			{
+				bodyTracked = 0;
+			}
+			cam->target = bodies[bodyTracked];
 
-		if(cam->relativePosition.length()
-		   >= cam->target->getSphereOfInfluenceRadius())
-		{
-			cam->relativePosition = cam->relativePosition.getUnitForm()
-			                        * cam->target->getSphereOfInfluenceRadius()
-			                        / 2.0;
-		}
+			if(cam->relativePosition.length()
+			   >= cam->target->getSphereOfInfluenceRadius())
+			{
+				cam->relativePosition
+				    = cam->relativePosition.getUnitForm()
+				      * cam->target->getSphereOfInfluenceRadius() / 2.0;
+			}
 
-		if(cam->relativePosition.length()
-		   <= cam->target->getCelestialBodyParameters().radius)
-		{
-			cam->relativePosition
-			    = cam->relativePosition.getUnitForm()
-			      * cam->target->getCelestialBodyParameters().radius * 2.0;
+			if(cam->relativePosition.length()
+			   <= cam->target->getCelestialBodyParameters().radius)
+			{
+				cam->relativePosition
+				    = cam->relativePosition.getUnitForm()
+				      * cam->target->getCelestialBodyParameters().radius * 2.0;
+			}
 		}
-	}
-	else if(e->key() == Qt::Key_Backtab)
-	{
-		std::vector<CelestialBody*> bodies(
-		    orbitalSystem->getAllCelestialBodiesPointers());
-		if(bodyTracked > 0)
+		else if(a.id == "prevcelestialbody")
 		{
-			bodyTracked--;
-		}
-		else
-		{
-			bodyTracked = bodies.size() - 1;
-		}
-		cam->target = bodies[bodyTracked];
+			std::vector<CelestialBody*> bodies(
+			    orbitalSystem->getAllCelestialBodiesPointers());
+			if(bodyTracked > 0)
+			{
+				bodyTracked--;
+			}
+			else
+			{
+				bodyTracked = bodies.size() - 1;
+			}
+			cam->target = bodies[bodyTracked];
 
-		if(cam->relativePosition.length()
-		   >= cam->target->getSphereOfInfluenceRadius())
-		{
-			cam->relativePosition = Vector3(
-			    cam->target->getSphereOfInfluenceRadius() / 2.0, 0.0, 0.0);
-		}
+			if(cam->relativePosition.length()
+			   >= cam->target->getSphereOfInfluenceRadius())
+			{
+				cam->relativePosition = Vector3(
+				    cam->target->getSphereOfInfluenceRadius() / 2.0, 0.0, 0.0);
+			}
 
-		if(cam->relativePosition.length()
-		   <= cam->target->getCelestialBodyParameters().radius)
+			if(cam->relativePosition.length()
+			   <= cam->target->getCelestialBodyParameters().radius)
+			{
+				cam->relativePosition
+				    = cam->relativePosition.getUnitForm()
+				      * cam->target->getCelestialBodyParameters().radius * 2.0;
+			}
+		}
+		else if(a.id == "timecoeffdown")
 		{
-			cam->relativePosition
-			    = cam->relativePosition.getUnitForm()
-			      * cam->target->getCelestialBodyParameters().radius * 2.0;
+			float tc(clock.getTimeCoeff());
+			if(tc > 1.f && !clock.getLockedRealTime())
+			{
+				clock.setTimeCoeff(tc / 10.f);
+				debugText->setText(
+				    ("Time coeff. : "
+				     + std::to_string(static_cast<int>(tc / 10.f)) + "x")
+				        .c_str());
+				timeSinceTextUpdate = 0.f;
+			}
+		}
+		else if(a.id == "timecoeffup")
+		{
+			float tc(clock.getTimeCoeff());
+			if(tc < 1000000.f && !clock.getLockedRealTime())
+			{
+				clock.setTimeCoeff(tc * 10.f);
+				debugText->setText(
+				    ("Time coeff. : "
+				     + std::to_string(static_cast<int>(tc * 10.f)) + "x")
+				        .c_str());
+				timeSinceTextUpdate = 0.f;
+			}
+		}
+		else if(a.id == "resetvrpos")
+		{
+			if(vrHandler)
+			{
+				vrHandler.resetPos();
+			}
+		}
+		else if(a.id == "togglelabels")
+		{
+			CelestialBodyRenderer::renderLabels
+			    = !CelestialBodyRenderer::renderLabels;
+		}
+		else if(a.id == "toggleorbits")
+		{
+			CelestialBodyRenderer::renderOrbits
+			    = !CelestialBodyRenderer::renderOrbits;
+		}
+		// CONTROLS
+		else if(a.id == "centercam")
+		{
+			Vector3 unitRelPos(cam->relativePosition.getUnitForm());
+			float yaw(atan2(unitRelPos[1], unitRelPos[0]));
+			float pitch(cam->pitch = -1.0 * asin(unitRelPos[2]));
+			cam->yaw   = yaw;
+			cam->pitch = pitch;
+		}
+		else if(a.id == "forward")
+		{
+			negativeVelocity.setZ(-1);
+		}
+		else if(a.id == "left")
+		{
+			negativeVelocity.setX(-1);
+		}
+		else if(a.id == "backward")
+		{
+			positiveVelocity.setZ(1);
+		}
+		else if(a.id == "right")
+		{
+			positiveVelocity.setX(1);
 		}
 	}
-	else if(e->key() == Qt::Key_R)
+	else
 	{
-		float timeCoeff(clock.getTimeCoeff());
-		if(timeCoeff >= 10.f)
+		// CONTROLS
+		if(a.id == "forward")
 		{
-			timeCoeff /= 10.f;
+			negativeVelocity.setZ(0);
 		}
-		clock.setTimeCoeff(timeCoeff);
-	}
-	else if(e->key() == Qt::Key_T)
-	{
-		float timeCoeff(clock.getTimeCoeff());
-		if(timeCoeff <= 100000.f)
+		else if(a.id == "left")
 		{
-			timeCoeff *= 10.f;
+			negativeVelocity.setX(0);
 		}
-		clock.setTimeCoeff(timeCoeff);
+		else if(a.id == "backward")
+		{
+			positiveVelocity.setZ(0);
+		}
+		else if(a.id == "right")
+		{
+			positiveVelocity.setX(0);
+		}
 	}
-	// CONTROLS
-	else if(e->key() == Qt::Key_C)
-	{
-		Vector3 unitRelPos(cam->relativePosition.getUnitForm());
-		cam->yaw   = atan2(unitRelPos[1], unitRelPos[0]);
-		cam->pitch = -1.0 * asin(unitRelPos[2]);
-	}
-	else if(e->key() == Qt::Key_W || e->key() == Qt::Key_Up)
-	{
-		negativeVelocity.setZ(-1);
-	}
-	else if(e->key() == Qt::Key_A || e->key() == Qt::Key_Left)
-	{
-		negativeVelocity.setX(-1);
-	}
-	else if(e->key() == Qt::Key_S || e->key() == Qt::Key_Down)
-	{
-		positiveVelocity.setZ(1);
-	}
-	else if(e->key() == Qt::Key_D || e->key() == Qt::Key_Right)
-	{
-		positiveVelocity.setX(1);
-	}
-
-	AbstractMainWin::keyPressEvent(e);
-}
-
-void MainWin::keyReleaseEvent(QKeyEvent* e)
-{
-	if(e->key() == Qt::Key_L)
-	{
-		CelestialBodyRenderer::renderLabels
-		    = !CelestialBodyRenderer::renderLabels;
-	}
-	// CONTROLS
-	else if(e->key() == Qt::Key_W || e->key() == Qt::Key_Up)
-	{
-		negativeVelocity.setZ(0);
-	}
-	else if(e->key() == Qt::Key_A || e->key() == Qt::Key_Left)
-	{
-		negativeVelocity.setX(0);
-	}
-	else if(e->key() == Qt::Key_S || e->key() == Qt::Key_Down)
-	{
-		positiveVelocity.setZ(0);
-	}
-	else if(e->key() == Qt::Key_D || e->key() == Qt::Key_Right)
-	{
-		positiveVelocity.setX(0);
-	}
-
-	AbstractMainWin::keyReleaseEvent(e);
+	AbstractMainWin::actionEvent(a, pressed);
 }
 
 void MainWin::mousePressEvent(QMouseEvent* e)
@@ -354,9 +375,10 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 					{
 						leftGripPressed = true;
 						initControllerRelPos
-						    = Utils::fromQt(getCamera("planet")
-						                        .trackedSpaceToWorldTransform()
-						                    * left->getPosition())
+						    = Utils::fromQt(
+						          getCamera("planet")
+						              .seatedTrackedSpaceToWorldTransform()
+						          * left->getPosition())
 						          / CelestialBodyRenderer::overridenScale
 						      + cam->relativePosition;
 					}
@@ -364,9 +386,10 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 					{
 						rightGripPressed = true;
 						initControllerRelPos
-						    = Utils::fromQt(getCamera("planet")
-						                        .trackedSpaceToWorldTransform()
-						                    * right->getPosition())
+						    = Utils::fromQt(
+						          getCamera("planet")
+						              .seatedTrackedSpaceToWorldTransform()
+						          * right->getPosition())
 						          / CelestialBodyRenderer::overridenScale
 						      + cam->relativePosition;
 					}
@@ -388,7 +411,8 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						controllersMidPoint /= 2.f;
 
 						controllersMidPoint
-						    = getCamera("planet").trackedSpaceToWorldTransform()
+						    = getCamera("planet")
+						          .seatedTrackedSpaceToWorldTransform()
 						      * controllersMidPoint;
 						scaleCenter
 						    = Utils::fromQt(controllersMidPoint)
@@ -425,7 +449,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 							initControllerRelPos
 							    = Utils::fromQt(
 							          getCamera("planet")
-							              .trackedSpaceToWorldTransform()
+							              .seatedTrackedSpaceToWorldTransform()
 							          * right->getPosition())
 							          / CelestialBodyRenderer::overridenScale
 							      + cam->relativePosition;
@@ -443,7 +467,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 							initControllerRelPos
 							    = Utils::fromQt(
 							          getCamera("planet")
-							              .trackedSpaceToWorldTransform()
+							              .seatedTrackedSpaceToWorldTransform()
 							          * left->getPosition())
 							          / CelestialBodyRenderer::overridenScale
 							      + cam->relativePosition;
@@ -521,17 +545,19 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 		Vector3 controllerRelPos;
 		if(leftGripPressed && left != nullptr)
 		{
-			controllerRelPos = Utils::fromQt(cam.trackedSpaceToWorldTransform()
-			                                 * left->getPosition())
-			                       / CelestialBodyRenderer::overridenScale
-			                   + cam.relativePosition;
+			controllerRelPos
+			    = Utils::fromQt(cam.seatedTrackedSpaceToWorldTransform()
+			                    * left->getPosition())
+			          / CelestialBodyRenderer::overridenScale
+			      + cam.relativePosition;
 		}
 		else if(rightGripPressed && right != nullptr)
 		{
-			controllerRelPos = Utils::fromQt(cam.trackedSpaceToWorldTransform()
-			                                 * right->getPosition())
-			                       / CelestialBodyRenderer::overridenScale
-			                   + cam.relativePosition;
+			controllerRelPos
+			    = Utils::fromQt(cam.seatedTrackedSpaceToWorldTransform()
+			                    * right->getPosition())
+			          / CelestialBodyRenderer::overridenScale
+			      + cam.relativePosition;
 		}
 		cam.relativePosition -= controllerRelPos - initControllerRelPos;
 	}

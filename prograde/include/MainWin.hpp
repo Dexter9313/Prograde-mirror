@@ -5,6 +5,7 @@
 #include <QMessageBox>
 
 #include "AbstractMainWin.hpp"
+#include "InputManager.hpp"
 
 #include "Text3D.hpp"
 #include "graphics/OrbitalSystemCamera.hpp"
@@ -25,8 +26,7 @@ class MainWin : public AbstractMainWin
 	~MainWin();
 
   protected:
-	virtual void keyPressEvent(QKeyEvent* e) override;
-	virtual void keyReleaseEvent(QKeyEvent* e) override;
+	virtual void actionEvent(BaseInputManager::Action a, bool pressed) override;
 	virtual void mousePressEvent(QMouseEvent* e) override;
 	virtual void mouseReleaseEvent(QMouseEvent* e) override;
 	virtual void mouseMoveEvent(QMouseEvent* e) override;
