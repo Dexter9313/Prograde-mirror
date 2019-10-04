@@ -38,6 +38,7 @@ ProgradeSettings::ProgradeSettings(QWidget* parent)
 	insertGroup("quality", tr("Quality"), 1);
 	addUIntSetting("texmaxsize", 16, tr("Textures max size (x512)"), 1, 32);
 	addUIntSetting("planetquality", 4, tr("Planet rendering quality"), 1, 6);
+	addUIntSetting("atmoquality", 6, tr("Atmosphere rendering quality"), 1, 8);
 
 	setCurrentIndex(0);
 }
