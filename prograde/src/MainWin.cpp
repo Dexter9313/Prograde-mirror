@@ -660,7 +660,7 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 {
 	GLHandler::setPointSize(1);
 	stars.render();
-	systemRenderer->render(camera);
+	systemRenderer->render(camera, vrHandler);
 	renderVRControls();
 	systemRenderer->renderTransparent(camera);
 	debugText->render();
