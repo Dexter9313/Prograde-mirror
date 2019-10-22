@@ -429,6 +429,47 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 					    = !CelestialBodyRenderer::renderOrbits;
 					break;
 				}
+				case VRHandler::Button::TOUCHPAD:
+				{
+					Controller const* ctrl(vrHandler.getController(e.side));
+					if(ctrl != nullptr)
+					{
+						QVector2D padCoords(ctrl->getPadCoords());
+						if(fabsf(padCoords[0]) < fabsf(padCoords[1]))// UP OR DOWN
+						{
+							float tc(clock.getTimeCoeff());
+							if(padCoords[1] < 0.0f) // DOWN
+							{
+								if(tc > 1.f && !clock.getLockedRealTime())
+								{
+									clock.setTimeCoeff(tc / 10.f);
+									debugText->setText(
+									    ("Time coeff. : "
+									     + std::to_string(
+									           static_cast<int>(tc / 10.f))
+									     + "x")
+									        .c_str());
+									timeSinceTextUpdate = 0.f;
+								}
+							}
+							else // UP
+							{
+								if(tc < 1000000.f && !clock.getLockedRealTime())
+								{
+									clock.setTimeCoeff(tc * 10.f);
+									debugText->setText(
+									    ("Time coeff. : "
+									     + std::to_string(
+									           static_cast<int>(tc * 10.f))
+									     + "x")
+									        .c_str());
+									timeSinceTextUpdate = 0.f;
+								}
+							}
+						}
+					}
+					break;
+				}
 				default:
 					break;
 			}
@@ -663,7 +704,10 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	systemRenderer->render(camera, vrHandler);
 	renderVRControls();
 	systemRenderer->renderTransparent(camera);
-	debugText->render();
+	if(!vrHandler)
+	{
+		debugText->render();
+	}
 }
 
 void MainWin::rescale(double newScale, Vector3 const& scaleCenter)
