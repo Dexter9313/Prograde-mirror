@@ -435,7 +435,8 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 					if(ctrl != nullptr)
 					{
 						QVector2D padCoords(ctrl->getPadCoords());
-						if(fabsf(padCoords[0]) < fabsf(padCoords[1]))// UP OR DOWN
+						if(fabsf(padCoords[0])
+						   < fabsf(padCoords[1])) // UP OR DOWN
 						{
 							float tc(clock.getTimeCoeff());
 							if(padCoords[1] < 0.0f) // DOWN
