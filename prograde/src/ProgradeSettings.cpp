@@ -36,7 +36,7 @@ ProgradeSettings::ProgradeSettings(QWidget* parent)
 	               tr("Random Planetary System (from subdir)"));
 
 	insertGroup("quality", tr("Quality"), 1);
-	addUIntSetting("texmaxsize", 16, tr("Textures max size (x512)"), 1, 32);
+	addUIntSetting("texmaxsize", 4, tr("Textures max size (x2048)"), 1, 8);
 	addUIntSetting("gentexload", 3, tr("Texture generation GPU load"), 1, 4);
 	addUIntSetting("atmoquality", 6, tr("Atmosphere rendering quality"), 1, 8);
 
