@@ -19,6 +19,7 @@
 #ifndef TEST_MAIN_H
 #define TEST_MAIN_H
 
+#include "graphics/UtilsTest.hpp"
 #include "math/EccentricAnomalySolverTest.hpp"
 #include "math/Vector3Test.hpp"
 #include "physics/OrbitTest.hpp"
@@ -29,6 +30,7 @@ void test_main(Functor assert_lambda)
 	assert_lambda(new OrbitTest());
 	assert_lambda(new Vector3Test());
 	assert_lambda(new EccentricAnomalySolverTest());
+	assert_lambda(new UtilsTest());
 }
 
 #endif // TEST_MAIN_H

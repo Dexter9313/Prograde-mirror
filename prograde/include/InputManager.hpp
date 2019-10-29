@@ -30,6 +30,8 @@ class InputManager : public BaseInputManager
 		          {"nextcelestialbody", tr("Next Celestial Body")});
 		addAction(Qt::Key_Backtab,
 		          {"prevcelestialbody", tr("Previous Celestial Body")});
+		addAction(Qt::Key_X,
+		          {"togglelock", "Toggle Lock on Celestial Body Rotation"});
 		addAction(Qt::Key_Home, {"resetvrpos", "Reset VR origin"});
 		addAction(Qt::Key_L, {"togglelabels", "Toggle Labels"});
 		addAction(Qt::Key_O, {"toggleorbits", "Toggle Orbits"});

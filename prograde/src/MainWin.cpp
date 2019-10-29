@@ -215,6 +215,10 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 			CelestialBodyRenderer::renderOrbits
 			    = !CelestialBodyRenderer::renderOrbits;
 		}
+		else if(a.id == "togglelock")
+		{
+			cam->toggleLockedOnRotation(clock.getCurrentUt());
+		}
 		// CONTROLS
 		else if(a.id == "centercam")
 		{
@@ -309,11 +313,9 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 	// means both mouse buttons are clicked
 	if(rotateViewEnabled && trackballEnabled)
 	{
-		double radius(cam->target->getCelestialBodyParameters().radius);
-		double alt(cam->relativePosition.length() - radius);
+		double alt(cam->getAltitude());
 		alt *= 1.f - dy;
-		cam->relativePosition
-		    = cam->relativePosition.getUnitForm() * (radius + alt);
+		cam->setAltitude(alt);
 	}
 	else if(rotateViewEnabled || trackballEnabled)
 	{
@@ -633,12 +635,10 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 	stream.precision(10);
 	stream
 	    << "Altitude : "
-	    << lengthPrettyPrint(cam.relativePosition.length()
-	                         - cam.target->getCelestialBodyParameters().radius)
+	    << lengthPrettyPrint(cam.getAltitude())
 	           .first
 	    << " "
-	    << lengthPrettyPrint(cam.relativePosition.length()
-	                         - cam.target->getCelestialBodyParameters().radius)
+	    << lengthPrettyPrint(cam.getAltitude())
 	           .second
 	    << std::endl;
 	stream.precision(4);
