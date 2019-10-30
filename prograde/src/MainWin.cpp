@@ -575,6 +575,11 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 
 	cam.updateUT(clock.getCurrentUt());
 
+	if(cam.getAltitude() < 0.0)
+	{
+		cam.setAltitude(1.0);
+	}
+
 	if(!vrHandler)
 	{
 		CelestialBodyRenderer::overridenScale = 1.0;
