@@ -633,14 +633,8 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 	stream << round(1.f / frameTiming) << " FPS" << std::endl;
 	stream << "Targeting : " << cam.target->getName() << std::endl;
 	stream.precision(10);
-	stream
-	    << "Altitude : "
-	    << lengthPrettyPrint(cam.getAltitude())
-	           .first
-	    << " "
-	    << lengthPrettyPrint(cam.getAltitude())
-	           .second
-	    << std::endl;
+	stream << "Altitude : " << lengthPrettyPrint(cam.getAltitude()).first << " "
+	       << lengthPrettyPrint(cam.getAltitude()).second << std::endl;
 	stream.precision(4);
 	stream << "UT = " << SimulationTime::UTToStr(clock.getCurrentUt())
 	       << std::endl;
