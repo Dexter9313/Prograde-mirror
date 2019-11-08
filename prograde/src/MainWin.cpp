@@ -77,6 +77,7 @@ MainWin::MainWin()
 	auto stars       = orbitalSystem->getAllStarsNames();
 	auto fcPlanets   = orbitalSystem->getAllFirstClassPlanetsNames();
 	auto satellites  = orbitalSystem->getAllSatellitePlanetsNames();
+	auto spacecrafts = orbitalSystem->getAllSpacecraftsNames();
 
 	std::cout << "-=-=- SYSTEM " << orbitalSystem->getName() << " -=-=-"
 	          << std::endl;
@@ -103,6 +104,15 @@ MainWin::MainWin()
 
 	std::cout << "Satellites : " << satellites.size() << std::endl;
 	for(auto name : satellites)
+	{
+		std::cout << name << "("
+		          << (*orbitalSystem)[name]->getParent()->getName() << ")"
+		          << std::endl;
+	}
+	std::cout << std::endl;
+
+	std::cout << "Spacecrafts : " << spacecrafts.size() << std::endl;
+	for(auto name : spacecrafts)
 	{
 		std::cout << name << "("
 		          << (*orbitalSystem)[name]->getParent()->getName() << ")"
