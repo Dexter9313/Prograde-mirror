@@ -640,6 +640,7 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 		       * velMag;
 	}
 
+	orbitalSystem->update(clock.getCurrentUt());
 	systemRenderer->updateMesh(clock.getCurrentUt(), cam);
 
 	std::stringstream stream;
