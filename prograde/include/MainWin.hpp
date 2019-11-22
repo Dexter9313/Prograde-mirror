@@ -2,7 +2,10 @@
 #define MAINWIN_H
 
 #include <QDateTime>
+#include <QLabel>
 #include <QMessageBox>
+#include <QTreeWidget>
+#include <QVBoxLayout>
 
 #include "AbstractMainWin.hpp"
 #include "InputManager.hpp"
@@ -24,6 +27,9 @@ class MainWin : public AbstractMainWin
   public:
 	MainWin();
 	~MainWin();
+
+  public slots:
+	void selectOrbitable(QTreeWidgetItem* item, int column);
 
   protected:
 	virtual void actionEvent(BaseInputManager::Action a, bool pressed) override;
@@ -102,6 +108,12 @@ class MainWin : public AbstractMainWin
 	// returns value and unit
 	static std::pair<double, std::string>
 	    lengthPrettyPrint(double length /* in meters */);
+
+	// SELECT OBJECTS UI
+	QDialog* dialog   = nullptr;
+	QTreeWidget* tree = nullptr;
+	QTreeWidgetItem* constructItems(Orbitable const& orbitable,
+	                                QTreeWidgetItem* parent = nullptr);
 };
 
 #endif // MAINWIN_H

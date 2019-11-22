@@ -121,6 +121,32 @@ MainWin::MainWin()
 	std::cout << std::endl;
 }
 
+void MainWin::selectOrbitable(QTreeWidgetItem* item, int column)
+{
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
+
+	auto orbitable = (*orbitalSystem)[item->text(column).toLatin1().data()];
+
+	cam->target = dynamic_cast<CelestialBody const*>(orbitable);
+
+	if(cam->relativePosition.length()
+	   >= cam->target->getSphereOfInfluenceRadius())
+	{
+		cam->relativePosition = cam->relativePosition.getUnitForm()
+		                        * cam->target->getSphereOfInfluenceRadius()
+		                        / 2.0;
+	}
+
+	if(cam->relativePosition.length()
+	   <= cam->target->getCelestialBodyParameters().radius)
+	{
+		cam->relativePosition
+		    = cam->relativePosition.getUnitForm()
+		      * cam->target->getCelestialBodyParameters().radius * 2.0;
+	}
+	actionEvent({"centercam", ""}, true);
+}
+
 void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 {
 	if(pressed)
@@ -571,6 +597,20 @@ void MainWin::initScene()
 
 	// we will draw them ourselves
 	pathIdRenderingControllers = "";
+
+	dialog = new QDialog;
+	dialog->show();
+	dialog->setWindowTitle("Orbitables List");
+	// dialog->setWindowFlags(Qt::Dialog | Qt::WindowStaysOnTopHint |
+	// Qt::X11BypassWindowManagerHint );
+
+	auto layout = new QVBoxLayout(dialog);
+	tree        = new QTreeWidget(dialog);
+	tree->setColumnCount(1);
+	tree->setHeaderLabel(QString());
+	connect(tree, &QTreeWidget::itemActivated, this, &MainWin::selectOrbitable);
+	layout->addWidget(tree);
+	constructItems(orbitalSystem->getRootOrbitable());
 }
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
@@ -730,10 +770,35 @@ void MainWin::rescale(double newScale, Vector3 const& scaleCenter)
 	CelestialBodyRenderer::overridenScale = newScale;
 }
 
+QTreeWidgetItem* MainWin::constructItems(Orbitable const& orbitable,
+                                         QTreeWidgetItem* parent)
+{
+	QTreeWidgetItem* item;
+	if(parent == nullptr)
+	{
+		item = new QTreeWidgetItem(tree);
+	}
+	else
+	{
+		item = new QTreeWidgetItem(parent);
+	}
+
+	item->setText(0, QString::fromStdString(orbitable.getName()));
+
+	for(auto child : orbitable.getChildren())
+	{
+		item->addChild(constructItems(*child, item));
+	}
+
+	return item;
+}
+
 MainWin::~MainWin()
 {
 	delete systemRenderer;
 	delete orbitalSystem;
+
+	delete dialog;
 }
 
 std::pair<double, std::string> MainWin::lengthPrettyPrint(double length)
