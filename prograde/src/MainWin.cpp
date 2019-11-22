@@ -178,6 +178,7 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 				    = cam->relativePosition.getUnitForm()
 				      * cam->target->getCelestialBodyParameters().radius * 2.0;
 			}
+			actionEvent({"centercam", ""}, true);
 		}
 		else if(a.id == "prevcelestialbody")
 		{
@@ -207,6 +208,7 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 				    = cam->relativePosition.getUnitForm()
 				      * cam->target->getCelestialBodyParameters().radius * 2.0;
 			}
+			actionEvent({"centercam", ""}, true);
 		}
 		else if(a.id == "timecoeffdown")
 		{
