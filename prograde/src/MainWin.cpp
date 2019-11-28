@@ -306,6 +306,16 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 	AbstractMainWin::actionEvent(a, pressed);
 }
 
+bool MainWin::event(QEvent* e)
+{
+	if(e->type() == QEvent::Type::Close)
+	{
+		menuBar->close();
+		dialog->close();
+	}
+	return AbstractMainWin::event(e);
+}
+
 void MainWin::mousePressEvent(QMouseEvent* e)
 {
 	if(e->button() == Qt::MouseButton::LeftButton)
@@ -600,11 +610,21 @@ void MainWin::initScene()
 	// we will draw them ourselves
 	pathIdRenderingControllers = "";
 
+	menuBar = new QMenuBar();
+	menuBar->setWindowFlags(Qt::X11BypassWindowManagerHint);
+
+	auto file(menuBar->addMenu(tr("File")));
+	file->addAction(tr("Close"), this, [this]() { this->close(); });
+
+	auto tools(menuBar->addMenu("Tools"));
+	tools->addAction("Orbitables List", this,
+	                 [this]() { this->dialog->show(); });
+
+	menuBar->show();
+
 	dialog = new QDialog;
-	dialog->show();
+	dialog->setFixedSize(250, 400);
 	dialog->setWindowTitle("Orbitables List");
-	// dialog->setWindowFlags(Qt::Dialog | Qt::WindowStaysOnTopHint |
-	// Qt::X11BypassWindowManagerHint );
 
 	auto layout = new QVBoxLayout(dialog);
 	tree        = new QTreeWidget(dialog);
@@ -617,6 +637,19 @@ void MainWin::initScene()
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 {
+	QPoint relPos(QCursor::pos());
+	relPos -= position();
+	if(relPos.y() < menuBar->height() + 10 && relPos.y() >= 0 && relPos.x() >= 0
+	   && relPos.x() < width())
+	{
+		menuBar->move(position());
+		menuBar->show();
+	}
+	else if(menuBar->activeAction() == nullptr)
+	{
+		menuBar->hide();
+	}
+
 	auto& cam = dynamic_cast<OrbitalSystemCamera&>(camera);
 
 	clock.update();
@@ -800,6 +833,7 @@ MainWin::~MainWin()
 	delete systemRenderer;
 	delete orbitalSystem;
 
+	delete menuBar;
 	delete dialog;
 }
 

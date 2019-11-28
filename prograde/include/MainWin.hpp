@@ -3,6 +3,7 @@
 
 #include <QDateTime>
 #include <QLabel>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QTreeWidget>
 #include <QVBoxLayout>
@@ -33,6 +34,7 @@ class MainWin : public AbstractMainWin
 
   protected:
 	virtual void actionEvent(BaseInputManager::Action a, bool pressed) override;
+	virtual bool event(QEvent* e) override;
 	virtual void mousePressEvent(QMouseEvent* e) override;
 	virtual void mouseReleaseEvent(QMouseEvent* e) override;
 	virtual void mouseMoveEvent(QMouseEvent* e) override;
@@ -109,7 +111,9 @@ class MainWin : public AbstractMainWin
 	static std::pair<double, std::string>
 	    lengthPrettyPrint(double length /* in meters */);
 
-	// SELECT OBJECTS UI
+	// UI
+	QMenuBar* menuBar = nullptr;
+
 	QDialog* dialog   = nullptr;
 	QTreeWidget* tree = nullptr;
 	QTreeWidgetItem* constructItems(Orbitable const& orbitable,
