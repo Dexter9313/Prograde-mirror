@@ -349,6 +349,8 @@ void MainWin::mouseReleaseEvent(QMouseEvent* e)
 
 void MainWin::mouseMoveEvent(QMouseEvent* e)
 {
+	lastCursorPos = e->pos();
+
 	if(!rotateViewEnabled && !trackballEnabled)
 	{
 		return;
@@ -637,15 +639,13 @@ void MainWin::initScene()
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 {
-	QPoint relPos(QCursor::pos());
-	relPos -= position();
-	if(relPos.y() < menuBar->height() + 10 && relPos.y() >= 0 && relPos.x() >= 0
-	   && relPos.x() < width())
+	if(lastCursorPos.y() < menuBar->height() + 10 && lastCursorPos.y() >= 0
+	   && lastCursorPos.x() >= 0 && lastCursorPos.x() < width())
 	{
 		menuBar->move(position());
 		menuBar->show();
 	}
-	else if(menuBar->activeAction() == nullptr)
+	else if(menuBar->activeAction() == nullptr && menuBar->isVisible())
 	{
 		menuBar->hide();
 	}
