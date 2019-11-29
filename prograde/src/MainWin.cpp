@@ -613,7 +613,9 @@ void MainWin::initScene()
 	pathIdRenderingControllers = "";
 
 	menuBar = new QMenuBar();
-	menuBar->setWindowFlags(Qt::X11BypassWindowManagerHint);
+	menuBar->setWindowFlags(Qt::X11BypassWindowManagerHint
+	                        | Qt::MSWindowsFixedSizeDialogHint
+	                        | Qt::FramelessWindowHint);
 
 	auto file(menuBar->addMenu(tr("File")));
 	file->addAction(tr("Close"), this, [this]() { this->close(); });
