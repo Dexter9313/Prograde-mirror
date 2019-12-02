@@ -125,7 +125,27 @@ void MainWin::selectOrbitable(QTreeWidgetItem* item, int column)
 {
 	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
 
-	auto orbitable = (*orbitalSystem)[item->text(column).toLatin1().data()];
+	QString name(item->text(column));
+	if(name.contains('('))
+	{
+		unsigned int pos(name.lastIndexOf('('));
+		name = name.left(pos - 1);
+	}
+	auto orbitable = (*orbitalSystem)[name.toLatin1().data()];
+
+	if(orbitable->getOrbit() != nullptr
+	   && !orbitable->getOrbit()->isInRange(clock.getCurrentUt()))
+	{
+		if(orbitable->getOrbitableType() == Orbitable::Type::SPACECRAFT)
+		{
+			item->setTextColor(0, QColor("red"));
+		}
+		return;
+	}
+	if(orbitable->getOrbitableType() == Orbitable::Type::SPACECRAFT)
+	{
+		item->setTextColor(0, QColor("green"));
+	}
 
 	cam->target = dynamic_cast<CelestialBody const*>(orbitable);
 
@@ -163,6 +183,12 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 			}
 			cam->target = bodies[bodyTracked];
 
+			if(cam->target->getOrbit() != nullptr
+			   && !cam->target->getOrbit()->isInRange(clock.getCurrentUt()))
+			{
+				actionEvent({"nextcelestialbody", ""}, true);
+			}
+
 			if(cam->relativePosition.length()
 			   >= cam->target->getSphereOfInfluenceRadius())
 			{
@@ -193,6 +219,12 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 				bodyTracked = bodies.size() - 1;
 			}
 			cam->target = bodies[bodyTracked];
+
+			if(cam->target->getOrbit() != nullptr
+			   && !cam->target->getOrbit()->isInRange(clock.getCurrentUt()))
+			{
+				actionEvent({"prevcelestialbody", ""}, true);
+			}
 
 			if(cam->relativePosition.length()
 			   >= cam->target->getSphereOfInfluenceRadius())
@@ -627,7 +659,7 @@ void MainWin::initScene()
 	menuBar->show();
 
 	dialog = new QDialog;
-	dialog->setFixedSize(250, 400);
+	dialog->setFixedSize(250, 600);
 	dialog->setWindowTitle("Orbitables List");
 
 	auto layout = new QVBoxLayout(dialog);
@@ -820,7 +852,44 @@ QTreeWidgetItem* MainWin::constructItems(Orbitable const& orbitable,
 		item = new QTreeWidgetItem(parent);
 	}
 
-	item->setText(0, QString::fromStdString(orbitable.getName()));
+	if(orbitable.getOrbitableType() != Orbitable::Type::SPACECRAFT)
+	{
+		item->setText(0, QString::fromStdString(orbitable.getName()));
+	}
+	else
+	{
+		auto obt(orbitable.getOrbit());
+		if(obt != nullptr)
+		{
+			QString beginDate(
+			    SimulationTime::utToDateTime(obt->getRange().first)
+			        .date()
+			        .toString(Qt::ISODate));
+			QString endDate(SimulationTime::utToDateTime(obt->getRange().second)
+			                    .date()
+			                    .toString(Qt::ISODate));
+			if(obt->isInRange(clock.getCurrentUt()))
+			{
+				item->setText(0, QString::fromStdString(orbitable.getName())
+				                     + "\n(" + beginDate + "\n->" + endDate
+				                     + ")");
+				item->setTextColor(0, QColor("green"));
+			}
+			else
+			{
+				item->setText(0, QString::fromStdString(orbitable.getName())
+				                     + "\n(" + beginDate + "\n->" + endDate
+				                     + ")");
+				item->setTextColor(0, QColor("red"));
+			}
+		}
+		else
+		{
+			std::cout << std::string("Spacecraft \"") + orbitable.getName()
+			                 + "\" doesn't have an orbit"
+			          << std::endl;
+		}
+	}
 
 	for(auto child : orbitable.getChildren())
 	{
