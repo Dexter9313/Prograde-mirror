@@ -885,6 +885,7 @@ QTreeWidgetItem* MainWin::constructItems(Orbitable const& orbitable,
 		}
 		else
 		{
+			item->setText(0, QString::fromStdString(orbitable.getName()));
 			std::cout << std::string("Spacecraft \"") + orbitable.getName()
 			                 + "\" doesn't have an orbit"
 			          << std::endl;
