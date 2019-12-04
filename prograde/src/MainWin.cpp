@@ -696,7 +696,7 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 
 	cam.updateUT(clock.getCurrentUt());
 
-	if(cam.getAltitude() < 0.0)
+	if(!vrHandler && cam.getAltitude() < 0.0)
 	{
 		cam.setAltitude(1.0);
 	}
