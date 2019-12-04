@@ -64,6 +64,11 @@ class MainWin : public AbstractMainWin
 	Text3D* debugText;
 	float timeSinceTextUpdate = FLT_MAX;
 
+	// render controllers as points used to measure distances
+	// useful for spacecrafts scale checking
+	GLHandler::ShaderProgram shader;
+	GLHandler::Mesh point;
+	void dbgRenderVRControls();
 	void rescale(double newScale, Vector3 const& scaleCenter);
 
 	OrbitalSystem* orbitalSystem;

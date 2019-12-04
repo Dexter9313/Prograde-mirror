@@ -666,6 +666,11 @@ void MainWin::initScene()
 	connect(tree, &QTreeWidget::itemActivated, this, &MainWin::selectOrbitable);
 	layout->addWidget(tree);
 	constructItems(orbitalSystem->getRootOrbitable());
+
+	// DBG
+	shader = GLHandler::newShader("default");
+	point  = GLHandler::newMesh();
+	GLHandler::setVertices(point, {0.f, 0.f, 0.f}, shader, {{"position", 3}});
 }
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
@@ -820,10 +825,49 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	stars.render();
 	systemRenderer->render(camera);
 	renderVRControls();
+	// dbgRenderVRControls();
 	systemRenderer->renderTransparent(camera);
 	if(!vrHandler)
 	{
 		debugText->render();
+	}
+}
+
+void MainWin::dbgRenderVRControls()
+{
+	if(!vrHandler)
+	{
+		return;
+	}
+
+	Controller const* left(vrHandler.getController(Side::LEFT));
+	Controller const* right(vrHandler.getController(Side::RIGHT));
+
+	QVector3D leftPos, rightPos;
+	if(left != nullptr)
+	{
+		leftPos = left->getPosition();
+		GLHandler::setShaderParam(shader, "color", QColor("red"));
+		QMatrix4x4 model;
+		model.translate(left->getPosition());
+		GLHandler::setUpRender(shader, model,
+		                       GLHandler::GeometricSpace::SEATEDTRACKED);
+		GLHandler::render(point);
+	}
+	if(right != nullptr)
+	{
+		rightPos = right->getPosition();
+		GLHandler::setShaderParam(shader, "color", QColor("green"));
+		QMatrix4x4 model;
+		model.translate(right->getPosition());
+		GLHandler::setUpRender(shader, model,
+		                       GLHandler::GeometricSpace::SEATEDTRACKED);
+		GLHandler::render(point);
+	}
+
+	if(left != nullptr && right != nullptr)
+	{
+		debugText->setText(QString::number((leftPos - rightPos).length()));
 	}
 }
 
@@ -904,6 +948,9 @@ MainWin::~MainWin()
 
 	delete menuBar;
 	delete dialog;
+
+	GLHandler::deleteMesh(point);
+	GLHandler::deleteShader(shader);
 }
 
 std::pair<double, std::string> MainWin::lengthPrettyPrint(double length)
