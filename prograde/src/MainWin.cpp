@@ -255,7 +255,7 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		else if(a.id == "timecoeffup")
 		{
 			float tc(clock.getTimeCoeff());
-			if(tc < 1000000.f && !clock.getLockedRealTime())
+			if(tc < 10000000.f && !clock.getLockedRealTime())
 			{
 				clock.setTimeCoeff(tc * 10.f);
 				debugText->setText(
@@ -536,7 +536,8 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 							}
 							else // UP
 							{
-								if(tc < 1000000.f && !clock.getLockedRealTime())
+								if(tc < 10000000.f
+								   && !clock.getLockedRealTime())
 								{
 									clock.setTimeCoeff(tc * 10.f);
 									debugText->setText(
