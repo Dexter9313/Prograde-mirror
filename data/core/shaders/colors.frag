@@ -31,15 +31,15 @@ void main()
 {
 	vec4 result = texture(tex, texCoord);
 	// reinhard tone mapping
-	if(hdr == 1.0)
+	/*if(hdr == 1.0)
 	{
 		result.rgb = result.rgb / (result.rgb + vec3(1.0));
-	}
+	}*/
 	result.rgb = pow(result.rgb, vec3(1.0 / gamma));
 
 #ifdef DITHERING
 	// dithering to remove banding
-	result += dither();
+	// result += dither();
 #endif
 
 	outColor = result;

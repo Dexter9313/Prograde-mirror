@@ -286,6 +286,14 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		{
 			cam->toggleLockedOnRotation(clock.getCurrentUt());
 		}
+		else if(a.id == "exposureup")
+		{
+			cam->exposure *= 1.5f;
+		}
+		else if(a.id == "exposuredown")
+		{
+			cam->exposure /= 1.5f;
+		}
 		// CONTROLS
 		else if(a.id == "centercam")
 		{
@@ -822,8 +830,10 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 
 void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 {
+	auto& cam(getCamera<OrbitalSystemCamera>("planet"));
+
 	GLHandler::setPointSize(1);
-	stars.render();
+	stars.render(cam.exposure);
 	systemRenderer->render(camera);
 	renderVRControls();
 	// dbgRenderVRControls();

@@ -83,8 +83,8 @@ message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
 # Update submodules
 
-execute_process(COMMAND git submodule update --init --recursive
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+#execute_process(COMMAND git submodule update --init --recursive
+#                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(EXISTS ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/thirdparty)
 	file(GLOB THIRDPARTY_INCLUDES_FILES ${PROJECT_SOURCE_DIR}/${PROJECT_DIRECTORY}/thirdparty/**/include/* LIST_DIRECTORIES true)
