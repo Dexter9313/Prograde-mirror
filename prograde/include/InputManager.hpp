@@ -42,6 +42,9 @@ class InputManager : public BaseInputManager
 		addAction(Qt::Key_A, {"left", "Move Left"});
 		addAction(Qt::Key_S, {"backward", "Move Backward"});
 		addAction(Qt::Key_D, {"right", "Move Right"});
+
+		addAction(Qt::Key_PageUp, {"exposureup", tr("Increase Exposure")});
+		addAction(Qt::Key_PageDown, {"exposuredown", tr("Decrease Exposure")});
 	};
 };
 

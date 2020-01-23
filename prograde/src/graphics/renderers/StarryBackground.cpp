@@ -36,8 +36,6 @@ void StarryBackground::initFromRandomUniform()
 	for(unsigned int i(0); i < 120000; ++i)
 	{
 		float mag(-1.0 * distributionMag(generator) + 10);
-		float lum(lumFromMagnitude(mag));
-		Color baseColor(colorFromColorIndex(distributionCI(generator)));
 
 		stars.push_back(Star());
 		int j = stars.size() - 1;
@@ -49,8 +47,7 @@ void StarryBackground::initFromRandomUniform()
 		stars[j].properMotionLatitude  = 0.f;
 		stars[j].properMotionLongitude = 0.f;
 		stars[j].magnitude             = mag;
-		stars[j].color = Color(lum * 255, lum * baseColor.r, lum * baseColor.g,
-		                       lum * baseColor.b);
+		stars[j].color = colorFromColorIndex(distributionCI(generator));
 	}
 
 	initMesh(stars);
@@ -71,8 +68,6 @@ void StarryBackground::initFromRandomGalactic()
 	for(unsigned int i(0); i < 120000; ++i)
 	{
 		float mag(-1.0 * distributionMag(generator) + 10);
-		float lum(lumFromMagnitude(mag));
-		Color baseColor(colorFromColorIndex(distributionCI(generator)));
 
 		stars.push_back(Star());
 		int j = stars.size() - 1;
@@ -84,8 +79,7 @@ void StarryBackground::initFromRandomGalactic()
 		stars[j].properMotionLatitude  = 0.f;
 		stars[j].properMotionLongitude = 0.f;
 		stars[j].magnitude             = mag;
-		stars[j].color = Color(lum * 255, lum * baseColor.r, lum * baseColor.g,
-		                       lum * baseColor.b);
+		stars[j].color = colorFromColorIndex(distributionCI(generator));
 	}
 
 	initMesh(stars);
@@ -97,20 +91,30 @@ void StarryBackground::initFromFile(float axialTilt)
 	initMesh(stars, axialTilt);
 }
 
-void StarryBackground::render()
+void StarryBackground::render(float exposure)
 {
+	GLHandler::glf().glEnable(GL_POINT_SPRITE);
+	GLHandler::glf().glEnable(GL_PROGRAM_POINT_SIZE);
 	GLHandler::beginTransparent();
+	GLHandler::setShaderParam(shader, "exposure", exposure);
+	GLHandler::useTextures({tex});
 	GLHandler::setUpRender(shader, QMatrix4x4(),
 	                       GLHandler::GeometricSpace::SKYBOX);
 	GLHandler::render(mesh);
 	GLHandler::endTransparent();
+	GLHandler::glf().glDisable(GL_POINT_SPRITE);
+	GLHandler::glf().glDisable(GL_PROGRAM_POINT_SIZE);
 }
 
 void StarryBackground::initMesh(std::vector<Star> const& stars, float axialTilt)
 {
-	shader = GLHandler::newShader("colored");
+	shader = GLHandler::newShader("starrybackground");
 
 	mesh = GLHandler::newMesh();
+
+	tex = GLHandler::newTexture(
+	    getAbsoluteDataPath("images/star.png").toLatin1().data());
+
 	std::vector<float> vboContent;
 
 	Vector3 pos;
@@ -123,14 +127,14 @@ void StarryBackground::initMesh(std::vector<Star> const& stars, float axialTilt)
 		vboContent.push_back(pos[0] * 1000);
 		vboContent.push_back(pos[1] * 1000);
 		vboContent.push_back(pos[2] * 1000);
-		vboContent.push_back(star.color.r / 255.f);
-		vboContent.push_back(star.color.g / 255.f);
-		vboContent.push_back(star.color.b / 255.f);
-		vboContent.push_back(star.color.alpha / 255.f);
+		vboContent.push_back(star.magnitude);
+		vboContent.push_back(star.color.redF());
+		vboContent.push_back(star.color.greenF());
+		vboContent.push_back(star.color.blueF());
 	}
 
 	GLHandler::setVertices(mesh, vboContent, shader,
-	                       {{"position", 3}, {"color", 4}});
+	                       {{"position", 3}, {"mag", 1}, {"color", 3}});
 }
 
 std::vector<StarryBackground::Star> StarryBackground::loadStars()
@@ -175,74 +179,26 @@ std::vector<StarryBackground::Star> StarryBackground::loadStars()
 			result[i].properMotionLongitude = 0.f;
 
 			result[i].magnitude = mag;
-
-			float lum(lumFromMagnitude(mag));
-			Color baseColor(colorFromColorIndex(ci));
-			result[i].color = Color(lum * 255, lum * baseColor.r,
-			                        lum * baseColor.g, lum * baseColor.b);
+			result[i].color     = colorFromColorIndex(ci);
 		}
 	}
 	return result;
 }
 
-float StarryBackground::lumFromMagnitude(float magnitude)
-{
-	// return magnitude < 3 ? 3 - magnitude : 0;
-	// return pow(10, (-1.44f - magnitude) / 9.f);
-	return pow(10, (-1.44f - magnitude) / 9.f) * 0.8f;
-}
-
-Color StarryBackground::colorFromColorIndex(float ci)
+QColor StarryBackground::colorFromColorIndex(float ci)
 {
 	// https://stackoverflow.com/questions/21977786/star-b-v-color-index-to-apparent-rgb-color
 	float t
 	    = 4600
 	      * ((1.f / ((0.92f * ci) + 1.7f)) + (1.f / ((0.92f * ci) + 0.62f)));
 
-	float x = 0.f, y = 0.f, X, Y, Z, r, g, b;
-
-	if(t >= 1667 && t <= 4000)
-	{
-		x = ((-0.2661239 * pow(10, 9)) / (t * t * t))
-		    + ((-0.2343580 * pow(10, 6)) / (t * t))
-		    + ((0.8776956 * pow(10, 3)) / t) + 0.179910;
-	}
-	else if(t > 4000 && t <= 25000)
-	{
-		x = ((-3.0258469 * pow(10, 9)) / (t * t * t))
-		    + ((2.1070379 * pow(10, 6)) / (t * t))
-		    + ((0.2226347 * pow(10, 3)) / t) + 0.240390;
-	}
-
-	if(t >= 1667 && t <= 2222)
-	{
-		y = -1.1063814 * x * x * x - 1.34811020 * x * x + 2.18555832 * x
-		    - 0.20219683;
-	}
-	else if(t > 2222 && t <= 4000)
-	{
-		y = -0.9549476 * x * x * x - 1.37418593 * x * x + 2.09137015 * x
-		    - 0.16748867;
-	}
-	else if(t > 4000 && t <= 25000)
-	{
-		y = 3.0817580 * x * x * x - 5.87338670 * x * x + 3.75112997 * x
-		    - 0.37001483;
-	}
-
-	Y = (y == 0.f) ? 0.f : 1.f;
-	X = (y == 0.f) ? 0.f : x / y;
-	Z = (y == 0.f) ? 0.f : (1.f - x - y) / y;
-
-	r = 3.240479 * X - 1.537150 * Y - 0.498535 * Z;
-	g = -0.969256 * X + 1.875992 * Y + 0.041556 * Z;
-	b = 0.055648 * X - 0.204043 * Y + 1.057311 * Z;
-
-	return Color(255, 255 * r, 255 * g, 255 * b);
+	return GLHandler::sRGBToLinear(
+	    Utils::toQt(blackbody::colorFromTemperature(t)));
 }
 
 StarryBackground::~StarryBackground()
 {
+	GLHandler::deleteTexture(tex);
 	GLHandler::deleteShader(shader);
 	GLHandler::deleteMesh(mesh);
 }

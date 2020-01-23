@@ -23,9 +23,11 @@
 #include <random>
 
 #include "GLHandler.hpp"
+#include "graphics/Utils.hpp"
 #include "math/Vector3.hpp"
 #include "math/constants.hpp"
 #include "physics/Color.hpp"
+#include "physics/blackbody.hpp"
 
 class StarryBackground
 {
@@ -34,12 +36,13 @@ class StarryBackground
 	void initFromRandomUniform();
 	void initFromRandomGalactic();
 	void initFromFile(float axialTilt = 0.f);
-	void render();
+	void render(float exposure);
 	~StarryBackground();
 
   private:
 	GLHandler::ShaderProgram shader;
 	GLHandler::Mesh mesh;
+	GLHandler::Texture tex;
 	struct Star
 	{
 		std::string commonName;
@@ -48,14 +51,13 @@ class StarryBackground
 		float properMotionLatitude;
 		float properMotionLongitude;
 		float magnitude;
-		Color color;
+		QColor color;
 	};
 
 	void initMesh(std::vector<Star> const& stars, float axialTilt = 0.f);
 
 	static std::vector<Star> loadStars();
-	static float lumFromMagnitude(float magnitude);
-	static Color colorFromColorIndex(float ci);
+	static QColor colorFromColorIndex(float ci);
 };
 
 #endif // STARRYBACKGROUND_H
