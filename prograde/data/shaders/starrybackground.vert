@@ -95,7 +95,7 @@ void main()
 	if(m > 1.0)
 	{
 		col /= m;
-		gl_PointSize = min(1.0e32, sqrt(m) * 33.55263157894737 / 2.0);
+		gl_PointSize = min(256.0, sqrt(m) * 33.55263157894737 / 2.0);
 		f_finalcolor = vec4(col, 1.0);
 	}
 	else
