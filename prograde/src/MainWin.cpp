@@ -696,6 +696,7 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 	}
 
 	auto& cam = dynamic_cast<OrbitalSystemCamera&>(camera);
+	cam.setWindowSize(size());
 
 	clock.update();
 	/*if(!clock.drawableFrame())
