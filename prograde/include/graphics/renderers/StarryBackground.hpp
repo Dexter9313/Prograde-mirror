@@ -36,7 +36,7 @@ class StarryBackground
 	void initFromRandomUniform();
 	void initFromRandomGalactic();
 	void initFromFile(float axialTilt = 0.f);
-	void render(float exposure);
+	void render(float exposure, float pixelSolidAngle);
 	~StarryBackground();
 
   private:

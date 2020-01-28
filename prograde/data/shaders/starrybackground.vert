@@ -6,6 +6,7 @@ in vec3 color;
 
 uniform mat4 camera;
 uniform float exposure;
+uniform float pixelSolidAngle;
 
 out vec4 f_finalcolor;
 out float f_pointsize;
@@ -62,7 +63,7 @@ void main()
 
 	//e = 1.0 / pow(10.0, 0.4 * (-6.5 - 19.0));
 
-	float mul = e * irradiance;
+	float mul = e * irradiance / pixelSolidAngle;
 
 	//mul = changeRange(mul, 1.0/255.0, 10000.0/255.0, 2.0/255.0, 1.0);
 	//if(mul < 2.0 / 255.0) mul = 0.0;
