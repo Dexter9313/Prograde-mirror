@@ -55,8 +55,8 @@ vec3 xyYtoRGB(vec3 xyY)
 void main()
 {
 	gl_Position = camera * vec4(position, 1.0);
-	// lx.m-2
-	float irradiance = pow(10.0, 0.4 * (-mag - 19.0));
+	// lm.m-2
+	float irradiance = pow(10.0, 0.4 * (-mag - 14.0));
 
 	float e = exposure;
 	//e = 0.00392156862 / pow(10.0, 0.4 * (-6.5 - 19.0));
