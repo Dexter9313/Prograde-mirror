@@ -286,6 +286,10 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		{
 			cam->toggleLockedOnRotation(clock.getCurrentUt());
 		}
+		else if(a.id == "autoexposure")
+		{
+			autoexposure = !autoexposure;
+		}
 		else if(a.id == "exposureup")
 		{
 			cam->exposure *= 1.5f;
@@ -716,6 +720,30 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 		CelestialBodyRenderer::overridenScale = 1.0;
 	}
 
+	if(autoexposure)
+	{
+		const float limit(vrHandler ? 0.08 : 0.2);
+		float lum(getLastFrameAverageLuminance());
+		if(lum > limit)
+		{
+			cam.exposure /= 1.02f;
+		}
+		else if(lum < limit)
+		{
+			cam.exposure *= 1.01f;
+		}
+		// 1 / (min scotopic vision)
+		if(cam.exposure > 1e5f)
+		{
+			cam.exposure = 1e5f;
+		}
+		// 1 / (max photopic vision)
+		if(cam.exposure < 1e-4f)
+		{
+			cam.exposure = 1e-4f;
+		}
+	}
+
 	Controller const* left(vrHandler.getController(Side::LEFT));
 	Controller const* right(vrHandler.getController(Side::RIGHT));
 
@@ -782,6 +810,10 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 	       << (clock.getLockedRealTime() ? " (locked)" : "") << std::endl;
 	stream << "Velocity : " << lengthPrettyPrint(velMag).first << " "
 	       << lengthPrettyPrint(velMag).second << "/s" << std::endl;
+
+	stream << "Exposure " << (autoexposure ? "(auto)" : "") << ": "
+	       << cam.exposure << std::endl;
+
 	if(vrHandler)
 	{
 		stream.precision(4);

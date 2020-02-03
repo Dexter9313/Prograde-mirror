@@ -116,6 +116,8 @@ class MainWin : public AbstractMainWin
 	static std::pair<double, std::string>
 	    lengthPrettyPrint(double length /* in meters */);
 
+	bool autoexposure = true;
+
 	// UI
 	QMenuBar* menuBar = nullptr;
 
