@@ -132,56 +132,6 @@ bool VRHandler::init()
 	GLHandler::glf().glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 	// end render hidden area mesh
 
-	// render hidden area mesh
-	GLHandler::setBackfaceCulling(false);
-	GLHandler::ShaderProgram s = GLHandler::newShader("hiddenarea");
-
-	GLHandler::glf().glClearStencil(0x0);
-	GLHandler::glf().glEnable(GL_STENCIL_TEST);
-	GLHandler::glf().glStencilMask(0xFF);
-	GLHandler::glf().glStencilFunc(GL_ALWAYS, 1, 0xFF);
-	GLHandler::glf().glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-	// LEFT
-	GLHandler::Mesh hiddenAreaMesh = GLHandler::newMesh();
-	GLHandler::setVertices(
-	    hiddenAreaMesh,
-	    &(vr_pointer->GetHiddenAreaMesh(vr::Eye_Left).pVertexData[0].v[0]),
-	    2 * 3 * vr_pointer->GetHiddenAreaMesh(vr::Eye_Left).unTriangleCount, s,
-	    {{"position", 2}});
-
-	GLHandler::beginRendering(static_cast<GLuint>(GL_COLOR_BUFFER_BIT)
-	                              | static_cast<GLuint>(GL_DEPTH_BUFFER_BIT)
-	                              | static_cast<GLuint>(GL_STENCIL_BUFFER_BIT),
-	                          postProcessingTargetsLeft[0]);
-	GLHandler::useShader(s);
-	GLHandler::render(hiddenAreaMesh, GLHandler::PrimitiveType::TRIANGLES);
-	GLHandler::deleteMesh(hiddenAreaMesh);
-
-	// RIGHT
-	hiddenAreaMesh = GLHandler::newMesh();
-	GLHandler::setVertices(
-	    hiddenAreaMesh,
-	    &(vr_pointer->GetHiddenAreaMesh(vr::Eye_Right).pVertexData[0].v[0]),
-	    2 * 3 * vr_pointer->GetHiddenAreaMesh(vr::Eye_Right).unTriangleCount, s,
-	    {{"position", 2}});
-
-	GLHandler::beginRendering(static_cast<GLuint>(GL_COLOR_BUFFER_BIT)
-	                              | static_cast<GLuint>(GL_DEPTH_BUFFER_BIT)
-	                              | static_cast<GLuint>(GL_STENCIL_BUFFER_BIT),
-	                          postProcessingTargetsRight[0]);
-	GLHandler::useShader(s);
-	GLHandler::render(hiddenAreaMesh, GLHandler::PrimitiveType::TRIANGLES);
-	GLHandler::deleteMesh(hiddenAreaMesh);
-
-	GLHandler::deleteShader(s);
-	GLHandler::setBackfaceCulling(true);
-
-	GLHandler::glf().glStencilMask(0x00);
-	GLHandler::glf().glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-	GLHandler::glf().glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-	// end render hidden area mesh
-
 #ifdef LEAP_MOTION
 	if(leapController.isConnected())
 	{
