@@ -649,6 +649,9 @@ void MainWin::initScene()
 	removeSceneRenderPath("default");
 	appendSceneRenderPath("planet", RenderPath(cam));
 
+	appendPostProcessingShader("exposure", "exposure");
+	appendPostProcessingShader("bloom", "bloom");
+
 	CelestialBodyRenderer::overridenScale = 1.0;
 
 	// we will draw them ourselves
@@ -722,26 +725,7 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 
 	if(autoexposure)
 	{
-		const float limit(vrHandler ? 0.08 : 0.2);
-		float lum(getLastFrameAverageLuminance());
-		if(lum > limit)
-		{
-			cam.exposure /= 1.02f;
-		}
-		else if(lum < limit)
-		{
-			cam.exposure *= 1.01f;
-		}
-		// 1 / (min scotopic vision)
-		if(cam.exposure > 1e5f)
-		{
-			cam.exposure = 1e5f;
-		}
-		// 1 / (max photopic vision)
-		if(cam.exposure < 1e-4f)
-		{
-			cam.exposure = 1e-4f;
-		}
+		cam.autoUpdateExposure(getLastFrameAverageLuminance(), frameTiming);
 	}
 
 	Controller const* left(vrHandler.getController(Side::LEFT));
@@ -874,6 +858,17 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	if(!vrHandler)
 	{
 		debugText->render();
+	}
+}
+
+void MainWin::applyPostProcShaderParams(QString const& id,
+                                        GLHandler::ShaderProgram shader) const
+{
+	AbstractMainWin::applyPostProcShaderParams(id, shader);
+	if(id == "exposure")
+	{
+		auto& cam(getCamera<OrbitalSystemCamera>("planet"));
+		GLHandler::setShaderParam(shader, "exposure", cam.exposure);
 	}
 }
 

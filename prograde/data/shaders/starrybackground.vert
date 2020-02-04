@@ -63,12 +63,13 @@ void main()
 
 	//e = 1.0 / pow(10.0, 0.4 * (-6.5 - 19.0));
 
-	float mul = e * irradiance / pixelSolidAngle;
+	float mul = /*e */ irradiance / pixelSolidAngle;
 
 	//mul = changeRange(mul, 1.0/255.0, 10000.0/255.0, 2.0/255.0, 1.0);
 	//if(mul < 2.0 / 255.0) mul = 0.0;
 	//mul = max(mul, 0.0);
 
+	/*
 	if(mul < 10000.0)
 	{
 		float b = 0.7;
@@ -77,9 +78,9 @@ void main()
 	else
 	{
 		mul /= 10000.0;
-	}
+	}*/
 
-	vec3 col = mul * color;
+	//vec3 col = mul * color;
 	/* TONE MAPPING */
 	// col = col / (col + vec3(1.0));
 	// col = log(col+vec3(1.0))/log(col+vec3(2.0));
@@ -90,7 +91,7 @@ void main()
 	//col = xyYtoRGB(col);
 
 	//col = xyYtoRGB(RGBtoxyY(col));
-
+/*
 	float m = max3(col);
 	f_pointsize = sqrt(m);
 	if(m > 1.0)
@@ -104,4 +105,8 @@ void main()
 		gl_PointSize = 1.0;
 		f_finalcolor = vec4(col / mul, mul);
 	}
+	*/
+		f_pointsize = 1.0;
+		gl_PointSize = 1.0;
+		f_finalcolor = vec4(mul*color, 1.0);
 }

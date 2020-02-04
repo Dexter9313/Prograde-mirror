@@ -54,6 +54,9 @@ class MainWin : public AbstractMainWin
 	virtual void renderScene(BasicCamera const& camera,
 	                         QString const& pathId) override;
 
+	virtual void applyPostProcShaderParams(
+	    QString const& id, GLHandler::ShaderProgram shader) const override;
+
   private:
 	StarryBackground stars;
 
