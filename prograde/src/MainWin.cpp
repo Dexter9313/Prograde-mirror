@@ -635,7 +635,7 @@ void MainWin::initScene()
 	clock.setTargetFPS(0.f);
 	stars.initFromFile(23.4392811 * constant::pi / 180.f);
 
-	debugText = new Text3D(textWidth, textHeight);
+	debugText = new Text3D(textWidth, textHeight, GLHandler::newShader("billboard", "label"));
 	debugText->setColor(QColor(255, 0, 0));
 
 	auto cam = new OrbitalSystemCamera(&vrHandler);
@@ -857,6 +857,7 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	systemRenderer->renderTransparent(camera);
 	if(!vrHandler)
 	{
+		GLHandler::setShaderParam(debugText->getShader(), "exposure", cam.exposure);
 		debugText->render();
 	}
 }
