@@ -408,20 +408,6 @@ class AbstractMainWin : public QWindow
 	    QString const& id, GLHandler::ShaderProgram shader,
 	    GLHandler::RenderTarget const& currentTarget) const;
 	/**
-	 * @brief Override to return textures to use in your post-processing
-	 * shaders.
-	 *
-	 * Don't forget that the first sampler2D will be used by GLHandler to store
-	 * the previous rendering result.
-	 *
-	 * @param id Identifier of the shader that is going to be used for post
-	 * processing.
-	 * @param shader The actual shader program.
-	 */
-	virtual std::vector<GLHandler::Texture>
-	    getPostProcessingUniformTextures(QString const& id,
-	                                     GLHandler::ShaderProgram shader) const;
-	/**
 	 * @brief Reloads the post-processing targets (2D and VR).
 	 *
 	 * Mainly used after toggling HDR rendering. The new render targets will use
