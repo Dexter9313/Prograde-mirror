@@ -6,6 +6,7 @@ in vec3 color;
 
 uniform mat4 camera;
 uniform float exposure;
+uniform float dynamicrange = 10000.0;
 uniform float pixelSolidAngle;
 
 out vec4 f_finalcolor;
@@ -65,19 +66,19 @@ void main()
 
 	float mul = /*e */ irradiance / pixelSolidAngle;
 
-	//mul = changeRange(mul, 1.0/255.0, 10000.0/255.0, 2.0/255.0, 1.0);
+	//mul = changeRange(mul, 1.0/255.0, dynamicrange/255.0, 2.0/255.0, 1.0);
 	//if(mul < 2.0 / 255.0) mul = 0.0;
 	//mul = max(mul, 0.0);
 
 	/*
-	if(mul < 10000.0)
+	if(mul < dynamicrange)
 	{
 		float b = 0.7;
-		mul=pow(mul,b)*pow(1.0/10000.0,b);
+		mul=pow(mul,b)*pow(1.0/dynamicrange,b);
 	}
 	else
 	{
-		mul /= 10000.0;
+		mul /= dynamicrange;
 	}*/
 
 	//vec3 col = mul * color;

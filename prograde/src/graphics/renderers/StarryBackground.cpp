@@ -91,12 +91,14 @@ void StarryBackground::initFromFile(float axialTilt)
 	initMesh(stars, axialTilt);
 }
 
-void StarryBackground::render(float exposure, float pixelSolidAngle)
+void StarryBackground::render(float exposure, float dynamicrange,
+                              float pixelSolidAngle)
 {
 	GLHandler::glf().glEnable(GL_POINT_SPRITE);
 	GLHandler::glf().glEnable(GL_PROGRAM_POINT_SIZE);
 	GLHandler::beginTransparent();
 	GLHandler::setShaderParam(shader, "exposure", exposure);
+	GLHandler::setShaderParam(shader, "dynamicrange", dynamicrange);
 	GLHandler::setShaderParam(shader, "pixelSolidAngle", pixelSolidAngle);
 	GLHandler::useTextures({tex});
 	GLHandler::setUpRender(shader, QMatrix4x4(),

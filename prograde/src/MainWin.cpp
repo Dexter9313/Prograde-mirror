@@ -851,7 +851,7 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	auto& cam(getCamera<OrbitalSystemCamera>("planet"));
 
 	GLHandler::setPointSize(1);
-	stars.render(cam.exposure, cam.getPixelSolidAngle());
+	stars.render(cam.exposure, cam.dynamicrange, cam.getPixelSolidAngle());
 	systemRenderer->render(camera);
 	renderVRControls();
 	// dbgRenderVRControls();
@@ -860,6 +860,8 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	{
 		GLHandler::setShaderParam(debugText->getShader(), "exposure",
 		                          cam.exposure);
+		GLHandler::setShaderParam(debugText->getShader(), "dynamicrange",
+		                          cam.dynamicrange);
 		debugText->render();
 	}
 }
