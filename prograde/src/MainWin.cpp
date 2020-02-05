@@ -292,11 +292,25 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		}
 		else if(a.id == "exposureup")
 		{
-			cam->exposure *= 1.5f;
+			if(autoexposure)
+			{
+				cam->autoexposurecoeff *= 1.5f;
+			}
+			else
+			{
+				cam->exposure *= 1.5f;
+			}
 		}
 		else if(a.id == "exposuredown")
 		{
-			cam->exposure /= 1.5f;
+			if(autoexposure)
+			{
+				cam->autoexposurecoeff /= 1.5f;
+			}
+			else
+			{
+				cam->exposure /= 1.5f;
+			}
 		}
 		// CONTROLS
 		else if(a.id == "centercam")
