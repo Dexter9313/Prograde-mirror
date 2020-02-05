@@ -55,7 +55,12 @@ class MainWin : public AbstractMainWin
 	                         QString const& pathId) override;
 
 	virtual void applyPostProcShaderParams(
-	    QString const& id, GLHandler::ShaderProgram shader) const override;
+	    QString const& id, GLHandler::ShaderProgram shader,
+	    GLHandler::RenderTarget const& currentTarget) const override;
+
+	virtual std::vector<GLHandler::Texture> getPostProcessingUniformTextures(
+	    QString const& id, GLHandler::ShaderProgram shader,
+	    GLHandler::RenderTarget const& currentTarget) const override;
 
   private:
 	StarryBackground stars;
@@ -128,6 +133,10 @@ class MainWin : public AbstractMainWin
 	QTreeWidget* tree = nullptr;
 	QTreeWidgetItem* constructItems(Orbitable const& orbitable,
 	                                QTreeWidgetItem* parent = nullptr);
+
+	// BLOOM
+	bool bloom = true;
+	GLHandler::RenderTarget bloomTargets[2];
 };
 
 #endif // MAINWIN_H

@@ -688,6 +688,10 @@ void MainWin::initScene()
 	shader = GLHandler::newShader("default");
 	point  = GLHandler::newMesh();
 	GLHandler::setVertices(point, {0.f, 0.f, 0.f}, shader, {{"position", 3}});
+
+	// BLOOM
+	bloomTargets[0] = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
+	bloomTargets[1] = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
 }
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
@@ -866,15 +870,64 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	}
 }
 
-void MainWin::applyPostProcShaderParams(QString const& id,
-                                        GLHandler::ShaderProgram shader) const
+void MainWin::applyPostProcShaderParams(
+    QString const& id, GLHandler::ShaderProgram shader,
+    GLHandler::RenderTarget const& currentTarget) const
 {
-	AbstractMainWin::applyPostProcShaderParams(id, shader);
+	AbstractMainWin::applyPostProcShaderParams(id, shader, currentTarget);
 	if(id == "exposure")
 	{
 		auto& cam(getCamera<OrbitalSystemCamera>("planet"));
 		GLHandler::setShaderParam(shader, "exposure", cam.exposure);
+		GLHandler::setShaderParam(shader, "dynamicrange", cam.dynamicrange);
 	}
+	if(id == "bloom")
+	{
+		GLHandler::setShaderParam(shader, "highlumtex", 1);
+	}
+}
+
+std::vector<GLHandler::Texture> MainWin::getPostProcessingUniformTextures(
+    QString const& id, GLHandler::ShaderProgram shader,
+    GLHandler::RenderTarget const& currentTarget) const
+{
+	auto abstractResult(AbstractMainWin::getPostProcessingUniformTextures(
+	    id, shader, currentTarget));
+	if(!abstractResult.empty())
+	{
+		return abstractResult;
+	}
+	if(id == "bloom")
+	{
+		if(bloom)
+		{
+			// high luminosity pass
+			GLHandler::ShaderProgram hlshader(
+			    GLHandler::newShader("postprocess", "highlumpass"));
+			GLHandler::postProcess(hlshader, currentTarget, bloomTargets[0]);
+			GLHandler::deleteShader(hlshader);
+
+			// blurring
+			GLHandler::ShaderProgram blurshader(
+			    GLHandler::newShader("postprocess", "blur"));
+			for(unsigned int i = 0; i < 6; i++)
+			{
+				GLHandler::setShaderParam(blurshader, "horizontal",
+				                          static_cast<float>(i % 2));
+				GLHandler::postProcess(blurshader, bloomTargets[i % 2],
+				                       bloomTargets[(i + 1) % 2]);
+			}
+			GLHandler::deleteShader(blurshader);
+
+			return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
+		}
+		else
+		{
+			GLHandler::beginRendering(bloomTargets[0]);
+			return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
+		}
+	}
+	return {};
 }
 
 void MainWin::dbgRenderVRControls()
@@ -987,6 +1040,9 @@ QTreeWidgetItem* MainWin::constructItems(Orbitable const& orbitable,
 
 MainWin::~MainWin()
 {
+	GLHandler::deleteRenderTarget(bloomTargets[0]);
+	GLHandler::deleteRenderTarget(bloomTargets[1]);
+
 	delete systemRenderer;
 	delete orbitalSystem;
 
