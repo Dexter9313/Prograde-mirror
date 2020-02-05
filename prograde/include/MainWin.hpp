@@ -135,7 +135,7 @@ class MainWin : public AbstractMainWin
 	                                QTreeWidgetItem* parent = nullptr);
 
 	// BLOOM
-	bool bloom = true;
+	bool bloom = QSettings().value("graphics/bloom").toBool();
 	GLHandler::RenderTarget bloomTargets[2];
 };
 
