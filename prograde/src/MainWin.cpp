@@ -289,6 +289,11 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		else if(a.id == "autoexposure")
 		{
 			autoexposure = !autoexposure;
+			if(autoexposure)
+			{
+				cam->dynamicrange      = 1e4f;
+				cam->autoexposurecoeff = 1.f;
+			}
 		}
 		else if(a.id == "exposureup")
 		{
@@ -310,6 +315,36 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 			else
 			{
 				cam->exposure /= 1.5f;
+			}
+		}
+		else if(a.id == "dynamicrangeup")
+		{
+			if(cam->dynamicrange < 1e37)
+			{
+				cam->dynamicrange *= 10.f;
+				if(autoexposure)
+				{
+					cam->autoexposurecoeff *= 10.f;
+				}
+				else
+				{
+					cam->exposure *= 10.f;
+				}
+			}
+		}
+		else if(a.id == "dynamicrangedown")
+		{
+			if(cam->dynamicrange > 10.f)
+			{
+				cam->dynamicrange /= 10.f;
+				if(autoexposure)
+				{
+					cam->autoexposurecoeff /= 10.f;
+				}
+				else
+				{
+					cam->exposure /= 10.f;
+				}
 			}
 		}
 		// CONTROLS
@@ -935,11 +970,8 @@ std::vector<GLHandler::Texture> MainWin::getPostProcessingUniformTextures(
 
 			return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
 		}
-		else
-		{
-			GLHandler::beginRendering(bloomTargets[0]);
-			return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
-		}
+		GLHandler::beginRendering(bloomTargets[0]);
+		return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
 	}
 	return {};
 }

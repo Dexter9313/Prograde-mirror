@@ -46,6 +46,8 @@ class InputManager : public BaseInputManager
 		addAction(Qt::Key_E, {"autoexposure", tr("Toggle Automatic Exposure")});
 		addAction(Qt::Key_PageUp, {"exposureup", tr("Increase Exposure")});
 		addAction(Qt::Key_PageDown, {"exposuredown", tr("Decrease Exposure")});
+		addAction(Qt::Key_Insert, {"dynamicrangeup", tr("Increase Dynamic Range")});
+		addAction(Qt::Key_Delete, {"dynamicrangedown", tr("Decrease Dynamic Range")});
 	};
 };
 
