@@ -137,6 +137,7 @@ class MainWin : public AbstractMainWin
 	// BLOOM
 	bool bloom = QSettings().value("graphics/bloom").toBool();
 	GLHandler::RenderTarget bloomTargets[2];
+	void reloadBloomTargets();
 };
 
 #endif // MAINWIN_H

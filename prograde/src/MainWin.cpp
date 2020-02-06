@@ -394,6 +394,12 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		}
 	}
 	AbstractMainWin::actionEvent(a, pressed);
+
+	// reload after AbstractMainWin toggled VR
+	if(pressed && a.id == "togglevr")
+	{
+		reloadBloomTargets();
+	}
 }
 
 bool MainWin::event(QEvent* e)
@@ -739,8 +745,42 @@ void MainWin::initScene()
 	GLHandler::setVertices(point, {0.f, 0.f, 0.f}, shader, {{"position", 3}});
 
 	// BLOOM
-	bloomTargets[0] = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
-	bloomTargets[1] = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
+	if(!vrHandler)
+	{
+		bloomTargets[0]
+		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
+		bloomTargets[1]
+		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
+	}
+	else
+	{
+		QSize size(vrHandler.getEyeRenderTargetSize());
+		bloomTargets[0] = GLHandler::newRenderTarget(size.width(),
+		                                             size.height(), GL_RGBA32F);
+		bloomTargets[1] = GLHandler::newRenderTarget(size.width(),
+		                                             size.height(), GL_RGBA32F);
+	}
+}
+
+void MainWin::reloadBloomTargets()
+{
+	GLHandler::deleteRenderTarget(bloomTargets[0]);
+	GLHandler::deleteRenderTarget(bloomTargets[1]);
+	if(!vrHandler)
+	{
+		bloomTargets[0]
+		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
+		bloomTargets[1]
+		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
+	}
+	else
+	{
+		QSize size(vrHandler.getEyeRenderTargetSize());
+		bloomTargets[0] = GLHandler::newRenderTarget(size.width(),
+		                                             size.height(), GL_RGBA32F);
+		bloomTargets[1] = GLHandler::newRenderTarget(size.width(),
+		                                             size.height(), GL_RGBA32F);
+	}
 }
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
