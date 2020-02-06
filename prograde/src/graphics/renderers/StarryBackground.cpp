@@ -91,22 +91,14 @@ void StarryBackground::initFromFile(float axialTilt)
 	initMesh(stars, axialTilt);
 }
 
-void StarryBackground::render(float exposure, float dynamicrange,
-                              float pixelSolidAngle)
+void StarryBackground::render(float pixelSolidAngle)
 {
-	GLHandler::glf().glEnable(GL_POINT_SPRITE);
-	GLHandler::glf().glEnable(GL_PROGRAM_POINT_SIZE);
 	GLHandler::beginTransparent(GL_ONE, GL_ONE); // sum points
-	GLHandler::setShaderParam(shader, "exposure", exposure);
-	GLHandler::setShaderParam(shader, "dynamicrange", dynamicrange);
 	GLHandler::setShaderParam(shader, "pixelSolidAngle", pixelSolidAngle);
-	GLHandler::useTextures({tex});
 	GLHandler::setUpRender(shader, QMatrix4x4(),
 	                       GLHandler::GeometricSpace::SKYBOX);
 	GLHandler::render(mesh);
 	GLHandler::endTransparent();
-	GLHandler::glf().glDisable(GL_POINT_SPRITE);
-	GLHandler::glf().glDisable(GL_PROGRAM_POINT_SIZE);
 }
 
 void StarryBackground::initMesh(std::vector<Star> const& stars, float axialTilt)
@@ -114,9 +106,6 @@ void StarryBackground::initMesh(std::vector<Star> const& stars, float axialTilt)
 	shader = GLHandler::newShader("starrybackground");
 
 	mesh = GLHandler::newMesh();
-
-	tex = GLHandler::newTexture(
-	    getAbsoluteDataPath("images/star.png").toLatin1().data());
 
 	std::vector<float> vboContent;
 
@@ -201,7 +190,6 @@ QColor StarryBackground::colorFromColorIndex(float ci)
 
 StarryBackground::~StarryBackground()
 {
-	GLHandler::deleteTexture(tex);
 	GLHandler::deleteShader(shader);
 	GLHandler::deleteMesh(mesh);
 }

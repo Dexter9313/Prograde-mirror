@@ -36,13 +36,12 @@ class StarryBackground
 	void initFromRandomUniform();
 	void initFromRandomGalactic();
 	void initFromFile(float axialTilt = 0.f);
-	void render(float exposure, float dynamicrange, float pixelSolidAngle);
+	void render(float pixelSolidAngle);
 	~StarryBackground();
 
   private:
 	GLHandler::ShaderProgram shader;
 	GLHandler::Mesh mesh;
-	GLHandler::Texture tex;
 	struct Star
 	{
 		std::string commonName;

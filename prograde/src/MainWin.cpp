@@ -944,7 +944,7 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	auto& cam(getCamera<OrbitalSystemCamera>("planet"));
 
 	GLHandler::setPointSize(1);
-	stars.render(cam.exposure, cam.dynamicrange, cam.getPixelSolidAngle());
+	stars.render(cam.getPixelSolidAngle());
 	systemRenderer->render(camera);
 	renderVRControls();
 	// dbgRenderVRControls();
