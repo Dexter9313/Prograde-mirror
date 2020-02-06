@@ -96,7 +96,7 @@ void StarryBackground::render(float exposure, float dynamicrange,
 {
 	GLHandler::glf().glEnable(GL_POINT_SPRITE);
 	GLHandler::glf().glEnable(GL_PROGRAM_POINT_SIZE);
-	GLHandler::beginTransparent();
+	GLHandler::beginTransparent(GL_ONE, GL_ONE); // sum points
 	GLHandler::setShaderParam(shader, "exposure", exposure);
 	GLHandler::setShaderParam(shader, "dynamicrange", dynamicrange);
 	GLHandler::setShaderParam(shader, "pixelSolidAngle", pixelSolidAngle);
