@@ -123,7 +123,7 @@ MainWin::MainWin()
 
 void MainWin::selectOrbitable(QTreeWidgetItem* item, int column)
 {
-	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&renderer.getCamera("planet")));
 
 	QString name(item->text(column));
 	if(name.contains('('))
@@ -170,7 +170,8 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 {
 	if(pressed)
 	{
-		auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
+		auto cam(
+		    dynamic_cast<OrbitalSystemCamera*>(&renderer.getCamera("planet")));
 		if(a.id == "nextcelestialbody")
 		{
 			std::vector<CelestialBody*> bodies(
@@ -452,7 +453,7 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 		return;
 	}
 
-	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&renderer.getCamera("planet")));
 	float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
 	float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
 
@@ -507,7 +508,7 @@ void MainWin::wheelEvent(QWheelEvent* e)
 
 void MainWin::vrEvent(VRHandler::Event const& e)
 {
-	auto cam(dynamic_cast<OrbitalSystemCamera*>(&getCamera("planet")));
+	auto cam(dynamic_cast<OrbitalSystemCamera*>(&renderer.getCamera("planet")));
 	switch(e.type)
 	{
 		case VRHandler::EventType::BUTTON_PRESSED:
@@ -524,7 +525,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						leftGripPressed = true;
 						initControllerRelPos
 						    = Utils::fromQt(
-						          getCamera("planet")
+						          renderer.getCamera("planet")
 						              .seatedTrackedSpaceToWorldTransform()
 						          * left->getPosition())
 						          / CelestialBodyRenderer::overridenScale
@@ -535,7 +536,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						rightGripPressed = true;
 						initControllerRelPos
 						    = Utils::fromQt(
-						          getCamera("planet")
+						          renderer.getCamera("planet")
 						              .seatedTrackedSpaceToWorldTransform()
 						          * right->getPosition())
 						          / CelestialBodyRenderer::overridenScale
@@ -559,7 +560,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						controllersMidPoint /= 2.f;
 
 						controllersMidPoint
-						    = getCamera("planet")
+						    = renderer.getCamera("planet")
 						          .seatedTrackedSpaceToWorldTransform()
 						      * controllersMidPoint;
 						scaleCenter
@@ -639,7 +640,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						{
 							initControllerRelPos
 							    = Utils::fromQt(
-							          getCamera("planet")
+							          renderer.getCamera("planet")
 							              .seatedTrackedSpaceToWorldTransform()
 							          * right->getPosition())
 							          / CelestialBodyRenderer::overridenScale
@@ -657,7 +658,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 						{
 							initControllerRelPos
 							    = Utils::fromQt(
-							          getCamera("planet")
+							          renderer.getCamera("planet")
 							              .seatedTrackedSpaceToWorldTransform()
 							          * left->getPosition())
 							          / CelestialBodyRenderer::overridenScale
@@ -702,16 +703,16 @@ void MainWin::initScene()
 	    cam->target->getCelestialBodyParameters().radius * 2.0, 0.0, 0.0);
 	systemRenderer = new OrbitalSystemRenderer(orbitalSystem);
 
-	removeSceneRenderPath("default");
-	appendSceneRenderPath("planet", RenderPath(cam));
+	renderer.removeSceneRenderPath("default");
+	renderer.appendSceneRenderPath("planet", Renderer::RenderPath(cam));
 
-	appendPostProcessingShader("exposure", "exposure");
-	appendPostProcessingShader("bloom", "bloom");
+	renderer.appendPostProcessingShader("exposure", "exposure");
+	renderer.appendPostProcessingShader("bloom", "bloom");
 
 	CelestialBodyRenderer::overridenScale = 1.0;
 
 	// we will draw them ourselves
-	pathIdRenderingControllers = "";
+	renderer.pathIdRenderingControllers = "";
 
 	menuBar = new QMenuBar();
 	menuBar->setWindowFlags(Qt::X11BypassWindowManagerHint
@@ -819,7 +820,8 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 
 	if(autoexposure)
 	{
-		cam.autoUpdateExposure(getLastFrameAverageLuminance(), frameTiming);
+		cam.autoUpdateExposure(renderer.getLastFrameAverageLuminance(),
+		                       frameTiming);
 	}
 
 	Controller const* left(vrHandler.getController(Side::LEFT));
@@ -941,12 +943,12 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 
 void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 {
-	auto& cam(getCamera<OrbitalSystemCamera>("planet"));
+	auto& cam(renderer.getCamera<OrbitalSystemCamera>("planet"));
 
 	GLHandler::setPointSize(1);
 	stars.render(cam.getPixelSolidAngle());
 	systemRenderer->render(camera);
-	renderVRControls();
+	renderer.renderVRControls();
 	// dbgRenderVRControls();
 	systemRenderer->renderTransparent(camera);
 	if(!vrHandler)
@@ -966,7 +968,7 @@ void MainWin::applyPostProcShaderParams(
 	AbstractMainWin::applyPostProcShaderParams(id, shader, currentTarget);
 	if(id == "exposure")
 	{
-		auto& cam(getCamera<OrbitalSystemCamera>("planet"));
+		auto& cam(renderer.getCamera<OrbitalSystemCamera>("planet"));
 		GLHandler::setShaderParam(shader, "exposure", cam.exposure);
 		GLHandler::setShaderParam(shader, "dynamicrange", cam.dynamicrange);
 	}
@@ -1056,7 +1058,7 @@ void MainWin::dbgRenderVRControls()
 
 void MainWin::rescale(double newScale, Vector3 const& scaleCenter)
 {
-	auto& cam(dynamic_cast<OrbitalSystemCamera&>(getCamera("planet")));
+	auto& cam(dynamic_cast<OrbitalSystemCamera&>(renderer.getCamera("planet")));
 	Vector3 diff(cam.relativePosition - scaleCenter);
 	diff /= newScale / CelestialBodyRenderer::overridenScale;
 	cam.relativePosition                  = scaleCenter + diff;
