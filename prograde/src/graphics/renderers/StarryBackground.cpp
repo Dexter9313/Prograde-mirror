@@ -93,12 +93,14 @@ void StarryBackground::initFromFile(float axialTilt)
 
 void StarryBackground::render(float pixelSolidAngle)
 {
+	GLHandler::glf().glDisable(GL_MULTISAMPLE);
 	GLHandler::beginTransparent(GL_ONE, GL_ONE); // sum points
 	GLHandler::setShaderParam(shader, "pixelSolidAngle", pixelSolidAngle);
 	GLHandler::setUpRender(shader, QMatrix4x4(),
 	                       GLHandler::GeometricSpace::SKYBOX);
 	GLHandler::render(mesh);
 	GLHandler::endTransparent();
+	GLHandler::glf().glEnable(GL_MULTISAMPLE);
 }
 
 void StarryBackground::initMesh(std::vector<Star> const& stars, float axialTilt)
