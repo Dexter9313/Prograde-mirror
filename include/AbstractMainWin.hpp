@@ -368,25 +368,4 @@ class ImageWriter : public QRunnable
 	void run() override { img.save(filename); }
 };
 
-template <class T>
-T const& AbstractMainWin::getCamera(QString const& pathId) const
-{
-	return dynamic_cast<T const&>(getCamera(pathId));
-}
-
-template <class T>
-T& AbstractMainWin::getCamera(QString const& pathId)
-{
-	return dynamic_cast<T&>(getCamera(pathId));
-}
-
-template <class T>
-void AbstractMainWin::initLibrary()
-{
-	static_assert(
-	    std::is_base_of<AbstractLibrary, T>::value,
-	    "Initializing a library that doesn't inherit from AbstractLibrary.");
-	T lib;
-	lib.setupPythonAPI();
-}
 #endif // ABSTRACTMAINWIN_H
