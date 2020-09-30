@@ -124,8 +124,6 @@ class MainWin : public AbstractMainWin
 	static std::pair<double, std::string>
 	    lengthPrettyPrint(double length /* in meters */);
 
-	bool autoexposure = true;
-
 	// UI
 	QMenuBar* menuBar = nullptr;
 
@@ -133,11 +131,6 @@ class MainWin : public AbstractMainWin
 	QTreeWidget* tree = nullptr;
 	QTreeWidgetItem* constructItems(Orbitable const& orbitable,
 	                                QTreeWidgetItem* parent = nullptr);
-
-	// BLOOM
-	bool bloom = QSettings().value("graphics/bloom").toBool();
-	GLHandler::RenderTarget bloomTargets[2];
-	void reloadBloomTargets();
 };
 
 #endif // MAINWIN_H

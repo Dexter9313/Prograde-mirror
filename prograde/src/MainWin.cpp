@@ -287,67 +287,6 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		{
 			cam->toggleLockedOnRotation(clock.getCurrentUt());
 		}
-		else if(a.id == "autoexposure")
-		{
-			autoexposure = !autoexposure;
-			if(autoexposure)
-			{
-				cam->dynamicrange      = 1e4f;
-				cam->autoexposurecoeff = 1.f;
-			}
-		}
-		else if(a.id == "exposureup")
-		{
-			if(autoexposure)
-			{
-				cam->autoexposurecoeff *= 1.5f;
-			}
-			else
-			{
-				cam->exposure *= 1.5f;
-			}
-		}
-		else if(a.id == "exposuredown")
-		{
-			if(autoexposure)
-			{
-				cam->autoexposurecoeff /= 1.5f;
-			}
-			else
-			{
-				cam->exposure /= 1.5f;
-			}
-		}
-		else if(a.id == "dynamicrangeup")
-		{
-			if(cam->dynamicrange < 1e37)
-			{
-				cam->dynamicrange *= 10.f;
-				if(autoexposure)
-				{
-					cam->autoexposurecoeff *= 10.f;
-				}
-				else
-				{
-					cam->exposure *= 10.f;
-				}
-			}
-		}
-		else if(a.id == "dynamicrangedown")
-		{
-			if(cam->dynamicrange > 10.f)
-			{
-				cam->dynamicrange /= 10.f;
-				if(autoexposure)
-				{
-					cam->autoexposurecoeff /= 10.f;
-				}
-				else
-				{
-					cam->exposure /= 10.f;
-				}
-			}
-		}
 		// CONTROLS
 		else if(a.id == "centercam")
 		{
@@ -395,12 +334,6 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		}
 	}
 	AbstractMainWin::actionEvent(a, pressed);
-
-	// reload after AbstractMainWin toggled VR
-	if(pressed && a.id == "togglevr")
-	{
-		reloadBloomTargets();
-	}
 }
 
 bool MainWin::event(QEvent* e)
@@ -695,7 +628,8 @@ void MainWin::initScene()
 	                       GLHandler::newShader("billboard", "label"));
 	debugText->setColor(QColor(255, 0, 0));
 
-	auto cam = new OrbitalSystemCamera(&vrHandler);
+	auto cam = new OrbitalSystemCamera(&vrHandler, toneMappingModel->exposure,
+	                                   toneMappingModel->dynamicrange);
 	cam->setPerspectiveProj(70.0f, static_cast<float>(width())
 	                                   / static_cast<float>(height()));
 	cam->target           = orbitalSystem->getAllCelestialBodiesPointers()[0];
@@ -705,9 +639,6 @@ void MainWin::initScene()
 
 	renderer.removeSceneRenderPath("default");
 	renderer.appendSceneRenderPath("planet", Renderer::RenderPath(cam));
-
-	renderer.appendPostProcessingShader("exposure", "exposure");
-	renderer.appendPostProcessingShader("bloom", "bloom");
 
 	CelestialBodyRenderer::overridenScale = 1.0;
 
@@ -740,48 +671,14 @@ void MainWin::initScene()
 	layout->addWidget(tree);
 	constructItems(orbitalSystem->getRootOrbitable());
 
+	toneMappingModel->exposure     = 100.f;
+	toneMappingModel->dynamicrange = 10000.f;
+	toneMappingModel->autoexposure = true;
+
 	// DBG
 	shader = GLHandler::newShader("default");
 	point  = GLHandler::newMesh();
 	GLHandler::setVertices(point, {0.f, 0.f, 0.f}, shader, {{"position", 3}});
-
-	// BLOOM
-	if(!vrHandler)
-	{
-		bloomTargets[0]
-		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
-		bloomTargets[1]
-		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
-	}
-	else
-	{
-		QSize size(vrHandler.getEyeRenderTargetSize());
-		bloomTargets[0] = GLHandler::newRenderTarget(size.width(),
-		                                             size.height(), GL_RGBA32F);
-		bloomTargets[1] = GLHandler::newRenderTarget(size.width(),
-		                                             size.height(), GL_RGBA32F);
-	}
-}
-
-void MainWin::reloadBloomTargets()
-{
-	GLHandler::deleteRenderTarget(bloomTargets[0]);
-	GLHandler::deleteRenderTarget(bloomTargets[1]);
-	if(!vrHandler)
-	{
-		bloomTargets[0]
-		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
-		bloomTargets[1]
-		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
-	}
-	else
-	{
-		QSize size(vrHandler.getEyeRenderTargetSize());
-		bloomTargets[0] = GLHandler::newRenderTarget(size.width(),
-		                                             size.height(), GL_RGBA32F);
-		bloomTargets[1] = GLHandler::newRenderTarget(size.width(),
-		                                             size.height(), GL_RGBA32F);
-	}
 }
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
@@ -808,6 +705,8 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 
 	cam.updateUT(clock.getCurrentUt());
 
+	toneMappingModel->autoexposuretimecoeff = clock.getTimeCoeff();
+
 	if(!vrHandler && cam.getAltitude() < 0.0)
 	{
 		cam.setAltitude(1.0);
@@ -816,12 +715,6 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 	if(!vrHandler)
 	{
 		CelestialBodyRenderer::overridenScale = 1.0;
-	}
-
-	if(autoexposure)
-	{
-		cam.autoUpdateExposure(renderer.getLastFrameAverageLuminance(),
-		                       frameTiming);
 	}
 
 	Controller const* left(vrHandler.getController(Side::LEFT));
@@ -891,8 +784,8 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 	stream << "Velocity : " << lengthPrettyPrint(velMag).first << " "
 	       << lengthPrettyPrint(velMag).second << "/s" << std::endl;
 
-	stream << "Exposure " << (autoexposure ? "(auto)" : "") << ": "
-	       << cam.exposure << std::endl;
+	stream << "Exposure " << (toneMappingModel->autoexposure ? "(auto)" : "")
+	       << ": " << toneMappingModel->exposure << std::endl;
 
 	if(vrHandler)
 	{
@@ -954,9 +847,9 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	if(!vrHandler)
 	{
 		GLHandler::setShaderParam(debugText->getShader(), "exposure",
-		                          cam.exposure);
+		                          toneMappingModel->exposure);
 		GLHandler::setShaderParam(debugText->getShader(), "dynamicrange",
-		                          cam.dynamicrange);
+		                          toneMappingModel->dynamicrange);
 		debugText->render();
 	}
 }
@@ -966,16 +859,6 @@ void MainWin::applyPostProcShaderParams(
     GLHandler::RenderTarget const& currentTarget) const
 {
 	AbstractMainWin::applyPostProcShaderParams(id, shader, currentTarget);
-	if(id == "exposure")
-	{
-		auto& cam(renderer.getCamera<OrbitalSystemCamera>("planet"));
-		GLHandler::setShaderParam(shader, "exposure", cam.exposure);
-		GLHandler::setShaderParam(shader, "dynamicrange", cam.dynamicrange);
-	}
-	if(id == "bloom")
-	{
-		GLHandler::setShaderParam(shader, "highlumtex", 1);
-	}
 }
 
 std::vector<GLHandler::Texture> MainWin::getPostProcessingUniformTextures(
@@ -987,33 +870,6 @@ std::vector<GLHandler::Texture> MainWin::getPostProcessingUniformTextures(
 	if(!abstractResult.empty())
 	{
 		return abstractResult;
-	}
-	if(id == "bloom")
-	{
-		if(bloom)
-		{
-			// high luminosity pass
-			GLHandler::ShaderProgram hlshader(
-			    GLHandler::newShader("postprocess", "highlumpass"));
-			GLHandler::postProcess(hlshader, currentTarget, bloomTargets[0]);
-			GLHandler::deleteShader(hlshader);
-
-			// blurring
-			GLHandler::ShaderProgram blurshader(
-			    GLHandler::newShader("postprocess", "blur"));
-			for(unsigned int i = 0; i < 6; i++)
-			{
-				GLHandler::setShaderParam(blurshader, "horizontal",
-				                          static_cast<float>(i % 2));
-				GLHandler::postProcess(blurshader, bloomTargets[i % 2],
-				                       bloomTargets[(i + 1) % 2]);
-			}
-			GLHandler::deleteShader(blurshader);
-
-			return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
-		}
-		GLHandler::beginRendering(bloomTargets[0]);
-		return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
 	}
 	return {};
 }
@@ -1128,9 +984,6 @@ QTreeWidgetItem* MainWin::constructItems(Orbitable const& orbitable,
 
 MainWin::~MainWin()
 {
-	GLHandler::deleteRenderTarget(bloomTargets[0]);
-	GLHandler::deleteRenderTarget(bloomTargets[1]);
-
 	delete systemRenderer;
 	delete orbitalSystem;
 
