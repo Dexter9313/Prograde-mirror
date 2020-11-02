@@ -8,7 +8,7 @@
 #include <QVector4D>
 #include <array>
 
-#include "GLHandler.hpp"
+#include "gl/GLHandler.hpp"
 
 class VRHandler;
 
@@ -104,6 +104,13 @@ class BasicCamera : public QObject
 	 */
 	Q_PROPERTY(QMatrix4x4 screentoworldtransform READ screenToWorldTransform)
 	/**
+	 * @brief Knowing the FOV of the camera, computes the solid angle of one
+	 * pixel in steradians.
+	 *
+	 * @accessors pixelSolidAngle()
+	 */
+	Q_PROPERTY(float pixelSolideAngle READ pixelSolidAngle)
+	/**
 	 * @brief If true, VR origin is in seated coordinates. If false in standing
 	 * coordinates.
 	 */
@@ -139,7 +146,7 @@ class BasicCamera : public QObject
 	 * @param vrHandler The engine's @ref VRHandler, wether it is active or not.
 	 * It is mostly used to get VR transformations.
 	 */
-	explicit BasicCamera(VRHandler const* vrHandler);
+	explicit BasicCamera(VRHandler const& vrHandler);
 	/**
 	 * @getter{viewmatrix}
 	 */
@@ -192,6 +199,15 @@ class BasicCamera : public QObject
 	 * @getter{screentoworldtransform}
 	 */
 	QMatrix4x4 screenToWorldTransform() const;
+	/**
+	 * @getter{pixelSolidAngle}
+	 */
+	float pixelSolidAngle() const;
+	void setWindowSize(QSize const& windowSize)
+	{
+		this->windowSize = windowSize;
+	};
+
 	/**
 	 * @brief Destroys a @ref BasicCamera instance, freeing its resources.
 	 */
@@ -267,7 +283,7 @@ class BasicCamera : public QObject
 	 *
 	 * If VR is enabled, the VR transformations will be applied.
 	 */
-	virtual void update();
+	virtual void update(QMatrix4x4 const& angleShiftMat);
 	/**
 	 * @brief Updates all the camera transformation matrices and forces 2D
 	 * transformations.
@@ -275,7 +291,7 @@ class BasicCamera : public QObject
 	 * The 2D transformations will be applied wether VR is enabled or not.
 	 * Useful for rendering on the companion window for example.
 	 */
-	virtual void update2D();
+	virtual void update2D(QMatrix4x4 const& angleShiftMat);
 	/**
 	 * @brief Calls GLHandler#setUpTransforms with this camera's transformation
 	 * matrices.
@@ -289,7 +305,7 @@ class BasicCamera : public QObject
 	/**
 	 * @brief Read-only pointer on @ref AbstractMainWin#vrHandler.
 	 */
-	VRHandler const* vrHandler;
+	VRHandler const& vrHandler;
 	/**
 	 * @brief Direct access to the @ref eyedistancefactor property.
 	 */
@@ -435,6 +451,8 @@ class BasicCamera : public QObject
 	 * 0</code> if and only if v is at the inner side of clippingPlanes[i]).
 	 */
 	std::array<Plane, 6> clippingPlanes;
+
+	QSize windowSize;
 };
 
 #include "vr/VRHandler.hpp"

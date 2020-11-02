@@ -1,6 +1,6 @@
 #include "BasicCamera.hpp"
 
-BasicCamera::BasicCamera(VRHandler const* vrHandler)
+BasicCamera::BasicCamera(VRHandler const& vrHandler)
     : vrHandler(vrHandler)
     , eyeDistanceFactor(1.0f)
 {
@@ -45,48 +45,49 @@ QVector4D BasicCamera::project(QVector4D const& vertex) const
 	return fullTransform * vertex;
 }
 
-void BasicCamera::update()
+void BasicCamera::update(QMatrix4x4 const& angleShiftMat)
 {
-	if(*vrHandler)
+	const QMatrix4x4 shiftedView(angleShiftMat * view);
+	if(vrHandler.isEnabled())
 	{
 		// proj
-		projLeft = vrHandler->getProjectionMatrix(
+		projLeft = vrHandler.getProjectionMatrix(
 		    Side::LEFT, 0.1f * eyeDistanceFactor, 10000.f * eyeDistanceFactor);
-		projRight = vrHandler->getProjectionMatrix(
+		projRight = vrHandler.getProjectionMatrix(
 		    Side::RIGHT, 0.1f * eyeDistanceFactor, 10000.f * eyeDistanceFactor);
 
 		projLeft = projLeft
-		           * eyeDist(vrHandler->getEyeViewMatrix(Side::LEFT),
+		           * eyeDist(vrHandler.getEyeViewMatrix(Side::LEFT),
 		                     eyeDistanceFactor);
 		projRight = projRight
-		            * eyeDist(vrHandler->getEyeViewMatrix(Side::RIGHT),
+		            * eyeDist(vrHandler.getEyeViewMatrix(Side::RIGHT),
 		                      eyeDistanceFactor);
 
-		Side currentRenderingEye(vrHandler->getCurrentRenderingEye());
+		Side currentRenderingEye(vrHandler.getCurrentRenderingEye());
 
 		QMatrix4x4* projEye
 		    = (currentRenderingEye == Side::LEFT) ? &projLeft : &projRight;
 
-		// prog * view
-		QMatrix4x4 hmdMat(vrHandler->getHMDPosMatrix().inverted());
+		// prog * shiftedView
+		QMatrix4x4 hmdMat(vrHandler.getHMDPosMatrix().inverted());
 
 		fullSeatedTrackedSpaceTransform
 		    = *projEye * eyeDistanceCorrection * hmdMat;
 		fullStandingTrackedSpaceTransform
 		    = fullSeatedTrackedSpaceTransform
-		      * vrHandler->getSeatedToStandingAbsoluteTrackingPos().inverted();
+		      * vrHandler.getSeatedToStandingAbsoluteTrackingPos().inverted();
 		fullHmdSpaceTransform = *projEye * eyeDistanceCorrection;
 
 		if(!seatedVROrigin)
 		{
 			hmdMat = hmdMat
-			         * vrHandler->getSeatedToStandingAbsoluteTrackingPos()
+			         * vrHandler.getSeatedToStandingAbsoluteTrackingPos()
 			               .inverted();
 		}
 
 		hmdMat = eyeDist(hmdMat, eyeDistanceFactor);
 		// not true ! it holds its inverse for now
-		hmdScaledToWorld = hmdMat * view;
+		hmdScaledToWorld = hmdMat * shiftedView;
 		fullTransform    = *projEye * hmdScaledToWorld;
 		// now it's the right value :)
 		hmdScaledToWorld = hmdScaledToWorld.inverted();
@@ -94,27 +95,28 @@ void BasicCamera::update()
 		fullCameraSpaceTransform = *projEye * hmdMat;
 
 		fullSkyboxSpaceTransform
-		    = vrHandler->getProjectionMatrix(currentRenderingEye, 0.1f, 10000.f)
-		      * noTrans(vrHandler->getEyeViewMatrix(currentRenderingEye))
-		      * noTrans(vrHandler->getHMDPosMatrix().inverted())
-		      * noTrans(view);
+		    = vrHandler.getProjectionMatrix(currentRenderingEye, 0.1f, 10000.f)
+		      * noTrans(vrHandler.getEyeViewMatrix(currentRenderingEye))
+		      * noTrans(vrHandler.getHMDPosMatrix().inverted())
+		      * noTrans(shiftedView);
 
 		updateClippingPlanes();
 
 		return;
 	}
 
-	update2D();
+	update2D(angleShiftMat);
 }
 
-void BasicCamera::update2D()
+void BasicCamera::update2D(QMatrix4x4 const& angleShiftMat)
 {
-	fullTransform                     = proj * view;
+	const QMatrix4x4 shiftedView(angleShiftMat * view);
+	fullTransform                     = proj * shiftedView;
 	fullCameraSpaceTransform          = proj;
 	fullSeatedTrackedSpaceTransform   = proj * eyeDistanceCorrection;
 	fullStandingTrackedSpaceTransform = fullSeatedTrackedSpaceTransform;
 	fullHmdSpaceTransform             = fullSeatedTrackedSpaceTransform;
-	fullSkyboxSpaceTransform          = proj * noTrans(view);
+	fullSkyboxSpaceTransform          = proj * noTrans(shiftedView);
 
 	updateClippingPlanes();
 }
@@ -152,10 +154,10 @@ void BasicCamera::updateClippingPlanes()
 QVector3D BasicCamera::getWorldSpacePosition() const
 {
 	QMatrix4x4 eyeViewMatrix;
-	if(*vrHandler)
+	if(vrHandler.isEnabled())
 	{
 		eyeViewMatrix
-		    = vrHandler->getEyeViewMatrix(vrHandler->getCurrentRenderingEye());
+		    = vrHandler.getEyeViewMatrix(vrHandler.getCurrentRenderingEye());
 	}
 
 	return QVector3D((hmdScaledToWorld * eyeViewMatrix.inverted()).column(3));
@@ -187,7 +189,7 @@ QMatrix4x4 BasicCamera::hmdSpaceToWorldTransform() const
 
 QMatrix4x4 BasicCamera::hmdScaledSpaceToWorldTransform() const
 {
-	if(*vrHandler)
+	if(vrHandler.isEnabled())
 	{
 		return hmdScaledToWorld;
 	}
@@ -197,6 +199,18 @@ QMatrix4x4 BasicCamera::hmdScaledSpaceToWorldTransform() const
 QMatrix4x4 BasicCamera::screenToWorldTransform() const
 {
 	return view.inverted() * proj.inverted();
+}
+
+float BasicCamera::pixelSolidAngle() const
+{
+	QMatrix4x4 p(vrHandler.isEnabled()
+	                 ? vrHandler.getProjectionMatrix(
+	                       Side::LEFT, 0.1f * eyeDistanceFactor,
+	                       10000.f * eyeDistanceFactor)
+	                 : proj);
+	double radPerPix = atan(1.0f / p.column(1)[1]) * 2.0 / windowSize.height();
+	// https://en.wikipedia.org/wiki/Solid_angle#Pyramid
+	return 4.0 * asin(sin(radPerPix / 2.0) * sin(radPerPix / 2.0));
 }
 
 QMatrix4x4 BasicCamera::hmdScreenToWorldTransform(Side side) const

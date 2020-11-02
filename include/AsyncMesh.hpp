@@ -26,21 +26,20 @@
 class AsyncMesh
 {
   public:
-	// grabs ownage of defaultMesh
-	AsyncMesh(QString const& path, GLHandler::Mesh const& defaultMesh,
-	          GLHandler::ShaderProgram shader);
+	AsyncMesh(QString const& path, GLMesh&& defaultMesh,
+	          GLShaderProgram&& shader);
 	bool isLoaded() const { return loaded; };
 	float getBoundingSphereRadius() const { return boundingSphereRadius; };
-	GLHandler::Mesh getDefaultMesh() const { return defaultMesh; };
+	GLMesh const& getDefaultMesh() const { return defaultMesh; };
 	void updateMesh();
-	GLHandler::Mesh getMesh();
+	GLMesh const& getMesh();
 	~AsyncMesh();
 
 	static void garbageCollect(bool force = false);
 
   private:
-	GLHandler::Mesh defaultMesh = {};
-	GLHandler::Mesh mesh        = {};
+	GLMesh defaultMesh;
+	GLMesh* mesh = nullptr;
 
 	QFuture<float> future;
 
@@ -50,7 +49,7 @@ class AsyncMesh
 
 	std::vector<AssetLoader::MeshDescriptor>* meshDescriptors;
 
-	GLHandler::ShaderProgram shader;
+	GLShaderProgram shader;
 
 	// never wait for futures to finish within destructor ! if you need to
 	// release resources and the future didn't finish, push it here and other

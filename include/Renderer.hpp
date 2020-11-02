@@ -19,6 +19,9 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include <list>
+#include <utility>
+
 #include "BasicCamera.hpp"
 #include "DebugCamera.hpp"
 #include "vr/VRHandler.hpp"
@@ -47,8 +50,8 @@ class Renderer
 		BasicCamera* camera;
 	};
 
-	Renderer() = default;
-	void init(AbstractMainWin* window, VRHandler* vrHandler);
+	Renderer(AbstractMainWin& window, VRHandler& vrHandler);
+	void init();
 	void windowResized();
 	QSize getSize() const;
 	float getAspectRatio() const;
@@ -174,27 +177,27 @@ class Renderer
 	 * pipeline using the corresponding methods.
 	 * * p.second is the shader itself.
 	 */
-	QList<QPair<QString, GLHandler::ShaderProgram>> const&
-	    postProcessingPipeline
+	std::list<std::pair<QString, GLShaderProgram>> const& postProcessingPipeline
 	    = postProcessingPipeline_;
 
   private:
 	bool initialized = false;
 
-	AbstractMainWin* window = nullptr;
-
 	void vrRenderSinglePath(RenderPath& renderPath, QString const& pathId,
 	                        bool debug, bool debugInHeadset);
 	void vrRender(Side side, bool debug, bool debugInHeadset);
 
-	VRHandler* vrHandler   = nullptr;
+	AbstractMainWin& window;
+	VRHandler& vrHandler;
 	DebugCamera* dbgCamera = nullptr;
+
+	QMatrix4x4 angleShiftMat;
 
 	QList<QPair<QString, RenderPath>> sceneRenderPipeline_;
 
 	bool cubemapTargetInit                = false;
 	GLHandler::RenderTarget cubemapTarget = {};
-	QList<QPair<QString, GLHandler::ShaderProgram>> postProcessingPipeline_;
+	std::list<std::pair<QString, GLShaderProgram>> postProcessingPipeline_;
 	GLHandler::RenderTarget multisampledTarget                   = {};
 	std::array<GLHandler::RenderTarget, 2> postProcessingTargets = {{{}, {}}};
 	float lastFrameAverageLuminance                              = 0.f;

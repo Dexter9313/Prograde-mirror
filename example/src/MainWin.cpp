@@ -24,11 +24,50 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 	AbstractMainWin::actionEvent(a, pressed);
 }
 
+void MainWin::mousePressEvent(QMouseEvent* e)
+{
+	if(e->button() == Qt::MouseButton::LeftButton)
+	{
+		moveView = true;
+		QCursor c(cursor());
+		c.setShape(Qt::CursorShape::BlankCursor);
+		cursorPosBackup = QCursor::pos();
+		QCursor::setPos(width() / 2, height() / 2);
+		setCursor(c);
+	}
+}
+
+void MainWin::mouseReleaseEvent(QMouseEvent* e)
+{
+	if(e->button() == Qt::MouseButton::LeftButton)
+	{
+		moveView = false;
+		QCursor c(cursor());
+		c.setShape(Qt::CursorShape::ArrowCursor);
+		QCursor::setPos(cursorPosBackup);
+		setCursor(c);
+	}
+}
+
+void MainWin::mouseMoveEvent(QMouseEvent* e)
+{
+	if(!isActive() || /*vrHandler->isEnabled() ||*/ !moveView)
+	{
+		return;
+	}
+	float dx = (static_cast<float>(width()) / 2 - e->globalX()) / width();
+	float dy = (static_cast<float>(height()) / 2 - e->globalY()) / height();
+	yaw += dx * 3.14f / 3.f;
+	pitch += dy * 3.14f / 3.f;
+	QCursor::setPos(width() / 2, height() / 2);
+}
+
 void MainWin::initScene()
 {
 	// SKYBOX
 	sbShader.load("skybox");
-	skybox = Primitives::newUnitCube(sbShader.toGLHandler());
+	skybox = new GLMesh;
+	Primitives::setAsUnitCube(*skybox, sbShader.toGLShaderProgram());
 
 	std::array<const char*, 6> paths = {};
 	paths.at(static_cast<unsigned int>(GLHandler::CubeFace::BACK))
@@ -66,36 +105,38 @@ void MainWin::initScene()
 	    0, 1, 3, // first Triangle
 	    1, 2, 3  // second Triangle
 	};
-	mesh = GLHandler::newMesh();
-	GLHandler::setVertices(mesh, vertices, shaderProgram.toGLHandler(),
-	                       {{"position", 3}}, indices);
-	GLHandler::setShaderUnusedAttributesValues(shaderProgram.toGLHandler(),
-	                                           {{"color", {1.0, 1.0, 0.0}}});
+	mesh = new GLMesh;
+	mesh->setVertices(vertices, shaderProgram.toGLShaderProgram(),
+	                  {{"position", 3}}, indices);
+	shaderProgram.toGLShaderProgram().setUnusedAttributesValues(
+	    {{"color", {1.0, 1.0, 0.0}}});
 
 	// create cube
 	movingCube = new MovingCube;
 
 	// create points
-	pointsMesh = GLHandler::newMesh();
+	pointsMesh = new GLMesh;
 	pointsShader.load("default");
 	pointsShader.setUniform("alpha", 1.0f);
 	pointsShader.setUniform("color", QColor::fromRgbF(1.0f, 1.0f, 1.0f));
 	std::vector<float> points = {0, 0, 0};
-	GLHandler::setVertices(pointsMesh, points, pointsShader.toGLHandler(),
-	                       {{"position", 3}});
+	pointsMesh->setVertices(points, pointsShader.toGLShaderProgram(),
+	                        {{"position", 3}});
 
 	sphereShader.load("default");
 	sphereShader.setUniform("alpha", 1.0f);
 	sphereShader.setUniform("color", QColor::fromRgbF(0.5f, 0.5f, 1.0f));
-	sphere = Primitives::newUnitSphere(sphereShader.toGLHandler(), 100, 100);
+	sphere = new GLMesh;
+	Primitives::setAsUnitSphere(*sphere, sphereShader.toGLShaderProgram(), 100,
+	                            100);
 
 	playareaShader.load("default");
 	playareaShader.setUniform("color", QColor(255, 0, 0));
 	playareaShader.setUniform("alpha", 1.f);
-	playarea = GLHandler::newMesh();
-	if(vrHandler)
+	playarea = new GLMesh;
+	if(vrHandler->isEnabled())
 	{
-		auto playareaquad(vrHandler.getPlayAreaQuad());
+		auto playareaquad(vrHandler->getPlayAreaQuad());
 		vertices = {
 		    playareaquad[0].x(), playareaquad[0].y(), playareaquad[0].z(),
 		    playareaquad[1].x(), playareaquad[1].y(), playareaquad[1].z(),
@@ -103,30 +144,8 @@ void MainWin::initScene()
 		    playareaquad[3].x(), playareaquad[3].y(), playareaquad[3].z(),
 		};
 		indices = {0, 1, 1, 2, 2, 3, 3, 0};
-		GLHandler::setVertices(playarea, vertices, playareaShader.toGLHandler(),
-		                       {{"position", 3}}, indices);
-	}
-
-	model                = new Model("models/drone/scene.gltf");
-	light                = new Light;
-	light->ambiantFactor = 0.05f;
-
-	playareaShader = GLHandler::newShader("default");
-	GLHandler::setShaderParam(playareaShader, "color", QColor(255, 0, 0));
-	GLHandler::setShaderParam(playareaShader, "alpha", 1.f);
-	playarea = GLHandler::newMesh();
-	if(vrHandler)
-	{
-		auto playareaquad(vrHandler.getPlayAreaQuad());
-		vertices = {
-		    playareaquad[0].x(), playareaquad[0].y(), playareaquad[0].z(),
-		    playareaquad[1].x(), playareaquad[1].y(), playareaquad[1].z(),
-		    playareaquad[2].x(), playareaquad[2].y(), playareaquad[2].z(),
-		    playareaquad[3].x(), playareaquad[3].y(), playareaquad[3].z(),
-		};
-		indices = {0, 1, 1, 2, 2, 3, 3, 0};
-		GLHandler::setVertices(playarea, vertices, playareaShader,
-		                       {{"position", 3}}, indices);
+		playarea->setVertices(vertices, playareaShader.toGLShaderProgram(),
+		                      {{"position", 3}}, indices);
 	}
 
 	model                = new Model("models/drone/scene.gltf");
@@ -163,10 +182,14 @@ void MainWin::initScene()
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 {
-	Controller const* cont(vrHandler.getController(Side::LEFT));
+	QVector3D lookDir(-cosf(yaw) * cosf(pitch), -sinf(yaw) * cosf(pitch),
+	                  sinf(pitch));
+	camera.setView({1, 1, 1}, lookDir, {0, 0, 1});
+
+	Controller const* cont(vrHandler->getController(Side::LEFT));
 	if(cont == nullptr)
 	{
-		cont = vrHandler.getController(Side::RIGHT);
+		cont = vrHandler->getController(Side::RIGHT);
 	}
 	if(cont != nullptr)
 	{
@@ -178,11 +201,11 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 			points[0] = pos[0];
 			points[1] = pos[1];
 			points[2] = pos[2];
-			GLHandler::updateVertices(pointsMesh, points);
+			pointsMesh->updateVertices(points);
 		}
 	}
 
-	Hand const* leftHand(vrHandler.getHand(Side::LEFT));
+	Hand const* leftHand(vrHandler->getHand(Side::LEFT));
 	if(leftHand != nullptr)
 	{
 		if(leftHand->isClosed())
@@ -193,7 +216,7 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 			points[0] = pos[0];
 			points[1] = pos[1];
 			points[2] = pos[2];
-			GLHandler::updateVertices(pointsMesh, points);
+			pointsMesh->updateVertices(points);
 		}
 	}
 
@@ -205,7 +228,7 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 	light->color
 	    = QColor(128 + 127 * cos(secs / 2.0), 128 + 127 * sin(secs / 2.0), 0);
 	light->color = QColor(255, 255, 255);
-	if(vrHandler)
+	if(vrHandler->isEnabled())
 	{
 		modelModel.translate(0.f, 1.4f * model->getBoundingSphereRadius(), 0.f);
 		modelModel.rotate(180.f, QVector3D(0.f, 1.f, 0.f));
@@ -227,9 +250,9 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 {
 	GLHandler::useTextures({sbTexture});
 	GLHandler::setBackfaceCulling(false);
-	GLHandler::setUpRender(sbShader.toGLHandler(), QMatrix4x4(),
+	GLHandler::setUpRender(sbShader.toGLShaderProgram(), QMatrix4x4(),
 	                       GLHandler::GeometricSpace::SKYBOX);
-	GLHandler::render(skybox, GLHandler::PrimitiveType::TRIANGLE_STRIP);
+	skybox->render(PrimitiveType::TRIANGLE_STRIP);
 	GLHandler::setBackfaceCulling(true);
 	GLHandler::clearDepthBuffer();
 	if(vrHandler)
@@ -239,9 +262,9 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 
 	QMatrix4x4 modelSphere;
 	modelSphere.translate(-1.5, 0, 0);
-	GLHandler::setUpRender(sphereShader.toGLHandler(), modelSphere,
+	GLHandler::setUpRender(sphereShader.toGLShaderProgram(), modelSphere,
 	                       GLHandler::GeometricSpace::SKYBOX);
-	GLHandler::render(sphere);
+	sphere->render();
 	GLHandler::clearDepthBuffer();
 	if(vrHandler)
 	{
@@ -250,18 +273,18 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 
 	movingCube->render();
 
-	GLHandler::setUpRender(shaderProgram.toGLHandler());
-	GLHandler::render(mesh);
-	GLHandler::setUpRender(pointsShader.toGLHandler());
+	GLHandler::setUpRender(shaderProgram.toGLShaderProgram());
+	mesh->render();
+	GLHandler::setUpRender(pointsShader.toGLShaderProgram());
 	GLHandler::setPointSize(8);
-	GLHandler::render(pointsMesh);
+	pointsMesh->render();
 	GLHandler::setPointSize(1);
 
-	GLHandler::setUpRender(playareaShader.toGLHandler(), QMatrix4x4(),
+	GLHandler::setUpRender(playareaShader.toGLShaderProgram(), QMatrix4x4(),
 	                       GLHandler::GeometricSpace::STANDINGTRACKED);
-	GLHandler::render(playarea, GLHandler::PrimitiveType::LINES);
+	playarea->render(PrimitiveType::LINES);
 
-	if(vrHandler)
+	if(vrHandler->isEnabled())
 	{
 		model->render(camera.standingTrackedSpaceToWorldTransform().inverted()
 		                  * camera.getWorldSpacePosition(),
@@ -279,29 +302,26 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 }
 
 void MainWin::applyPostProcShaderParams(
-    QString const& id, GLHandler::ShaderProgram shader,
+    QString const& id, GLShaderProgram const& shader,
     GLHandler::RenderTarget const& currentTarget) const
 {
 	AbstractMainWin::applyPostProcShaderParams(id, shader, currentTarget);
 	if(id == "distort")
 	{
-		GLHandler::setShaderParam(shader, "BarrelPower", barrelPower);
+		shader.setUniform("BarrelPower", barrelPower);
 	}
 }
 
 MainWin::~MainWin()
 {
 	GLHandler::deleteTexture(sbTexture);
-	GLHandler::deleteMesh(skybox);
+	delete skybox;
 
-	GLHandler::deleteMesh(mesh);
+	delete mesh;
 
-	GLHandler::deleteMesh(pointsMesh);
+	delete pointsMesh;
 
-	GLHandler::deleteMesh(playarea);
-
-	GLHandler::deleteMesh(playarea);
-	GLHandler::deleteShader(playareaShader);
+	delete playarea;
 
 	delete movingCube;
 

@@ -1,6 +1,7 @@
 #include "AbstractMainWin.hpp"
 
 AbstractMainWin::AbstractMainWin()
+    : renderer(*this, *vrHandler)
 {
 	setSurfaceType(QSurface::OpenGLSurface);
 
@@ -56,25 +57,25 @@ void AbstractMainWin::toggleFullscreen()
 
 bool AbstractMainWin::vrIsEnabled() const
 {
-	return static_cast<bool>(vrHandler);
+	return vrHandler->isEnabled();
 }
 
 void AbstractMainWin::setVR(bool vr)
 {
-	if(vrHandler && !vr)
+	if(vrHandler->isEnabled() && !vr)
 	{
-		vrHandler.close();
+		vrHandler->close();
 	}
-	else if(!vrHandler && vr)
+	else if(!vrHandler->isEnabled() && vr)
 	{
-		if(vrHandler.init())
+		if(vrHandler->init())
 		{
-			vrHandler.resetPos();
+			vrHandler->resetPos();
 		}
 	}
 	if(vrIsEnabled())
 	{
-		PythonQtHandler::addObject("VRHandler", &vrHandler);
+		PythonQtHandler::addObject("VRHandler", vrHandler);
 	}
 	else
 	{
@@ -350,38 +351,35 @@ void AbstractMainWin::setupPythonAPI()
 }
 
 void AbstractMainWin::applyPostProcShaderParams(
-    QString const& id, GLHandler::ShaderProgram shader,
+    QString const& id, GLShaderProgram const& shader,
     GLHandler::RenderTarget const& /*currentTarget*/) const
 {
 	if(id == "colors")
 	{
-		GLHandler::setShaderParam(shader, "gamma", gamma);
+		shader.setUniform("gamma", gamma);
 	}
 	else if(id == "exposure")
 	{
-		GLHandler::setShaderParam(shader, "exposure",
-		                          toneMappingModel->exposure);
-		GLHandler::setShaderParam(shader, "dynamicrange",
-		                          toneMappingModel->dynamicrange);
-		GLHandler::setShaderParam(shader, "purkinje",
-		                          toneMappingModel->purkinje ? 1.f : 0.f);
+		shader.setUniform("exposure", toneMappingModel->exposure);
+		shader.setUniform("dynamicrange", toneMappingModel->dynamicrange);
+		shader.setUniform("purkinje", toneMappingModel->purkinje ? 1.f : 0.f);
 	}
 	else if(id == "bloom")
 	{
-		GLHandler::setShaderParam(shader, "highlumtex", 1);
+		shader.setUniform("highlumtex", 1);
 	}
 	else
 	{
 		QString pyCmd("if \"applyPostProcShaderParams\" in "
 		              "dir():\n\tapplyPostProcShaderParams(\""
-		              + id + "\"," + QString::number(shader) + ")");
+		              + id + "\"," + shader.toStr() + ")");
 		PythonQtHandler::evalScript(pyCmd);
 	}
 }
 
 std::vector<GLHandler::Texture>
     AbstractMainWin::getPostProcessingUniformTextures(
-        QString const& id, GLHandler::ShaderProgram /*shader*/,
+        QString const& id, GLShaderProgram const& /*shader*/,
         GLHandler::RenderTarget const& currentTarget) const
 {
 	if(id == "bloom")
@@ -389,22 +387,17 @@ std::vector<GLHandler::Texture>
 		if(bloom)
 		{
 			// high luminosity pass
-			GLHandler::ShaderProgram hlshader(
-			    GLHandler::newShader("postprocess", "highlumpass"));
+			GLShaderProgram hlshader("postprocess", "highlumpass");
 			GLHandler::postProcess(hlshader, currentTarget, bloomTargets[0]);
-			GLHandler::deleteShader(hlshader);
 
 			// blurring
-			GLHandler::ShaderProgram blurshader(
-			    GLHandler::newShader("postprocess", "blur"));
+			GLShaderProgram blurshader("postprocess", "blur");
 			for(unsigned int i = 0; i < 6; i++)
 			{
-				GLHandler::setShaderParam(blurshader, "horizontal",
-				                          static_cast<float>(i % 2));
+				blurshader.setUniform("horizontal", static_cast<float>(i % 2));
 				GLHandler::postProcess(blurshader, bloomTargets.at(i % 2),
 				                       bloomTargets.at((i + 1) % 2));
 			}
-			GLHandler::deleteShader(blurshader);
 
 			return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
 		}
@@ -425,27 +418,28 @@ void AbstractMainWin::initializeGL()
 	// Init GL
 	GLHandler::init();
 	// Init Renderer
-	renderer.init(this, &vrHandler);
+	renderer.init();
 	// Init ToneMappingModel
-	toneMappingModel = new ToneMappingModel(&vrHandler);
+	toneMappingModel = new ToneMappingModel(*vrHandler);
 	// Init PythonQt
 	initializePythonQt();
 	// Init VR
 	setVR(QSettings().value("vr/enabled").toBool());
 	// Init libraries
 	initLibraries();
+	// Init NetworkManager
+	networkManager = new NetworkManager(constructNewState());
 
-	// NOLINTNEXTLINE(hicpp-no-array-decay)
 	qDebug() << "Using OpenGL " << format().majorVersion() << "."
 	         << format().minorVersion() << '\n';
 
-	if(vrHandler)
+	if(vrHandler->isEnabled())
 	{
-		vrHandler.resetPos();
+		vrHandler->resetPos();
 	}
 
 	// BLOOM
-	if(!vrHandler)
+	if(!vrHandler->isEnabled())
 	{
 		bloomTargets[0]
 		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
@@ -454,7 +448,7 @@ void AbstractMainWin::initializeGL()
 	}
 	else
 	{
-		QSize size(vrHandler.getEyeRenderTargetSize());
+		QSize size(vrHandler->getEyeRenderTargetSize());
 		bloomTargets[0] = GLHandler::newRenderTarget(size.width(),
 		                                             size.height(), GL_RGBA32F);
 		bloomTargets[1] = GLHandler::newRenderTarget(size.width(),
@@ -489,8 +483,12 @@ void AbstractMainWin::initializePythonQt()
 	PythonQtHandler::init();
 	PythonQtHandler::addClass<int>("Side");
 	PythonQtHandler::addObject("Side", new PySide);
+	PythonQtHandler::addClass<int>("PrimitiveType");
+	PythonQtHandler::addObject("PrimitiveType", new PyPrimitiveType);
 	PythonQtHandler::addObject("GLHandler", new GLHandler);
 	PythonQtHandler::addObject("ToneMappingModel", toneMappingModel);
+	PythonQtHandler::addWrapper<GLShaderProgramWrapper>();
+	PythonQtHandler::addWrapper<GLMeshWrapper>();
 }
 
 void AbstractMainWin::reloadPythonQt()
@@ -533,19 +531,37 @@ void AbstractMainWin::paintGL()
 	{
 		reloadPythonQt();
 	}
-	if(vrHandler)
+	if(vrHandler->isEnabled())
 	{
-		frameTiming_ = vrHandler.getFrameTiming() / 1000.f;
+		float vrFT(vrHandler->getFrameTiming());
+		if(vrFT >= 0.f)
+		{
+			frameTiming_ = vrFT / 1000.f;
+		}
+	}
+
+	auto* nState(networkManager->getNetworkedState());
+	if(nState != nullptr)
+	{
+		if(networkManager->isServer())
+		{
+			writeState(*nState);
+		}
+		else
+		{
+			readState(*nState);
+		}
+		networkManager->update(frameTiming);
 	}
 
 	toneMappingModel->autoUpdateExposure(
 	    renderer.getLastFrameAverageLuminance(), frameTiming);
 
 	// handle VR events if any
-	if(vrHandler)
+	if(vrHandler->isEnabled())
 	{
 		auto e = new VRHandler::Event;
-		while(vrHandler.pollEvent(e))
+		while(vrHandler->pollEvent(e))
 		{
 			vrEvent(*e);
 		}
@@ -610,6 +626,7 @@ void AbstractMainWin::paintGL()
 
 AbstractMainWin::~AbstractMainWin()
 {
+	delete networkManager;
 	delete toneMappingModel;
 	GLHandler::deleteRenderTarget(bloomTargets[0]);
 	GLHandler::deleteRenderTarget(bloomTargets[1]);
@@ -621,15 +638,16 @@ AbstractMainWin::~AbstractMainWin()
 	PythonQtHandler::evalScript(
 	    "if \"cleanUpScene\" in dir():\n\tcleanUpScene()");
 	renderer.clean();
-	vrHandler.close();
+	vrHandler->close();
 	PythonQtHandler::clean();
+	delete vrHandler;
 }
 
 void AbstractMainWin::reloadBloomTargets()
 {
 	GLHandler::deleteRenderTarget(bloomTargets[0]);
 	GLHandler::deleteRenderTarget(bloomTargets[1]);
-	if(!vrHandler)
+	if(!vrHandler->isEnabled())
 	{
 		bloomTargets[0]
 		    = GLHandler::newRenderTarget(width(), height(), GL_RGBA32F);
@@ -638,7 +656,7 @@ void AbstractMainWin::reloadBloomTargets()
 	}
 	else
 	{
-		QSize size(vrHandler.getEyeRenderTargetSize());
+		QSize size(vrHandler->getEyeRenderTargetSize());
 		bloomTargets[0] = GLHandler::newRenderTarget(size.width(),
 		                                             size.height(), GL_RGBA32F);
 		bloomTargets[1] = GLHandler::newRenderTarget(size.width(),
