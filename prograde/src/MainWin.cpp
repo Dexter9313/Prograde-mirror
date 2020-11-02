@@ -674,6 +674,7 @@ void MainWin::initScene()
 	toneMappingModel->exposure     = 100.f;
 	toneMappingModel->dynamicrange = 10000.f;
 	toneMappingModel->autoexposure = true;
+	toneMappingModel->purkinje     = true;
 
 	// DBG
 	shader = GLHandler::newShader("default");
