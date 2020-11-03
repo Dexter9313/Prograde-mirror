@@ -55,15 +55,15 @@ class MainWin : public AbstractMainWin
 	                         QString const& pathId) override;
 
 	virtual void applyPostProcShaderParams(
-	    QString const& id, GLHandler::ShaderProgram shader,
+	    QString const& id, GLShaderProgram const& shader,
 	    GLHandler::RenderTarget const& currentTarget) const override;
 
 	virtual std::vector<GLHandler::Texture> getPostProcessingUniformTextures(
-	    QString const& id, GLHandler::ShaderProgram shader,
+	    QString const& id, GLShaderProgram const& shader,
 	    GLHandler::RenderTarget const& currentTarget) const override;
 
   private:
-	StarryBackground stars;
+	StarryBackground* stars;
 
 	QPoint lastCursorPos;
 
@@ -74,8 +74,8 @@ class MainWin : public AbstractMainWin
 
 	// render controllers as points used to measure distances
 	// useful for spacecrafts scale checking
-	GLHandler::ShaderProgram shader;
-	GLHandler::Mesh point;
+	GLShaderProgram* shader;
+	GLMesh* point;
 	void dbgRenderVRControls();
 	void rescale(double newScale, Vector3 const& scaleCenter);
 

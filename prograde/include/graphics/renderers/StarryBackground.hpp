@@ -22,7 +22,7 @@
 #include <QFile>
 #include <random>
 
-#include "GLHandler.hpp"
+#include "gl/GLHandler.hpp"
 #include "graphics/Utils.hpp"
 #include "math/Vector3.hpp"
 #include "math/constants.hpp"
@@ -37,11 +37,10 @@ class StarryBackground
 	void initFromRandomGalactic();
 	void initFromFile(float axialTilt = 0.f);
 	void render(float pixelSolidAngle);
-	~StarryBackground();
 
   private:
-	GLHandler::ShaderProgram shader;
-	GLHandler::Mesh mesh;
+	GLShaderProgram shader;
+	GLMesh mesh;
 	struct Star
 	{
 		std::string commonName;

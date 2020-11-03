@@ -270,7 +270,7 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		{
 			if(vrHandler)
 			{
-				vrHandler.resetPos();
+				vrHandler->resetPos();
 			}
 		}
 		else if(a.id == "togglelabels")
@@ -450,9 +450,10 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 				case VRHandler::Button::GRIP:
 				{
 					OrbitalSystemRenderer::autoCameraTarget = false;
-					Controller const* left(vrHandler.getController(Side::LEFT));
+					Controller const* left(
+					    vrHandler->getController(Side::LEFT));
 					Controller const* right(
-					    vrHandler.getController(Side::RIGHT));
+					    vrHandler->getController(Side::RIGHT));
 					if(e.side == Side::LEFT && left != nullptr)
 					{
 						leftGripPressed = true;
@@ -513,7 +514,7 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 				}
 				case VRHandler::Button::TOUCHPAD:
 				{
-					Controller const* ctrl(vrHandler.getController(e.side));
+					Controller const* ctrl(vrHandler->getController(e.side));
 					if(ctrl != nullptr)
 					{
 						QVector2D padCoords(ctrl->getPadCoords());
@@ -563,9 +564,10 @@ void MainWin::vrEvent(VRHandler::Event const& e)
 			{
 				case VRHandler::Button::GRIP:
 				{
-					Controller const* left(vrHandler.getController(Side::LEFT));
+					Controller const* left(
+					    vrHandler->getController(Side::LEFT));
 					Controller const* right(
-					    vrHandler.getController(Side::RIGHT));
+					    vrHandler->getController(Side::RIGHT));
 					if(e.side == Side::LEFT)
 					{
 						leftGripPressed = false;
@@ -622,13 +624,14 @@ void MainWin::initScene()
 	setCursor(c);
 
 	clock.setTargetFPS(0.f);
-	stars.initFromFile(23.4392811 * constant::pi / 180.f);
+	stars = new StarryBackground;
+	stars->initFromFile(23.4392811 * constant::pi / 180.f);
 
 	debugText = new Text3D(textWidth, textHeight,
-	                       GLHandler::newShader("billboard", "label"));
+	                       GLShaderProgram("billboard", "label"));
 	debugText->setColor(QColor(255, 0, 0));
 
-	auto cam = new OrbitalSystemCamera(&vrHandler, toneMappingModel->exposure,
+	auto cam = new OrbitalSystemCamera(*vrHandler, toneMappingModel->exposure,
 	                                   toneMappingModel->dynamicrange);
 	cam->setPerspectiveProj(70.0f, static_cast<float>(width())
 	                                   / static_cast<float>(height()));
@@ -677,9 +680,9 @@ void MainWin::initScene()
 	toneMappingModel->purkinje     = true;
 
 	// DBG
-	shader = GLHandler::newShader("default");
-	point  = GLHandler::newMesh();
-	GLHandler::setVertices(point, {0.f, 0.f, 0.f}, shader, {{"position", 3}});
+	shader = new GLShaderProgram("default");
+	point  = new GLMesh;
+	point->setVertices({0.f, 0.f, 0.f}, *shader, {{"position", 3}});
 }
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
@@ -718,8 +721,8 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 		CelestialBodyRenderer::overridenScale = 1.0;
 	}
 
-	Controller const* left(vrHandler.getController(Side::LEFT));
-	Controller const* right(vrHandler.getController(Side::RIGHT));
+	Controller const* left(vrHandler->getController(Side::LEFT));
+	Controller const* right(vrHandler->getController(Side::RIGHT));
 
 	// single grip = translation
 	if(leftGripPressed != rightGripPressed)
@@ -840,30 +843,30 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	auto& cam(renderer.getCamera<OrbitalSystemCamera>("planet"));
 
 	GLHandler::setPointSize(1);
-	stars.render(cam.getPixelSolidAngle());
+	stars->render(cam.pixelSolidAngle());
 	systemRenderer->render(camera);
 	renderer.renderVRControls();
 	// dbgRenderVRControls();
 	systemRenderer->renderTransparent(camera);
 	if(!vrHandler)
 	{
-		GLHandler::setShaderParam(debugText->getShader(), "exposure",
-		                          toneMappingModel->exposure);
-		GLHandler::setShaderParam(debugText->getShader(), "dynamicrange",
-		                          toneMappingModel->dynamicrange);
+		debugText->getShader().setUniform("exposure",
+		                                  toneMappingModel->exposure);
+		debugText->getShader().setUniform("dynamicrange",
+		                                  toneMappingModel->dynamicrange);
 		debugText->render();
 	}
 }
 
 void MainWin::applyPostProcShaderParams(
-    QString const& id, GLHandler::ShaderProgram shader,
+    QString const& id, GLShaderProgram const& shader,
     GLHandler::RenderTarget const& currentTarget) const
 {
 	AbstractMainWin::applyPostProcShaderParams(id, shader, currentTarget);
 }
 
 std::vector<GLHandler::Texture> MainWin::getPostProcessingUniformTextures(
-    QString const& id, GLHandler::ShaderProgram shader,
+    QString const& id, GLShaderProgram const& shader,
     GLHandler::RenderTarget const& currentTarget) const
 {
 	auto abstractResult(AbstractMainWin::getPostProcessingUniformTextures(
@@ -882,29 +885,29 @@ void MainWin::dbgRenderVRControls()
 		return;
 	}
 
-	Controller const* left(vrHandler.getController(Side::LEFT));
-	Controller const* right(vrHandler.getController(Side::RIGHT));
+	Controller const* left(vrHandler->getController(Side::LEFT));
+	Controller const* right(vrHandler->getController(Side::RIGHT));
 
 	QVector3D leftPos, rightPos;
 	if(left != nullptr)
 	{
 		leftPos = left->getPosition();
-		GLHandler::setShaderParam(shader, "color", QColor("red"));
+		shader->setUniform("color", QColor("red"));
 		QMatrix4x4 model;
 		model.translate(left->getPosition());
-		GLHandler::setUpRender(shader, model,
+		GLHandler::setUpRender(*shader, model,
 		                       GLHandler::GeometricSpace::SEATEDTRACKED);
-		GLHandler::render(point);
+		point->render();
 	}
 	if(right != nullptr)
 	{
 		rightPos = right->getPosition();
-		GLHandler::setShaderParam(shader, "color", QColor("green"));
+		shader->setUniform("color", QColor("green"));
 		QMatrix4x4 model;
 		model.translate(right->getPosition());
-		GLHandler::setUpRender(shader, model,
+		GLHandler::setUpRender(*shader, model,
 		                       GLHandler::GeometricSpace::SEATEDTRACKED);
-		GLHandler::render(point);
+		point->render();
 	}
 
 	if(left != nullptr && right != nullptr)
@@ -985,14 +988,15 @@ QTreeWidgetItem* MainWin::constructItems(Orbitable const& orbitable,
 
 MainWin::~MainWin()
 {
+	delete stars;
 	delete systemRenderer;
 	delete orbitalSystem;
 
 	delete menuBar;
 	delete dialog;
 
-	GLHandler::deleteMesh(point);
-	GLHandler::deleteShader(shader);
+	delete point;
+	delete shader;
 }
 
 std::pair<double, std::string> MainWin::lengthPrettyPrint(double length)

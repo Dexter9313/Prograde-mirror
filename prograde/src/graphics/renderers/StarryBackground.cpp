@@ -18,7 +18,10 @@
 
 #include "graphics/renderers/StarryBackground.hpp"
 
-StarryBackground::StarryBackground() {}
+StarryBackground::StarryBackground()
+    : shader("starrybackground")
+{
+}
 
 // http://mathworld.wolfram.com/SpherePointPicking.html
 void StarryBackground::initFromRandomUniform()
@@ -95,20 +98,16 @@ void StarryBackground::render(float pixelSolidAngle)
 {
 	GLHandler::glf().glDisable(GL_MULTISAMPLE);
 	GLHandler::beginTransparent(GL_ONE, GL_ONE); // sum points
-	GLHandler::setShaderParam(shader, "pixelSolidAngle", pixelSolidAngle);
+	shader.setUniform("pixelSolidAngle", pixelSolidAngle);
 	GLHandler::setUpRender(shader, QMatrix4x4(),
 	                       GLHandler::GeometricSpace::SKYBOX);
-	GLHandler::render(mesh);
+	mesh.render();
 	GLHandler::endTransparent();
 	GLHandler::glf().glEnable(GL_MULTISAMPLE);
 }
 
 void StarryBackground::initMesh(std::vector<Star> const& stars, float axialTilt)
 {
-	shader = GLHandler::newShader("starrybackground");
-
-	mesh = GLHandler::newMesh();
-
 	std::vector<float> vboContent;
 
 	Vector3 pos;
@@ -127,8 +126,8 @@ void StarryBackground::initMesh(std::vector<Star> const& stars, float axialTilt)
 		vboContent.push_back(star.color.blueF());
 	}
 
-	GLHandler::setVertices(mesh, vboContent, shader,
-	                       {{"position", 3}, {"mag", 1}, {"color", 3}});
+	mesh.setVertices(vboContent, shader,
+	                 {{"position", 3}, {"mag", 1}, {"color", 3}});
 }
 
 std::vector<StarryBackground::Star> StarryBackground::loadStars()
@@ -188,10 +187,4 @@ QColor StarryBackground::colorFromColorIndex(float ci)
 
 	return GLHandler::sRGBToLinear(
 	    Utils::toQt(blackbody::colorFromTemperature(t)));
-}
-
-StarryBackground::~StarryBackground()
-{
-	GLHandler::deleteShader(shader);
-	GLHandler::deleteMesh(mesh);
 }
