@@ -26,6 +26,39 @@ class MainWin : public AbstractMainWin
 {
 	Q_OBJECT
   public:
+	class State : public AbstractState
+	{
+	  public:
+		State()                   = default;
+		State(State const& other) = default;
+		State(State&& other)      = default;
+		virtual void readFromDataStream(QDataStream& stream) override
+		{
+			toneMappingState.readFromDataStream(stream);
+			camState.readFromDataStream(stream);
+			double dut;
+			stream >> dut;
+			ut = dut;
+			stream >> renderLabels;
+			stream >> renderOrbits;
+		};
+		virtual void writeInDataStream(QDataStream& stream) override
+		{
+			toneMappingState.writeInDataStream(stream);
+			camState.writeInDataStream(stream);
+			double dut(ut);
+			stream << dut;
+			stream << renderLabels;
+			stream << renderOrbits;
+		};
+
+		ToneMappingModel::State toneMappingState;
+		OrbitalSystemCamera::State camState;
+		UniversalTime ut;
+		float renderLabels;
+		float renderOrbits;
+	};
+
 	MainWin();
 	~MainWin();
 
@@ -61,6 +94,34 @@ class MainWin : public AbstractMainWin
 	virtual std::vector<GLHandler::Texture> getPostProcessingUniformTextures(
 	    QString const& id, GLShaderProgram const& shader,
 	    GLHandler::RenderTarget const& currentTarget) const override;
+
+	virtual AbstractState* constructNewState() const override
+	{
+		return new MainWin::State;
+	};
+	virtual void readState(AbstractState const& s) override
+	{
+		auto const& state = dynamic_cast<State const&>(s);
+		toneMappingModel->readState(state.toneMappingState);
+
+		auto& cam(renderer.getCamera<OrbitalSystemCamera&>("planet"));
+		cam.readState(state.camState);
+		clock.setCurrentUt(state.ut);
+		CelestialBodyRenderer::renderLabels = state.renderLabels;
+		CelestialBodyRenderer::renderOrbits = state.renderOrbits;
+	};
+	virtual void writeState(AbstractState& s) const override
+	{
+		auto& state = dynamic_cast<State&>(s);
+		toneMappingModel->writeState(state.toneMappingState);
+
+		auto const& cam(
+		    renderer.getCamera<OrbitalSystemCamera const&>("planet"));
+		cam.writeState(state.camState);
+		state.ut           = clock.getCurrentUt();
+		state.renderLabels = CelestialBodyRenderer::renderLabels;
+		state.renderOrbits = CelestialBodyRenderer::renderOrbits;
+	};
 
   private:
 	StarryBackground* stars;
