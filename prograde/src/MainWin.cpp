@@ -268,7 +268,7 @@ void MainWin::actionEvent(BaseInputManager::Action a, bool pressed)
 		}
 		else if(a.id == "resetvrpos")
 		{
-			if(vrHandler)
+			if(vrHandler->isEnabled())
 			{
 				vrHandler->resetPos();
 			}
@@ -711,12 +711,12 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 
 	toneMappingModel->autoexposuretimecoeff = clock.getTimeCoeff();
 
-	if(!vrHandler && cam.getAltitude() < 0.0)
+	if(!vrHandler->isEnabled() && cam.getAltitude() < 0.0)
 	{
 		cam.setAltitude(1.0);
 	}
 
-	if(!vrHandler)
+	if(!vrHandler->isEnabled())
 	{
 		CelestialBodyRenderer::overridenScale = 1.0;
 	}
@@ -791,7 +791,7 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 	stream << "Exposure " << (toneMappingModel->autoexposure ? "(auto)" : "")
 	       << ": " << toneMappingModel->exposure << std::endl;
 
-	if(vrHandler)
+	if(vrHandler->isEnabled())
 	{
 		stream.precision(4);
 		stream << "Scale : 1 real meter = "
@@ -813,7 +813,7 @@ void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
 	std::endl;
 	*/
 
-	if(vrHandler)
+	if(vrHandler->isEnabled())
 	{
 		debugText->getModel() = cam.hmdSpaceToWorldTransform();
 		debugText->getModel().translate(QVector3D(0.0f, -0.15f, -0.4f));
@@ -848,7 +848,7 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 	renderer.renderVRControls();
 	// dbgRenderVRControls();
 	systemRenderer->renderTransparent(camera);
-	if(!vrHandler)
+	if(!vrHandler->isEnabled())
 	{
 		debugText->getShader().setUniform("exposure",
 		                                  toneMappingModel->exposure);
@@ -880,7 +880,7 @@ std::vector<GLHandler::Texture> MainWin::getPostProcessingUniformTextures(
 
 void MainWin::dbgRenderVRControls()
 {
-	if(!vrHandler)
+	if(!vrHandler->isEnabled())
 	{
 		return;
 	}
