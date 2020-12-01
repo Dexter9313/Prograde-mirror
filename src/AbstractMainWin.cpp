@@ -16,6 +16,50 @@ AbstractMainWin::AbstractMainWin()
 	m_context.create();
 }
 
+double AbstractMainWin::getHorizontalFOV() const
+{
+	return renderer.getHorizontalFOV();
+}
+
+double AbstractMainWin::getVerticalFOV() const
+{
+	return renderer.getVerticalFOV();
+}
+
+void AbstractMainWin::setHorizontalFOV(double fov)
+{
+	QSettings().setValue("graphics/hfov", fov);
+	renderer.updateFOV();
+}
+
+void AbstractMainWin::setVerticalFOV(double fov)
+{
+	QSettings().setValue("graphics/vfov", fov);
+	renderer.updateFOV();
+}
+
+double AbstractMainWin::getHorizontalAngleShift() const
+{
+	return QSettings().value("network/angleshift").toDouble();
+}
+
+double AbstractMainWin::getVerticalAngleShift() const
+{
+	return QSettings().value("network/vangleshift").toDouble();
+}
+
+void AbstractMainWin::setHorizontalAngleShift(double angleShift)
+{
+	QSettings().setValue("network/angleshift", angleShift);
+	renderer.updateAngleShiftMat();
+}
+
+void AbstractMainWin::setVerticalAngleShift(double angleShift)
+{
+	QSettings().setValue("network/vangleshift", angleShift);
+	renderer.updateAngleShiftMat();
+}
+
 bool AbstractMainWin::isFullscreen() const
 {
 	return QSettings().value("window/fullscreen").toBool();
@@ -68,7 +112,7 @@ void AbstractMainWin::setVR(bool vr)
 	}
 	else if(!vrHandler->isEnabled() && vr)
 	{
-		if(vrHandler->init())
+		if(vrHandler->init(renderer))
 		{
 			vrHandler->resetPos();
 		}
@@ -377,10 +421,9 @@ void AbstractMainWin::applyPostProcShaderParams(
 	}
 }
 
-std::vector<GLHandler::Texture>
-    AbstractMainWin::getPostProcessingUniformTextures(
-        QString const& id, GLShaderProgram const& /*shader*/,
-        GLHandler::RenderTarget const& currentTarget) const
+std::vector<GLTexture const*> AbstractMainWin::getPostProcessingUniformTextures(
+    QString const& id, GLShaderProgram const& /*shader*/,
+    GLHandler::RenderTarget const& currentTarget) const
 {
 	if(id == "bloom")
 	{
@@ -399,10 +442,10 @@ std::vector<GLHandler::Texture>
 				                       bloomTargets.at((i + 1) % 2));
 			}
 
-			return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
+			return {&GLHandler::getColorAttachmentTexture(bloomTargets[0])};
 		}
 		GLHandler::beginRendering(bloomTargets[0]);
-		return {GLHandler::getColorAttachmentTexture(bloomTargets[0])};
+		return {&GLHandler::getColorAttachmentTexture(bloomTargets[0])};
 	}
 	return {};
 }
@@ -575,6 +618,14 @@ void AbstractMainWin::paintGL()
 	PythonQtHandler::evalScript(
 	    "if \"updateScene\" in dir():\n\tupdateScene()");
 
+	if(renderer.getCalibrationCompass())
+	{
+		renderer.getCalibrationCompassPtr()->exposure
+		    = toneMappingModel->exposure;
+		renderer.getCalibrationCompassPtr()->dynamicrange
+		    = toneMappingModel->dynamicrange;
+	}
+
 	// Render frame
 	renderer.renderFrame();
 
@@ -645,8 +696,8 @@ AbstractMainWin::~AbstractMainWin()
 
 void AbstractMainWin::reloadBloomTargets()
 {
-	GLHandler::deleteRenderTarget(bloomTargets[0]);
-	GLHandler::deleteRenderTarget(bloomTargets[1]);
+	// GLHandler::deleteRenderTarget(bloomTargets[0]);
+	// GLHandler::deleteRenderTarget(bloomTargets[1]);
 	if(!vrHandler->isEnabled())
 	{
 		bloomTargets[0]

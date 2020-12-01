@@ -90,6 +90,21 @@
 class AbstractMainWin : public QWindow
 {
 	Q_OBJECT
+	Q_PROPERTY(float horizontalFOV READ getHorizontalFOV()
+	               WRITE setHorizontalFOV)
+	Q_PROPERTY(float verticalFOV READ getVerticalFOV() WRITE setVerticalFOV)
+	/**
+	 * @brief Horizontal angle shift in degrees compared to server if current
+	 * instance is a network client.
+	 */
+	Q_PROPERTY(double horizontalAngleShift READ getHorizontalAngleShift WRITE
+	               setHorizontalAngleShift)
+	/**
+	 * @brief Vertical angle shift in degrees compared to server if current
+	 * instance is a network client.
+	 */
+	Q_PROPERTY(double verticalAngleShift READ getVerticalAngleShift WRITE
+	               setVerticalAngleShift)
 	/**
 	 * @brief Wether the window is displayed in full screen or not.
 	 *
@@ -122,6 +137,38 @@ class AbstractMainWin : public QWindow
 	 */
 	AbstractMainWin();
 
+	/**
+	 * @getter{horizontalFOV}
+	 */
+	double getHorizontalFOV() const;
+	/**
+	 * @getter{verticalFOV}
+	 */
+	double getVerticalFOV() const;
+	/**
+	 * @setter{horizontalFOV}
+	 */
+	void setHorizontalFOV(double fov);
+	/**
+	 * @setter{verticalFOV}
+	 */
+	void setVerticalFOV(double fov);
+	/**
+	 * @getter{horizontalAngleShift}
+	 */
+	double getHorizontalAngleShift() const;
+	/**
+	 * @getter{verticalAngleShift}
+	 */
+	double getVerticalAngleShift() const;
+	/**
+	 * @setter{horizontalAngleShift}
+	 */
+	void setHorizontalAngleShift(double angleShift);
+	/**
+	 * @setter{verticalAngleShift}
+	 */
+	void setVerticalAngleShift(double angleShift);
 	/**
 	 * @getter{fullscreen}
 	 */
@@ -163,6 +210,24 @@ class AbstractMainWin : public QWindow
 	 * @toggle{wireframe}
 	 */
 	void toggleWireframe();
+	void toggleCalibrationCompass() { renderer.toggleCalibrationCompass(); };
+	void toggleCalibrationCompassMode()
+	{
+		CalibrationCompass::forceProtractorMode()
+		    = !CalibrationCompass::forceProtractorMode();
+	};
+	double getCalibrationCompassTickResolution()
+	{
+		return CalibrationCompass::getCurrentTickResolution();
+	};
+	double getDoubleFarRightPixelSubtendedAngle()
+	{
+		return renderer.getDoubleFarRightPixelSubtendedAngle();
+	};
+	void setCalibrationCompassTickResolution(double tickRes)
+	{
+		CalibrationCompass::forcedTickResolution() = tickRes;
+	}
 	/**
 	 * @brief Reloads all shaders managed by ShadersLoader.
 	 */
@@ -310,7 +375,7 @@ class AbstractMainWin : public QWindow
 	 * processing.
 	 * @param shader The actual shader program.
 	 */
-	virtual std::vector<GLHandler::Texture> getPostProcessingUniformTextures(
+	virtual std::vector<GLTexture const*> getPostProcessingUniformTextures(
 	    QString const& id, GLShaderProgram const& shader,
 	    GLHandler::RenderTarget const& currentTarget) const;
 

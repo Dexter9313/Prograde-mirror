@@ -5,6 +5,7 @@
 
 #include "AbstractMainWin.hpp"
 #include "Billboard.hpp"
+#include "CalibrationCompass.hpp"
 #include "Model.hpp"
 #include "Primitives.hpp"
 #include "ShaderProgram.hpp"
@@ -28,6 +29,8 @@ class MainWin : public AbstractMainWin
 			stream >> dynamicrange;
 			stream >> yaw;
 			stream >> pitch;
+			stream >> compass;
+			compassState.readFromDataStream(stream);
 		};
 		virtual void writeInDataStream(QDataStream& stream) override
 		{
@@ -35,12 +38,16 @@ class MainWin : public AbstractMainWin
 			stream << dynamicrange;
 			stream << yaw;
 			stream << pitch;
+			stream << compass;
+			compassState.writeInDataStream(stream);
 		};
 
 		float exposure     = 0.f;
 		float dynamicrange = 0.f;
 		float yaw          = 0.f;
 		float pitch        = 0.f;
+		bool compass       = false;
+		CalibrationCompass::State compassState;
 	};
 
 	MainWin() = default;
@@ -80,6 +87,8 @@ class MainWin : public AbstractMainWin
 		toneMappingModel->dynamicrange = state.dynamicrange;
 		yaw                            = state.yaw;
 		pitch                          = state.pitch;
+		renderer.setCalibrationCompass(state.compass);
+		CalibrationCompass::readState(state.compassState);
 	};
 	virtual void writeState(AbstractState& s) const override
 	{
@@ -88,12 +97,14 @@ class MainWin : public AbstractMainWin
 		state.dynamicrange = toneMappingModel->dynamicrange;
 		state.yaw          = yaw;
 		state.pitch        = pitch;
+		state.compass      = renderer.getCalibrationCompass();
+		CalibrationCompass::writeState(state.compassState);
 	};
 
   private:
 	ShaderProgram sbShader;
 	GLMesh* skybox;
-	GLHandler::Texture sbTexture;
+	GLTexture* sbTexture;
 
 	GLMesh* mesh;
 	ShaderProgram shaderProgram;

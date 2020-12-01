@@ -24,11 +24,6 @@ Renderer::Renderer(AbstractMainWin& window, VRHandler& vrHandler)
     : window(window)
     , vrHandler(vrHandler)
 {
-	if(!QSettings().value("network/server").toBool())
-	{
-		angleShiftMat.rotate(QSettings().value("network/angleshift").toInt(),
-		                     QVector3D(0.f, 1.f, 0.f));
-	}
 }
 
 void Renderer::init()
@@ -38,16 +33,36 @@ void Renderer::init()
 		clean();
 	}
 
+	vFOV = QSettings().value("graphics/vfov").toDouble();
+	hFOV = QSettings().value("graphics/hfov").toDouble();
+	if(vFOV == 0.0)
+	{
+		if(hFOV == 0.0)
+		{
+			vFOV = 70.0;
+		}
+		else
+		{
+			float a(getRenderTargetAspectRatio());
+			vFOV = 360.f * atan(tan(hFOV * M_PI / 360.f) / a) / M_PI;
+		}
+	}
+	if(hFOV == 0.0)
+	{
+		float a(getRenderTargetAspectRatio());
+		hFOV = 360.f * atan(tan(vFOV * M_PI / 360.f) * a) / M_PI;
+	}
+
 	dbgCamera = new DebugCamera(vrHandler);
 	dbgCamera->lookAt({2, 0, 2}, {0, 0, 0}, {0, 0, 1});
-	dbgCamera->setPerspectiveProj(70.0f, getAspectRatio());
 
 	auto defaultCam = new BasicCamera(vrHandler);
 	defaultCam->lookAt({1, 1, 1}, {0, 0, 0}, {0, 0, 1});
-	defaultCam->setPerspectiveProj(70.0f, getAspectRatio());
 	appendSceneRenderPath("default", RenderPath(defaultCam));
 
 	reloadPostProcessingTargets();
+	updateFOV();
+	updateAngleShiftMat();
 
 	initialized = true;
 }
@@ -65,11 +80,7 @@ void Renderer::windowResized()
 	{
 		return;
 	}
-	for(auto pair : sceneRenderPipeline_)
-	{
-		pair.second.camera->setPerspectiveProj(70.0f, getAspectRatio());
-	}
-	dbgCamera->setPerspectiveProj(70.0f, getAspectRatio());
+	updateFOV();
 	reloadPostProcessingTargets();
 }
 
@@ -84,12 +95,17 @@ QSize Renderer::getSize() const
 	return renderSize;
 }
 
-float Renderer::getAspectRatio() const
+float Renderer::getRenderTargetAspectRatio() const
 {
 	QSize renderSize(getSize());
 	float aspectRatio(static_cast<float>(renderSize.width())
 	                  / static_cast<float>(renderSize.height()));
 	return aspectRatio;
+}
+
+float Renderer::getAspectRatioFromFOV() const
+{
+	return tan(M_PI * hFOV / 360.f) / tan(M_PI * vFOV / 360.f);
 }
 
 BasicCamera const& Renderer::getCamera(QString const& pathId) const
@@ -205,6 +221,66 @@ void Renderer::reloadPostProcessingTargets()
 	if(vrHandler.isEnabled())
 	{
 		vrHandler.reloadPostProcessingTargets();
+	}
+}
+
+void Renderer::updateFOV()
+{
+	vFOV = QSettings().value("graphics/vfov").toDouble();
+	hFOV = QSettings().value("graphics/hfov").toDouble();
+	if(vFOV == 0.0)
+	{
+		if(hFOV == 0.0)
+		{
+			vFOV = 70.0;
+		}
+		else
+		{
+			float a(getRenderTargetAspectRatio());
+			vFOV = 360.f * atan(tan(hFOV * M_PI / 360.f) / a) / M_PI;
+		}
+	}
+	if(hFOV == 0.0)
+	{
+		float a(getRenderTargetAspectRatio());
+		hFOV = 360.f * atan(tan(vFOV * M_PI / 360.f) * a) / M_PI;
+	}
+
+	for(auto pair : sceneRenderPipeline_)
+	{
+		pair.second.camera->setPerspectiveProj(vFOV, getAspectRatioFromFOV());
+	}
+	dbgCamera->setPerspectiveProj(vFOV, getAspectRatioFromFOV());
+
+	CalibrationCompass::serverHorizontalFOV()     = getHorizontalFOV();
+	CalibrationCompass::serverRenderTargetWidth() = getSize().width();
+}
+
+void Renderer::updateAngleShiftMat()
+{
+	angleShiftMat = QMatrix4x4();
+	if(!QSettings().value("network/server").toBool())
+	{
+		angleShiftMat.rotate(
+		    QSettings().value("network/vangleshift").toDouble(),
+		    QVector3D(-1.f, 0.f, 0.f));
+		angleShiftMat.rotate(QSettings().value("network/angleshift").toDouble(),
+		                     QVector3D(0.f, 1.f, 0.f));
+	}
+}
+
+void Renderer::toggleCalibrationCompass()
+{
+	if(!renderCompass)
+	{
+		compass       = new CalibrationCompass;
+		renderCompass = true;
+	}
+	else
+	{
+		delete compass;
+		compass       = nullptr;
+		renderCompass = false;
 	}
 }
 
@@ -358,6 +434,10 @@ void Renderer::renderFrame()
 				{
 					dbgCamera->renderCamera(pair.second.camera);
 				}
+				if(renderCompass)
+				{
+					compass->render(angleShiftMat);
+				}
 				if(wireframe)
 				{
 					GLHandler::endWireframe();
@@ -440,9 +520,9 @@ void Renderer::renderFrame()
 		}
 
 		// compute average luminance
-		auto tex
+		auto const& tex
 		    = GLHandler::getColorAttachmentTexture(postProcessingTargets[0]);
-		lastFrameAverageLuminance = GLHandler::getTextureAverageLuminance(tex);
+		lastFrameAverageLuminance = tex.getAverageLuminance();
 
 		// postprocess
 		int i(0);
@@ -469,6 +549,8 @@ void Renderer::clean()
 	{
 		return;
 	}
+
+	delete compass;
 
 	for(auto const& pair : sceneRenderPipeline_)
 	{

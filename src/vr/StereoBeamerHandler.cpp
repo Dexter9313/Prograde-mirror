@@ -1,7 +1,10 @@
 #include "vr/StereoBeamerHandler.hpp"
 
-bool StereoBeamerHandler::init()
+#include "Renderer.hpp"
+
+bool StereoBeamerHandler::init(Renderer const& renderer)
 {
+	VRHandler::init(renderer);
 	reloadPostProcessingTargets();
 	hmdPosMatrix = QMatrix4x4();
 	enabled      = true;
@@ -10,7 +13,8 @@ bool StereoBeamerHandler::init()
 
 QSize StereoBeamerHandler::getEyeRenderTargetSize() const
 {
-	return {1000, 1000};
+	auto fullRTSize(renderer->getSize());
+	return {fullRTSize.width() / 2, fullRTSize.height()};
 }
 
 float StereoBeamerHandler::getFrameTiming() const
@@ -30,10 +34,10 @@ const Hand* StereoBeamerHandler::getHand(Side /*side*/) const
 
 float StereoBeamerHandler::getRenderTargetAverageLuminance(Side eye) const
 {
-	auto tex = GLHandler::getColorAttachmentTexture(
+	auto const& tex = GLHandler::getColorAttachmentTexture(
 	    eye == Side::LEFT ? postProcessingTargetsLeft[0]
 	                      : postProcessingTargetsRight[0]);
-	return GLHandler::getTextureAverageLuminance(tex);
+	return tex.getAverageLuminance();
 }
 
 QMatrix4x4 StereoBeamerHandler::getSeatedToStandingAbsoluteTrackingPos() const
@@ -128,7 +132,8 @@ QMatrix4x4 StereoBeamerHandler::getEyeViewMatrix(Side eye) const
 {
 	QMatrix4x4 res;
 	res.translate(
-	    QVector3D(eye == Side::LEFT ? 0.03215 : -0.03215, 0.f, -0.015f));
+	    stereoMultiplier
+	    * QVector3D(eye == Side::LEFT ? 0.03215 : -0.03215, 0.f, -0.015f));
 	return res;
 }
 
@@ -136,9 +141,9 @@ QMatrix4x4 StereoBeamerHandler::getProjectionMatrix(Side /*eye*/,
                                                     float nearPlan,
                                                     float farPlan) const
 {
-	const float fovV(40.f), fovH(36.f);
 	QMatrix4x4 result;
-	result.perspective(fovV, fovH / fovV, nearPlan, farPlan);
+	result.perspective(renderer->getVerticalFOV(),
+	                   renderer->getAspectRatioFromFOV(), nearPlan, farPlan);
 	return result;
 }
 
