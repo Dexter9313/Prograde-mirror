@@ -400,6 +400,15 @@ void MainWin::mouseMoveEvent(QMouseEvent* e)
 	else if(rotateViewEnabled || trackballEnabled)
 	{
 		double dYaw(dx * constant::pi / 3.0), dPitch(dy * constant::pi / 3.0);
+		if(trackballEnabled)
+		{
+			double coeff(cam->getAltitude()
+			             / cam->target->getCelestialBodyParameters().radius);
+			coeff = coeff > 1.0 ? 1.0 : coeff;
+			dPitch *= coeff;
+			dYaw *= coeff;
+		}
+
 		if(cam->pitch + dPitch > M_PI_2 - 0.20)
 		{
 			dPitch = M_PI_2 - 0.20 - cam->pitch;
