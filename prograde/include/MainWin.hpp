@@ -91,7 +91,7 @@ class MainWin : public AbstractMainWin
 	    QString const& id, GLShaderProgram const& shader,
 	    GLHandler::RenderTarget const& currentTarget) const override;
 
-	virtual std::vector<GLHandler::Texture> getPostProcessingUniformTextures(
+	virtual std::vector<GLTexture const*> getPostProcessingUniformTextures(
 	    QString const& id, GLShaderProgram const& shader,
 	    GLHandler::RenderTarget const& currentTarget) const override;
 

@@ -633,8 +633,9 @@ void MainWin::initScene()
 
 	auto cam = new OrbitalSystemCamera(*vrHandler, toneMappingModel->exposure,
 	                                   toneMappingModel->dynamicrange);
-	cam->setPerspectiveProj(70.0f, static_cast<float>(width())
-	                                   / static_cast<float>(height()));
+	cam->setPerspectiveProj(renderer.getVerticalFOV(),
+	                        renderer.getHorizontalFOV()
+	                            / renderer.getVerticalFOV());
 	cam->target           = orbitalSystem->getAllCelestialBodiesPointers()[0];
 	cam->relativePosition = Vector3(
 	    cam->target->getCelestialBodyParameters().radius * 2.0, 0.0, 0.0);
@@ -865,7 +866,7 @@ void MainWin::applyPostProcShaderParams(
 	AbstractMainWin::applyPostProcShaderParams(id, shader, currentTarget);
 }
 
-std::vector<GLHandler::Texture> MainWin::getPostProcessingUniformTextures(
+std::vector<GLTexture const*> MainWin::getPostProcessingUniformTextures(
     QString const& id, GLShaderProgram const& shader,
     GLHandler::RenderTarget const& currentTarget) const
 {
