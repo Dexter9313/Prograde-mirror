@@ -105,6 +105,10 @@ class AbstractMainWin : public QWindow
 	 */
 	Q_PROPERTY(double verticalAngleShift READ getVerticalAngleShift WRITE
 	               setVerticalAngleShift)
+	/*
+	 * @brief Compass tilt around the 0->180deg axis.
+	 */
+	Q_PROPERTY(float compassTilt READ getCompassTilt WRITE setCompassTilt)
 	/**
 	 * @brief Wether the window is displayed in full screen or not.
 	 *
@@ -169,6 +173,14 @@ class AbstractMainWin : public QWindow
 	 * @setter{verticalAngleShift}
 	 */
 	void setVerticalAngleShift(double angleShift);
+	/**
+	 * @getter{compasstilt}
+	 */
+	float getCompassTilt() { return CalibrationCompass::tilt(); };
+	/**
+	 * @setter{compasstilt}
+	 */
+	void setCompassTilt(float tilt) { CalibrationCompass::tilt() = tilt; };
 	/**
 	 * @getter{fullscreen}
 	 */
@@ -363,7 +375,7 @@ class AbstractMainWin : public QWindow
 	 */
 	virtual void applyPostProcShaderParams(
 	    QString const& id, GLShaderProgram const& shader,
-	    GLHandler::RenderTarget const& currentTarget) const;
+	    GLFramebufferObject const& currentTarget) const;
 	/**
 	 * @brief Override to return textures to use in your post-processing
 	 * shaders.
@@ -377,7 +389,7 @@ class AbstractMainWin : public QWindow
 	 */
 	virtual std::vector<GLTexture const*> getPostProcessingUniformTextures(
 	    QString const& id, GLShaderProgram const& shader,
-	    GLHandler::RenderTarget const& currentTarget) const;
+	    GLFramebufferObject const& currentTarget) const;
 
   protected:
 	/**
@@ -430,7 +442,7 @@ class AbstractMainWin : public QWindow
 
 	// BLOOM
 	bool bloom = QSettings().value("graphics/bloom").toBool();
-	std::array<GLHandler::RenderTarget, 2> bloomTargets;
+	std::array<GLFramebufferObject*, 2> bloomTargets = {{nullptr, nullptr}};
 	void reloadBloomTargets();
 };
 
