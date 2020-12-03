@@ -870,14 +870,14 @@ void MainWin::renderScene(BasicCamera const& camera, QString const& /*pathId*/)
 
 void MainWin::applyPostProcShaderParams(
     QString const& id, GLShaderProgram const& shader,
-    GLHandler::RenderTarget const& currentTarget) const
+    GLFramebufferObject const& currentTarget) const
 {
 	AbstractMainWin::applyPostProcShaderParams(id, shader, currentTarget);
 }
 
 std::vector<GLTexture const*> MainWin::getPostProcessingUniformTextures(
     QString const& id, GLShaderProgram const& shader,
-    GLHandler::RenderTarget const& currentTarget) const
+    GLFramebufferObject const& currentTarget) const
 {
 	auto abstractResult(AbstractMainWin::getPostProcessingUniformTextures(
 	    id, shader, currentTarget));
