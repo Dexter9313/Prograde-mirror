@@ -643,8 +643,7 @@ void MainWin::initScene()
 	auto cam = new OrbitalSystemCamera(*vrHandler, toneMappingModel->exposure,
 	                                   toneMappingModel->dynamicrange);
 	cam->setPerspectiveProj(renderer.getVerticalFOV(),
-	                        renderer.getHorizontalFOV()
-	                            / renderer.getVerticalFOV());
+	                        renderer.getAspectRatioFromFOV());
 	cam->target           = orbitalSystem->getAllCelestialBodiesPointers()[0];
 	cam->relativePosition = Vector3(
 	    cam->target->getCelestialBodyParameters().radius * 2.0, 0.0, 0.0);
