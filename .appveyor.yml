@@ -41,6 +41,9 @@ install:
     # Install Additional Project Dependencies
     ############################################################################
     - set USER_INSTALL=..\%PROJECT_DIRECTORY%\ci\appveyor\install_dependencies.bat
+    - echo %USER_INSTALL%
+    - IF EXIST %USER_INSTALL% (echo "Exists") ELSE (echo "Doesn't exist")
+    - dir
     - IF EXIST %USER_INSTALL% (%USER_INSTALL%)
 
 cache:
