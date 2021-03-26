@@ -691,7 +691,8 @@ void MainWin::initScene()
 	// DBG
 	shader = new GLShaderProgram("default");
 	point  = new GLMesh;
-	point->setVertices({0.f, 0.f, 0.f}, *shader, {{"position", 3}});
+	point->setVertexShaderMapping(*shader, {{"position", 3}});
+	point->setVertices({0.f, 0.f, 0.f});
 }
 
 void MainWin::updateScene(BasicCamera& camera, QString const& /*pathId*/)
@@ -874,9 +875,10 @@ void MainWin::applyPostProcShaderParams(
 	AbstractMainWin::applyPostProcShaderParams(id, shader, currentTarget);
 }
 
-std::vector<GLTexture const*> MainWin::getPostProcessingUniformTextures(
-    QString const& id, GLShaderProgram const& shader,
-    GLFramebufferObject const& currentTarget) const
+std::vector<std::pair<GLTexture const*, GLComputeShader::DataAccessMode>>
+    MainWin::getPostProcessingUniformTextures(
+        QString const& id, GLShaderProgram const& shader,
+        GLFramebufferObject const& currentTarget) const
 {
 	auto abstractResult(AbstractMainWin::getPostProcessingUniformTextures(
 	    id, shader, currentTarget));

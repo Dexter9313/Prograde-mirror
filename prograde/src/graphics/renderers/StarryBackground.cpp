@@ -126,8 +126,9 @@ void StarryBackground::initMesh(std::vector<Star> const& stars, float axialTilt)
 		vboContent.push_back(star.color.blueF());
 	}
 
-	mesh.setVertices(vboContent, shader,
-	                 {{"position", 3}, {"mag", 1}, {"color", 3}});
+	mesh.setVertexShaderMapping(shader,
+	                            {{"position", 3}, {"mag", 1}, {"color", 3}});
+	mesh.setVertices(vboContent);
 }
 
 std::vector<StarryBackground::Star> StarryBackground::loadStars()
