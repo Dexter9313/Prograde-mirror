@@ -76,6 +76,11 @@ SettingsWidget::SettingsWidget(QWidget* parent)
 	    tr("Force 2D render on screen\n(will decrease performance !)"));
 	addDoubleSetting("stereomultiplier", 1.0,
 	                 tr("Stereo multiplier (if applicable)"), 0.0, 1000.0);
+	addBoolSetting("forceleft", false, tr("Force left eye rendering only"));
+	addBoolSetting("forceright", false, tr("Force right eye rendering only"));
+	addVector3DSetting("virtualcamshift", {},
+	                   "Virtual Camera Shift\n(1.0 = screen physical height)",
+	                   {"x", "y", "z"}, 0.f, 100.f);
 
 	addGroup("network", tr("Network"));
 	addBoolSetting("server", true, tr("Server"));
@@ -616,9 +621,11 @@ QList<QPair<QString, QRect>> ScreenSelector::getScreens() const
 	for(auto s : screens)
 	{
 		QRect geom(s->geometry());
-		geom.setX(s->geometry().x() * w / desktopGeometry.width());
+		geom.setX((s->geometry().x() - desktopGeometry.x()) * w
+		          / desktopGeometry.width());
 		geom.setWidth(s->geometry().width() * w / desktopGeometry.width());
-		geom.setY(s->geometry().y() * h / desktopGeometry.height());
+		geom.setY((s->geometry().y() - desktopGeometry.y()) * h
+		          / desktopGeometry.height());
 		geom.setHeight(s->geometry().height() * h / desktopGeometry.height());
 
 		result.append({s->name(), geom});

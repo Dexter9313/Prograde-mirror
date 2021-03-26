@@ -7,19 +7,22 @@
 #include <QImage>
 #include <QMatrix4x4>
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_4_0_Core>
+#include <QOpenGLFunctions_4_2_Core>
 #include <QSettings>
 #include <QString>
 #include <QVector2D>
 #include <QVector3D>
 #include <QVector>
 #include <QtMath>
+#include <QtOpenGLExtensions>
 #include <array>
 #include <functional>
 
 #include "PythonQtHandler.hpp"
 #include "utils.hpp"
 
+#include "gl/GLBuffer.hpp"
+#include "gl/GLComputeShader.hpp"
 #include "gl/GLFramebufferObject.hpp"
 #include "gl/GLMesh.hpp"
 #include "gl/GLPixelBufferObject.hpp"
@@ -58,6 +61,7 @@ class GLHandler : public QObject
 	{
 		CLIP,
 		WORLD,
+		EYE,
 		CAMERA,
 		SEATEDTRACKED,
 		STANDINGTRACKED,
@@ -80,7 +84,9 @@ class GLHandler : public QObject
 	 * You can call OpenGL directly through that reference, but be careful !
 	 * Make sure you keep a clean OpenGL state.
 	 */
-	static QOpenGLFunctions_4_0_Core& glf();
+	static QOpenGLFunctions_4_2_Core& glf();
+
+	static QOpenGLExtension_ARB_compute_shader& glf_ARB_compute_shader();
 
   public slots:
 	/**
@@ -113,6 +119,7 @@ class GLHandler : public QObject
 	 *
 	 * The transformation matrix used will depend on the @p space parameter :
 	 * * WORLD : fullTransform : from world space to clip space
+	 * * EYE: fullEyeSpaceTransform : from eye space to clip space
 	 * * CAMERA : fullCameraSpaceTransform : from camera space to clip space
 	 * * SEATEDTRACKED : fullSeatedTrackedSpaceTransform : from seated tracked
 	 * space to clip space
@@ -161,6 +168,19 @@ class GLHandler : public QObject
 	                        GLFramebufferObject const& to,
 	                        std::vector<GLTexture const*> const& uniformTextures
 	                        = {});
+	static void postProcess(
+	    GLComputeShader const& shader, GLFramebufferObject const& inplace,
+	    std::vector<
+	        std::pair<GLTexture const*, GLComputeShader::DataAccessMode>> const&
+	        uniformTextures
+	    = {});
+	static void postProcess(
+	    GLComputeShader const& shader, GLFramebufferObject const& from,
+	    GLFramebufferObject const& to,
+	    std::vector<
+	        std::pair<GLTexture const*, GLComputeShader::DataAccessMode>> const&
+	        uniformTextures
+	    = {});
 	static void renderFromScratch(GLShaderProgram const& shader,
 	                              GLFramebufferObject const& to);
 
@@ -217,6 +237,7 @@ class GLHandler : public QObject
 	 */
 	static void
 	    setUpTransforms(QMatrix4x4 const& fullTransform,
+	                    QMatrix4x4 const& fullEyeSpaceTransform,
 	                    QMatrix4x4 const& fullCameraSpaceTransform,
 	                    QMatrix4x4 const& fullSeatedTrackedSpaceTransform,
 	                    QMatrix4x4 const& fullStandingTrackedSpaceTransform,
@@ -234,6 +255,8 @@ class GLHandler : public QObject
 	// object to screen transforms
 	// transform for any world object
 	static QMatrix4x4& fullTransform();
+	// transform for any Camera space object (follows Camera)
+	static QMatrix4x4& fullEyeSpaceTransform();
 	// transform for any Camera space object (follows Camera)
 	static QMatrix4x4& fullCameraSpaceTransform();
 	// transform for any Seated Tracked space object

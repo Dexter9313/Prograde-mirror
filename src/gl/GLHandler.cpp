@@ -1,15 +1,27 @@
 #include "gl/GLHandler.hpp"
 
-QOpenGLFunctions_4_0_Core& GLHandler::glf()
+QOpenGLFunctions_4_2_Core& GLHandler::glf()
 {
-	static QOpenGLFunctions_4_0_Core glf;
+	static QOpenGLFunctions_4_2_Core glf;
 	return glf;
+}
+
+QOpenGLExtension_ARB_compute_shader& GLHandler::glf_ARB_compute_shader()
+{
+	static QOpenGLExtension_ARB_compute_shader glf_ARB_compute_shader;
+	return glf_ARB_compute_shader;
 }
 
 QMatrix4x4& GLHandler::fullTransform()
 {
 	static QMatrix4x4 fullTransform;
 	return fullTransform;
+}
+
+QMatrix4x4& GLHandler::fullEyeSpaceTransform()
+{
+	static QMatrix4x4 fullEyeSpaceTransform;
+	return fullEyeSpaceTransform;
 }
 
 QMatrix4x4& GLHandler::fullCameraSpaceTransform()
@@ -45,6 +57,7 @@ QMatrix4x4& GLHandler::fullSkyboxSpaceTransform()
 bool GLHandler::init()
 {
 	glf().initializeOpenGLFunctions();
+	glf_ARB_compute_shader().initializeOpenGLFunctions();
 
 	// enable depth test
 	glf().glEnable(GL_DEPTH_TEST);
@@ -95,6 +108,9 @@ void GLHandler::setUpRender(GLShaderProgram const& shader,
 		case GeometricSpace::WORLD:
 			shader.setUniform("camera", fullTransform() * model);
 			break;
+		case GeometricSpace::EYE:
+			shader.setUniform("camera", fullEyeSpaceTransform() * model);
+			break;
 		case GeometricSpace::CAMERA:
 			shader.setUniform("camera", fullCameraSpaceTransform() * model);
 			break;
@@ -123,8 +139,8 @@ void GLHandler::postProcess(
     std::vector<GLTexture const*> const& uniformTextures)
 {
 	GLMesh quad;
-	quad.setVertices({-1.f, -1.f, 1.f, -1.f, -1.f, 1.f, 1.f, 1.f}, shader,
-	                 {{"position", 2}});
+	quad.setVertexShaderMapping(shader, {{"position", 2}});
+	quad.setVertices({-1.f, -1.f, 1.f, -1.f, -1.f, 1.f, 1.f, 1.f});
 
 	beginRendering(to);
 	shader.use();
@@ -141,12 +157,54 @@ void GLHandler::postProcess(
 	setBackfaceCulling(true);
 }
 
+void GLHandler::postProcess(
+    GLComputeShader const& shader, GLFramebufferObject const& inplace,
+    std::vector<
+        std::pair<GLTexture const*, GLComputeShader::DataAccessMode>> const&
+        uniformTextures)
+{
+	std::vector<std::pair<GLTexture const*, GLComputeShader::DataAccessMode>>
+	    texs;
+	texs.emplace_back(&inplace.getColorAttachmentTexture(),
+	                  GLComputeShader::DataAccessMode::RW);
+	// TODO(florian) performance
+	for(auto tex : uniformTextures)
+	{
+		texs.push_back(tex);
+	}
+	shader.exec(texs,
+	            {static_cast<unsigned int>(inplace.getSize().width()),
+	             static_cast<unsigned int>(inplace.getSize().height()), 1});
+}
+
+void GLHandler::postProcess(
+    GLComputeShader const& shader, GLFramebufferObject const& from,
+    GLFramebufferObject const& to,
+    std::vector<
+        std::pair<GLTexture const*, GLComputeShader::DataAccessMode>> const&
+        uniformTextures)
+{
+	std::vector<std::pair<GLTexture const*, GLComputeShader::DataAccessMode>>
+	    texs;
+	texs.emplace_back(&from.getColorAttachmentTexture(),
+	                  GLComputeShader::DataAccessMode::R);
+	texs.emplace_back(&to.getColorAttachmentTexture(),
+	                  GLComputeShader::DataAccessMode::R);
+	// TODO(florian) performance
+	for(auto tex : uniformTextures)
+	{
+		texs.push_back(tex);
+	}
+	shader.exec(texs, {static_cast<unsigned int>(from.getSize().width()),
+	                   static_cast<unsigned int>(from.getSize().height()), 1});
+}
+
 void GLHandler::renderFromScratch(GLShaderProgram const& shader,
                                   GLFramebufferObject const& to)
 {
 	GLMesh quad;
-	quad.setVertices({-1.f, -1.f, 1.f, -1.f, -1.f, 1.f, 1.f, 1.f}, shader,
-	                 {{"position", 2}});
+	quad.setVertexShaderMapping(shader, {{"position", 2}});
+	quad.setVertices({-1.f, -1.f, 1.f, -1.f, -1.f, 1.f, 1.f, 1.f});
 
 	if(to.getDepth() == 1)
 	{
@@ -246,13 +304,15 @@ void GLHandler::clearDepthBuffer()
 }
 
 void GLHandler::setUpTransforms(
-    QMatrix4x4 const& fullTransform, QMatrix4x4 const& fullCameraSpaceTransform,
+    QMatrix4x4 const& fullTransform, QMatrix4x4 const& fullEyeSpaceTransform,
+    QMatrix4x4 const& fullCameraSpaceTransform,
     QMatrix4x4 const& fullSeatedTrackedSpaceTransform,
     QMatrix4x4 const& fullStandingTrackedSpaceTransform,
     QMatrix4x4 const& fullHmdSpaceTransform,
     QMatrix4x4 const& fullSkyboxSpaceTransform)
 {
 	GLHandler::fullTransform()            = fullTransform;
+	GLHandler::fullEyeSpaceTransform()    = fullEyeSpaceTransform;
 	GLHandler::fullCameraSpaceTransform() = fullCameraSpaceTransform;
 	GLHandler::fullSeatedTrackedSpaceTransform()
 	    = fullSeatedTrackedSpaceTransform;

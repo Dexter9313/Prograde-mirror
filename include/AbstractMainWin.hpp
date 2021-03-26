@@ -69,6 +69,7 @@
  * accessed.
  * * #~AbstractMainWin : <code>cleanUpScene()</code>
  *
+ * TODO (florian) rewrite
  * @par Post-processing
  *
  * A post processing fragment shader must have :
@@ -106,6 +107,13 @@ class AbstractMainWin : public QWindow
 	 */
 	Q_PROPERTY(double verticalAngleShift READ getVerticalAngleShift WRITE
 	               setVerticalAngleShift)
+	/**
+	 * @brief For Stereo Beamer VR mode. Shifts camera's frustum tip. In case
+	 * the user's head is not aligned with the screen's center, this can fix
+	 * perspective.
+	 */
+	Q_PROPERTY(QVector3D virtualCamShift READ getVirtualCamShift WRITE
+	               setVirtualCamShift)
 	/*
 	 * @brief Compass tilt around the 0->180deg axis.
 	 */
@@ -174,6 +182,14 @@ class AbstractMainWin : public QWindow
 	 * @setter{verticalAngleShift}
 	 */
 	void setVerticalAngleShift(double angleShift);
+	/**
+	 * @getter{virtualCamShift}
+	 */
+	QVector3D getVirtualCamShift() const;
+	/**
+	 * @setter{virtualcamShift}
+	 */
+	void setVirtualCamShift(QVector3D const& virtualCamShift);
 	/**
 	 * @getter{compasstilt}
 	 */
@@ -388,9 +404,11 @@ class AbstractMainWin : public QWindow
 	 * processing.
 	 * @param shader The actual shader program.
 	 */
-	virtual std::vector<GLTexture const*> getPostProcessingUniformTextures(
-	    QString const& id, GLShaderProgram const& shader,
-	    GLFramebufferObject const& currentTarget) const;
+	virtual std::vector<
+	    std::pair<GLTexture const*, GLComputeShader::DataAccessMode>>
+	    getPostProcessingUniformTextures(
+	        QString const& id, GLShaderProgram const& shader,
+	        GLFramebufferObject const& currentTarget) const;
 
   protected:
 	/**

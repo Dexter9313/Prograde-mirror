@@ -47,12 +47,14 @@ class Renderer
 
 	Renderer(AbstractMainWin& window, VRHandler& vrHandler);
 	void init();
-	void windowResized();
-	QSize getSize() const;
+	// if ignore VR, returns hypothetical size if VR wasn't enabled
+	// of course real RT size doesn't ignore VR
+	QSize getSize(bool ignoreVR = false) const;
 	float getRenderTargetAspectRatio() const;
 	float getAspectRatioFromFOV() const;
 	float getVerticalFOV() const { return vFOV; };
 	float getHorizontalFOV() const { return hFOV; };
+	void updateRenderTargets();
 	/**
 	 * @brief Returns a constant reference to the @ref BasicCamera used for
 	 * rendering during specific scene rendering path.
@@ -107,10 +109,11 @@ class Renderer
 	 * follow the post-processing instructions given in the class description.
 	 *
 	 * @param id Identifier to refer to the fragment shader later.
-	 * @param fragment Path to the fragment shader to use. See README for
+	 * @param computeName Path to the compute shader to use. See README for
 	 * informations about data paths.
 	 */
-	void appendPostProcessingShader(QString const& id, QString const& fragment,
+	void appendPostProcessingShader(QString const& id,
+	                                QString const& computeName,
 	                                QMap<QString, QString> const& defines = {});
 	/**
 	 * @brief Inserts a post-processing shader into the post-processing
@@ -120,11 +123,12 @@ class Renderer
 	 * follow the post-processing instructions given in the class description.
 	 *
 	 * @param id Identifier to refer to the shader later.
-	 * @param fragment Path to the fragment shader to use. See README for
+	 * @param computeName Path to the fragment shader to use. See README for
 	 * informations about data paths.
 	 * @param pos Position at which to insert the shader.
 	 */
-	void insertPostProcessingShader(QString const& id, QString const& fragment,
+	void insertPostProcessingShader(QString const& id,
+	                                QString const& computeName,
 	                                unsigned int pos);
 	/**
 	 * @brief Removes a post-processing shader from the post-processing
@@ -198,7 +202,7 @@ class Renderer
 	 * pipeline using the corresponding methods.
 	 * * p.second is the shader itself.
 	 */
-	std::list<std::pair<QString, GLShaderProgram>> const& postProcessingPipeline
+	std::list<std::pair<QString, GLComputeShader>> const& postProcessingPipeline
 	    = postProcessingPipeline_;
 
   private:
@@ -206,7 +210,8 @@ class Renderer
 
 	void vrRenderSinglePath(RenderPath& renderPath, QString const& pathId,
 	                        bool debug, bool debugInHeadset);
-	void vrRender(Side side, bool debug, bool debugInHeadset);
+	void vrRender(Side side, bool debug, bool debugInHeadset,
+	              bool displayOnScreen);
 
 	AbstractMainWin& window;
 	VRHandler& vrHandler;
@@ -218,7 +223,7 @@ class Renderer
 
 	QList<QPair<QString, RenderPath>> sceneRenderPipeline_;
 
-	std::list<std::pair<QString, GLShaderProgram>> postProcessingPipeline_;
+	std::list<std::pair<QString, GLComputeShader>> postProcessingPipeline_;
 	float lastFrameAverageLuminance = 0.f;
 
 	bool renderCompass          = false;

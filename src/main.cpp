@@ -8,14 +8,20 @@
 #endif
 
 #include "Launcher.hpp"
+#include "Logger.hpp"
 #include "MainWin.hpp"
-
-void log(QtMsgType type, const QMessageLogContext& context, const QString& msg);
 
 int main(int argc, char* argv[])
 {
+	if(argc == 2 && std::string(argv[1]) == "--version")
+	{
+		std::cout << PROJECT_NAME << " version " << PROJECT_VERSION
+		          << std::endl;
+		return EXIT_SUCCESS;
+	}
+
 	// setup logging
-	qInstallMessageHandler(log);
+	Logger::init();
 
 	// Set config file names for QSettings
 	QCoreApplication::setOrganizationName(PROJECT_NAME);
@@ -35,6 +41,10 @@ int main(int argc, char* argv[])
 	    QCoreApplication::translate("main", "Read .ini config from <file>."),
 	    "file");
 	parser.addOption(config);
+	QCommandLineOption version(
+	    "version",
+	    QCoreApplication::translate("main", "Display version information."));
+	parser.addOption(version);
 	parser.process(a);
 
 	// set settings
@@ -99,7 +109,7 @@ int main(int argc, char* argv[])
 		launcher.init();
 		if(launcher.exec() == QDialog::Rejected)
 		{
-			return 1;
+			return EXIT_SUCCESS;
 		}
 	}
 
@@ -109,39 +119,7 @@ int main(int argc, char* argv[])
 	// start event loop
 	QCoreApplication::postEvent(&w, new QEvent(QEvent::UpdateRequest));
 	return QApplication::exec();
-}
 
-void log(QtMsgType type, const QMessageLogContext& context, const QString& msg)
-{
-	QByteArray localMsg   = msg.toLocal8Bit();
-	const char* file      = context.file != nullptr ? context.file : "";
-	const char* shortFile = file;
-	if(strlen(shortFile) > strlen(BUILD_SRC_DIR) + 1)
-	{
-		shortFile += strlen(BUILD_SRC_DIR) + 1;
-	}
-	const char* function = context.function != nullptr ? context.function : "";
-
-	std::string messageTypeStr;
-	switch(type)
-	{
-		case QtDebugMsg:
-			messageTypeStr = "Debug";
-			break;
-		case QtInfoMsg:
-			messageTypeStr = "Info";
-			break;
-		case QtWarningMsg:
-			messageTypeStr = "\033[1;33mWarning\033[0m";
-			break;
-		case QtCriticalMsg:
-			messageTypeStr = "\033[31mCritical\033[0m";
-			break;
-		case QtFatalMsg:
-			messageTypeStr = "\033[31mFatal\033[0m";
-			break;
-	}
-	std::cerr << messageTypeStr << " (" << shortFile << ":" << context.line
-	          << ", " << function << "):" << std::endl
-	          << "\t" << localMsg.constData() << std::endl;
+	// close log file
+	Logger::close();
 }

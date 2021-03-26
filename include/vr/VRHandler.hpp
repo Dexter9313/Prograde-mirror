@@ -76,28 +76,27 @@ class VRHandler : public QObject
 		QSettings().setValue("vr/stereomultiplier", sm);
 		stereoMultiplier = sm;
 	};
-	virtual float getFrameTiming() const                              = 0;
-	virtual const Controller* getController(Side side) const          = 0;
-	virtual const Hand* getHand(Side side) const                      = 0;
-	virtual float getRenderTargetAverageLuminance(Side eye) const     = 0;
+	virtual float getFrameTiming() const                     = 0;
+	virtual const Controller* getController(Side side) const = 0;
+	virtual const Hand* getHand(Side side) const             = 0;
+	// getRenderTargetAverageLuminanceFactor ? for OpenVR 1.041f
+	// virtual float getRenderTargetAverageLuminance(Side eye) const     = 0;
 	virtual QMatrix4x4 getSeatedToStandingAbsoluteTrackingPos() const = 0;
 	virtual QSizeF getPlayAreaSize() const                            = 0;
 	virtual std::vector<QVector3D> getPlayAreaQuad() const            = 0;
 	// update state
-	virtual void prepareRendering()        = 0;
-	virtual void beginRendering(Side eye)  = 0;
-	virtual void renderControllers() const = 0;
-	virtual void renderHands() const       = 0;
-	virtual GLFramebufferObject const&
-	    getPostProcessingTarget(unsigned int i, Side side) const = 0;
-	virtual void reloadPostProcessingTargets()                   = 0;
-	virtual void submitRendering(Side eye, unsigned int i)       = 0;
+	virtual void prepareRendering(Side eye) = 0;
+	virtual void renderHiddenAreaMesh(Side /*eye*/){};
+	virtual void renderControllers() const                       = 0;
+	virtual void renderHands() const                             = 0;
+	virtual void submitRendering(GLFramebufferObject const& fbo) = 0;
 
-	virtual void displayOnCompanion(unsigned int companionWidth,
-	                                unsigned int companionHeight) const = 0;
-	virtual bool pollEvent(Event* e)                                    = 0;
-	virtual void close()                                                = 0;
+	virtual bool pollEvent(Event* e) = 0;
+	virtual void close()             = 0;
 	virtual ~VRHandler(){};
+
+	const bool forceLeft  = QSettings().value("vr/forceleft").toBool();
+	const bool forceRight = QSettings().value("vr/forceright").toBool();
 
   public slots:
 	virtual QMatrix4x4 getEyeViewMatrix(Side eye) const                    = 0;
@@ -105,13 +104,15 @@ class VRHandler : public QObject
 	                                       float farPlan = 10000.0f) const = 0;
 	virtual void resetPos()                                                = 0;
 
+  signals:
+	void renderTargetSizeChanged(QSize newSize);
+
   protected:
 	Renderer const* renderer;
 
 	double stereoMultiplier
 	    = QSettings().value("vr/stereomultiplier").toDouble();
 
-  protected:
 	QMatrix4x4 hmdPosMatrix;
 	Side currentRenderingEye = Side::LEFT;
 	QString sideToStr(Side side) const

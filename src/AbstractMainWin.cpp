@@ -8,7 +8,7 @@ AbstractMainWin::AbstractMainWin()
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);
-	format.setVersion(4, 0);
+	format.setVersion(4, 2);
 	format.setSwapInterval(0);
 	setFormat(format);
 
@@ -60,6 +60,16 @@ void AbstractMainWin::setVerticalAngleShift(double angleShift)
 	renderer.updateAngleShiftMat();
 }
 
+QVector3D AbstractMainWin::getVirtualCamShift() const
+{
+	return QSettings().value("vr/virtualcamshift").value<QVector3D>();
+}
+
+void AbstractMainWin::setVirtualCamShift(QVector3D const& virtualCamShift)
+{
+	QSettings().setValue("vr/virtualcamshift", virtualCamShift);
+}
+
 bool AbstractMainWin::isFullscreen() const
 {
 	return QSettings().value("window/fullscreen").toBool();
@@ -84,17 +94,13 @@ void AbstractMainWin::setFullscreen(bool fullscreen)
 			}
 		}
 		setGeometry(screenGeometry);
-		show();
-		setFlag(Qt::FramelessWindowHint, true);
-		setFlag(Qt::WindowStaysOnTopHint, true);
+		showFullScreen();
 	}
 	else
 	{
+		show();
 		resize(QSettings().value("window/width").toUInt(),
 		       QSettings().value("window/height").toUInt());
-		show();
-		setFlag(Qt::FramelessWindowHint, false);
-		setFlag(Qt::WindowStaysOnTopHint, false);
 	}
 }
 
@@ -138,6 +144,7 @@ void AbstractMainWin::setVR(bool vr)
 	}
 	QSettings().setValue("vr/enabled", vrIsEnabled());
 
+	renderer.updateRenderTargets();
 	reloadBloomTargets();
 }
 
@@ -180,7 +187,8 @@ bool AbstractMainWin::event(QEvent* e)
 
 void AbstractMainWin::resizeEvent(QResizeEvent* /*ev*/)
 {
-	renderer.windowResized();
+	renderer.updateRenderTargets();
+	reloadBloomTargets();
 }
 
 void AbstractMainWin::keyPressEvent(QKeyEvent* e)
@@ -408,19 +416,15 @@ void AbstractMainWin::applyPostProcShaderParams(
     QString const& id, GLShaderProgram const& shader,
     GLFramebufferObject const& /*currentTarget*/) const
 {
-	if(id == "colors")
-	{
-		shader.setUniform("gamma", gamma);
-	}
-	else if(id == "exposure")
+	if(id == "exposure")
 	{
 		shader.setUniform("exposure", toneMappingModel->exposure);
 		shader.setUniform("dynamicrange", toneMappingModel->dynamicrange);
 		shader.setUniform("purkinje", toneMappingModel->purkinje ? 1.f : 0.f);
 	}
-	else if(id == "bloom")
+	else if(id == "colors")
 	{
-		shader.setUniform("highlumtex", 1);
+		shader.setUniform("gamma", gamma);
 	}
 	else
 	{
@@ -431,31 +435,36 @@ void AbstractMainWin::applyPostProcShaderParams(
 	}
 }
 
-std::vector<GLTexture const*> AbstractMainWin::getPostProcessingUniformTextures(
-    QString const& id, GLShaderProgram const& /*shader*/,
-    GLFramebufferObject const& currentTarget) const
+std::vector<std::pair<GLTexture const*, GLComputeShader::DataAccessMode>>
+    AbstractMainWin::getPostProcessingUniformTextures(
+        QString const& id, GLShaderProgram const& /*shader*/,
+        GLFramebufferObject const& currentTarget) const
 {
 	if(id == "bloom")
 	{
 		if(bloom)
 		{
 			// high luminosity pass
-			GLShaderProgram hlshader("postprocess", "highlumpass");
+			GLComputeShader hlshader("highlumpass");
 			GLHandler::postProcess(hlshader, currentTarget, *bloomTargets[0]);
 
 			// blurring
-			GLShaderProgram blurshader("postprocess", "blur");
-			for(unsigned int i = 0; i < 6; i++)
+			GLComputeShader blurshader("blur");
+			for(unsigned int i = 0; i < 6;
+			    i++) // always execute even number of times
 			{
-				blurshader.setUniform("horizontal", static_cast<float>(i % 2));
+				blurshader.setUniform("dir", i % 2 == 0 ? QVector2D(1, 0)
+				                                        : QVector2D(0, 1));
 				GLHandler::postProcess(blurshader, *bloomTargets.at(i % 2),
 				                       *bloomTargets.at((i + 1) % 2));
 			}
 
-			return {&bloomTargets[0]->getColorAttachmentTexture()};
+			return {{&bloomTargets[0]->getColorAttachmentTexture(),
+			         GLComputeShader::DataAccessMode::R}};
 		}
 		GLHandler::beginRendering(*bloomTargets[0]);
-		return {&bloomTargets[0]->getColorAttachmentTexture()};
+		return {{&bloomTargets[0]->getColorAttachmentTexture(),
+		         GLComputeShader::DataAccessMode::R}};
 	}
 	return {};
 }
@@ -491,9 +500,6 @@ void AbstractMainWin::initializeGL()
 		vrHandler->resetPos();
 	}
 
-	// BLOOM
-	reloadBloomTargets();
-
 	// let user init
 	initScene();
 
@@ -515,6 +521,9 @@ void AbstractMainWin::initializeGL()
 
 	frameTimer.start();
 	initialized = true;
+
+	// BLOOM
+	reloadBloomTargets();
 }
 
 void AbstractMainWin::initializePythonQt()
@@ -692,6 +701,10 @@ AbstractMainWin::~AbstractMainWin()
 
 void AbstractMainWin::reloadBloomTargets()
 {
+	if(!initialized)
+	{
+		return;
+	}
 	delete bloomTargets[0];
 	delete bloomTargets[1];
 	if(!vrHandler->isEnabled())

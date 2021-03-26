@@ -96,7 +96,8 @@ CalibrationCompass::CalibrationCompass()
 		circleVertices.push_back(0.0);
 		circleVertices.push_back(-cos(i * M_PI / 180.0));
 	}
-	circle.setVertices(circleVertices, shader, {{"position", 3}});
+	circle.setVertexShaderMapping(shader, {{"position", 3}});
+	circle.setVertices(circleVertices);
 
 	// precompute billboards textures
 	for(unsigned int i(0); i < 100; ++i)
@@ -143,7 +144,7 @@ void CalibrationCompass::renderCircle(QMatrix4x4 const& angleShiftMat,
 	model.scale(cos(latitude));
 
 	GLHandler::setUpRender(shader, angleShiftMat * model,
-	                       GLHandler::GeometricSpace::CAMERA);
+	                       GLHandler::GeometricSpace::EYE);
 	circle.render(PrimitiveType::LINE_LOOP);
 }
 
@@ -175,14 +176,15 @@ void CalibrationCompass::renderCompassTicks(QMatrix4x4 const& angleShiftMat,
 			billboards[j]->getModel() = angleShiftMat * model;
 			billboards[j]->getShader().setUniform("exposure", exposure);
 			billboards[j]->getShader().setUniform("dynamicrange", dynamicrange);
-			billboards[j]->render(GLHandler::GeometricSpace::CAMERA);
+			billboards[j]->render(GLHandler::GeometricSpace::EYE);
 		}
 		++j;
 	}
-	mesh.setVertices(vertices, shader, {{"position", 3}});
+	mesh.setVertexShaderMapping(shader, {{"position", 3}});
+	mesh.setVertices(vertices);
 
 	GLHandler::setUpRender(shader, angleShiftMat,
-	                       GLHandler::GeometricSpace::CAMERA);
+	                       GLHandler::GeometricSpace::EYE);
 	mesh.render(PrimitiveType::LINES);
 }
 

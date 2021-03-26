@@ -20,7 +20,7 @@
 #define GLFRAMEBUFFEROBJECT_HPP
 
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_4_0_Core>
+#include <QOpenGLFunctions_4_2_Core>
 #include <QSize>
 
 #include "GLTexture.hpp"
@@ -61,6 +61,7 @@ class GLFramebufferObject
 	    , texColorBuffer(other.texColorBuffer)
 	    , renderBuffer(other.renderBuffer)
 	    , width(other.width)
+	    , height(other.height)
 	    , depth(other.depth)
 	    , isDepthMap(other.isDepthMap)
 	    , doClean(other.doClean)
@@ -95,7 +96,8 @@ class GLFramebufferObject
 	{
 		return *texColorBuffer;
 	};
-	void bind(GLTexture::CubemapFace face, GLint layer) const;
+	void bind(GLTexture::CubemapFace face = GLTexture::CubemapFace::FRONT,
+	          GLint layer                 = 0) const;
 	void blitColorBufferTo(GLFramebufferObject const& to) const;
 	void blitColorBufferTo(GLFramebufferObject const& to, int srcX0, int srcY0,
 	                       int srcX1, int srcY1, int dstX0, int dstY0,
